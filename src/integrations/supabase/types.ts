@@ -35,6 +35,33 @@ export type Database = {
         }
         Relationships: []
       }
+      campuses: {
+        Row: {
+          created_at: string
+          email_domain: string | null
+          id: string
+          lat: number | null
+          lng: number | null
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          email_domain?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          name: string
+        }
+        Update: {
+          created_at?: string
+          email_domain?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          name?: string
+        }
+        Relationships: []
+      }
       event_participants: {
         Row: {
           checked_in: boolean
@@ -256,6 +283,7 @@ export type Database = {
         Row: {
           availability: Json | null
           avatar_url: string | null
+          campus_id: string | null
           created_at: string
           email: string
           id: string
@@ -273,6 +301,7 @@ export type Database = {
         Insert: {
           availability?: Json | null
           avatar_url?: string | null
+          campus_id?: string | null
           created_at?: string
           email: string
           id: string
@@ -290,6 +319,7 @@ export type Database = {
         Update: {
           availability?: Json | null
           avatar_url?: string | null
+          campus_id?: string | null
           created_at?: string
           email?: string
           id?: string
@@ -304,7 +334,15 @@ export type Database = {
           semester?: number | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_campus_id_fkey"
+            columns: ["campus_id"]
+            isOneToOne: false
+            referencedRelation: "campuses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reports: {
         Row: {

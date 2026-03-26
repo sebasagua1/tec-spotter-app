@@ -12,6 +12,7 @@ interface Profile {
   residence_type: string | null;
   interests: string[] | null;
   languages: string[] | null;
+  campus_id: string | null;
   availability: any;
   points: number;
   reputation: number;
