@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { EventBottomSheet } from '@/components/map/EventBottomSheet';
 import { CreateEventSheet } from '@/components/map/CreateEventSheet';
 import { supabase } from '@/integrations/supabase/client';
+import 'mapbox-gl/dist/mapbox-gl.css';
 
 export default function MapHome() {
   const mapContainer = useRef<HTMLDivElement>(null);
