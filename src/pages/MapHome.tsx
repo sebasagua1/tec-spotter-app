@@ -51,7 +51,6 @@ export default function MapHome() {
 
     const initMap = async () => {
       const mapboxgl = (await import('mapbox-gl')).default;
-      await import('mapbox-gl/dist/mapbox-gl.css');
 
       // Try to get token from environment or use placeholder
       const token = import.meta.env.VITE_MAPBOX_TOKEN || '';
