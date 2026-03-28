@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { EventBottomSheet } from '@/components/map/EventBottomSheet';
 import { CreateEventSheet } from '@/components/map/CreateEventSheet';
 import { supabase } from '@/integrations/supabase/client';
+import 'mapbox-gl/dist/mapbox-gl.css';
 
 export default function MapHome() {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -50,7 +51,6 @@ export default function MapHome() {
 
     const initMap = async () => {
       const mapboxgl = (await import('mapbox-gl')).default;
-      await import('mapbox-gl/dist/mapbox-gl.css');
 
       // Try to get token from environment or use placeholder
       const token = import.meta.env.VITE_MAPBOX_TOKEN || '';
