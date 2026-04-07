@@ -96,40 +96,45 @@ export default function MapHome() {
   // Update markers
   useEffect(() => {
     if (!mapRef.current || !mapLoaded) return;
-    const mapboxgl = (window as any).mapboxgl || null;
 
-    // Clear existing markers
-    markersRef.current.forEach(m => m.remove());
-    markersRef.current = [];
+    const updateMarkers = async () => {
+      const mapboxgl = (await import('mapbox-gl')).default;
 
-    const filtered = filterCategory
-      ? events.filter(e => e.category === filterCategory)
-      : events;
+      // Clear existing markers
+      markersRef.current.forEach(m => m.remove());
+      markersRef.current = [];
 
-    filtered.forEach(event => {
-      if (!event.location) return;
-      const cat = EVENT_CATEGORIES.find(c => c.key === event.category);
-      if (!cat) return;
+      const filtered = filterCategory
+        ? events.filter(e => e.category === filterCategory)
+        : events;
 
-      const el = document.createElement('div');
-      el.className = 'animate-flag-pulse cursor-pointer';
-      el.style.cssText = `
-        width: 36px; height: 36px; border-radius: 50%;
-        background: ${cat.color}; border: 3px solid white;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.2);
-        display: flex; align-items: center; justify-content: center;
-        font-size: 16px;
-      `;
-      el.innerHTML = cat.emoji;
-      el.addEventListener('click', () => setSelectedEvent(event));
+      filtered.forEach(event => {
+        if (!event.location) return;
+        const cat = EVENT_CATEGORIES.find(c => c.key === event.category);
+        if (!cat) return;
 
-      try {
-        const marker = new (mapboxgl || (window as any).mapboxgl).Marker({ element: el })
-          .setLngLat([event.location.lng, event.location.lat])
-          .addTo(mapRef.current!);
-        markersRef.current.push(marker);
-      } catch {}
-    });
+        const el = document.createElement('div');
+        el.className = 'animate-flag-pulse cursor-pointer';
+        el.style.cssText = `
+          width: 36px; height: 36px; border-radius: 50%;
+          background: ${cat.color}; border: 3px solid white;
+          box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+          display: flex; align-items: center; justify-content: center;
+          font-size: 16px;
+        `;
+        el.innerHTML = cat.emoji;
+        el.addEventListener('click', () => setSelectedEvent(event));
+
+        try {
+          const marker = new mapboxgl.Marker({ element: el })
+            .setLngLat([event.location.lng, event.location.lat])
+            .addTo(mapRef.current!);
+          markersRef.current.push(marker);
+        } catch {}
+      });
+    };
+
+    updateMarkers();
   }, [events, filterCategory, mapLoaded, setSelectedEvent]);
 
   const filteredCategories = [
