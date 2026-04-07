@@ -78,6 +78,12 @@ export default function MapHome() {
         attributionControl: false,
       });
 
+      map.addControl(new mapboxgl.GeolocateControl({
+        positionOptions: { enableHighAccuracy: true },
+        trackUserLocation: true,
+        showUserHeading: true,
+      }), 'bottom-left');
+
       map.on('load', () => {
         setMapLoaded(true);
       });

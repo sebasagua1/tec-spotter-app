@@ -39,10 +39,10 @@ export const POINTS = {
   RATE_EVENT: 5,
 } as const;
 
-// Monterrey Tec campus center coordinates
+// Tec de Monterrey Campus Querétaro center coordinates
 export const TEC_CENTER = {
-  lng: -100.2899,
-  lat: 25.6514,
+  lng: -100.4063,
+  lat: 20.6134,
 } as const;
 
 export const MAPBOX_STYLE = 'mapbox://styles/mapbox/light-v11';
