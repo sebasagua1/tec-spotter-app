@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Minus, Plus as PlusIcon } from 'lucide-react';
+import { X, Minus, Plus as PlusIcon, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -11,9 +11,12 @@ import { useToast } from '@/hooks/use-toast';
 
 interface Props {
   onClose: () => void;
+  onPickLocation: () => void;
+  pickedLocation: { lng: number; lat: number } | null;
+  onClearLocation: () => void;
 }
 
-export function CreateEventSheet({ onClose }: Props) {
+export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onClearLocation }: Props) {
   const { user } = useAuthStore();
   const { toast } = useToast();
   const [title, setTitle] = useState('');
@@ -32,7 +35,7 @@ export function CreateEventSheet({ onClose }: Props) {
     setLoading(true);
 
     const startsAt = new Date(`${date}T${time}`);
-    const endsAt = new Date(startsAt.getTime() + 2 * 60 * 60 * 1000); // default 2hr
+    const endsAt = new Date(startsAt.getTime() + 2 * 60 * 60 * 1000);
 
     const { error } = await supabase.from('events').insert({
       creator_id: user.id,
@@ -47,6 +50,8 @@ export function CreateEventSheet({ onClose }: Props) {
       is_active: true,
       current_spots: 0,
       is_recurring: false,
+      lng: pickedLocation?.lng ?? null,
+      lat: pickedLocation?.lat ?? null,
     });
 
     if (error) {
@@ -118,13 +123,35 @@ export function CreateEventSheet({ onClose }: Props) {
               </div>
             </div>
 
-            {/* Location */}
-            <Input
-              placeholder="Location name or address"
-              value={address}
-              onChange={e => setAddress(e.target.value)}
-              className="h-12 rounded-xl text-base"
-            />
+            {/* Location - Pick on map */}
+            <div>
+              <label className="text-sm font-semibold text-foreground mb-2 block">Location</label>
+              {pickedLocation ? (
+                <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-xl border border-primary/20">
+                  <MapPin className="w-5 h-5 text-primary flex-shrink-0" />
+                  <span className="text-sm font-medium text-foreground flex-1">
+                    📍 {pickedLocation.lat.toFixed(5)}, {pickedLocation.lng.toFixed(5)}
+                  </span>
+                  <button onClick={onClearLocation} className="text-xs text-muted-foreground underline">
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={onPickLocation}
+                  className="w-full flex items-center gap-2 p-3 bg-muted rounded-xl text-sm font-medium text-muted-foreground hover:bg-muted/80 transition-colors"
+                >
+                  <MapPin className="w-5 h-5" />
+                  Tap to pick location on map
+                </button>
+              )}
+              <Input
+                placeholder="Location name (optional)"
+                value={address}
+                onChange={e => setAddress(e.target.value)}
+                className="h-12 rounded-xl text-base mt-2"
+              />
+            </div>
 
             {/* Max spots stepper */}
             <div>
