@@ -17,6 +17,9 @@ export default function MapHome() {
   const [showCreate, setShowCreate] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
+  const [pickingLocation, setPickingLocation] = useState(false);
+  const [pickedLocation, setPickedLocation] = useState<{ lng: number; lat: number } | null>(null);
+  const pickMarkerRef = useRef<any>(null);
 
   // Fetch events
   useEffect(() => {
