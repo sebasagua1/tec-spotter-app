@@ -147,6 +147,76 @@ export default function MapHome() {
     updateMarkers();
   }, [events, filterCategory, mapLoaded, setSelectedEvent]);
 
+  // Handle map click for location picking
+  useEffect(() => {
+    if (!mapRef.current || !mapLoaded) return;
+
+    const handleClick = async (e: any) => {
+      if (!pickingLocation) return;
+      const { lng, lat } = e.lngLat;
+      setPickedLocation({ lng, lat });
+
+      // Update or create the pick marker
+      const mapboxgl = (await import('mapbox-gl')).default;
+      if (pickMarkerRef.current) pickMarkerRef.current.remove();
+
+      const el = document.createElement('div');
+      el.style.cssText = `
+        width: 40px; height: 40px; border-radius: 50%;
+        background: hsl(var(--primary)); border: 3px solid white;
+        box-shadow: 0 2px 16px rgba(0,0,0,0.3);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 20px;
+      `;
+      el.innerHTML = '📍';
+      pickMarkerRef.current = new mapboxgl.Marker({ element: el })
+        .setLngLat([lng, lat])
+        .addTo(mapRef.current!);
+    };
+
+    mapRef.current.on('click', handleClick);
+    return () => {
+      mapRef.current?.off('click', handleClick);
+    };
+  }, [pickingLocation, mapLoaded]);
+
+  const handleStartPicking = () => {
+    setShowCreate(false);
+    setPickingLocation(true);
+  };
+
+  const handleConfirmLocation = () => {
+    setPickingLocation(false);
+    setShowCreate(true);
+  };
+
+  const handleCancelPicking = () => {
+    setPickingLocation(false);
+    setPickedLocation(null);
+    if (pickMarkerRef.current) {
+      pickMarkerRef.current.remove();
+      pickMarkerRef.current = null;
+    }
+    setShowCreate(true);
+  };
+
+  const handleClearLocation = () => {
+    setPickedLocation(null);
+    if (pickMarkerRef.current) {
+      pickMarkerRef.current.remove();
+      pickMarkerRef.current = null;
+    }
+  };
+
+  const handleCloseCreate = () => {
+    setShowCreate(false);
+    setPickedLocation(null);
+    if (pickMarkerRef.current) {
+      pickMarkerRef.current.remove();
+      pickMarkerRef.current = null;
+    }
+  };
+
   const filteredCategories = [
     { key: null, label: 'All', emoji: '🗺️' },
     ...EVENT_CATEGORIES,
@@ -167,7 +237,6 @@ export default function MapHome() {
               Add your Mapbox token as VITE_MAPBOX_TOKEN to see the interactive map.
               Events will still appear below.
             </p>
-            {/* Show events as cards when no map */}
             <div className="mt-4 space-y-2 max-h-60 overflow-y-auto">
               {events.map(event => {
                 const cat = EVENT_CATEGORIES.find(c => c.key === event.category);
@@ -189,34 +258,47 @@ export default function MapHome() {
         </div>
       )}
 
-      {/* Filter pills */}
-      <div className="absolute top-4 left-0 right-0 z-10 px-4 safe-top">
-        <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
-          {filteredCategories.map(cat => (
-            <button
-              key={cat.key ?? 'all'}
-              onClick={() => setFilterCategory(cat.key)}
-              className={cn(
-                'flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all shadow-soft',
-                filterCategory === cat.key
-                  ? 'bg-primary text-primary-foreground'
-                  : 'glass text-foreground border border-border'
-              )}
-            >
-              <span>{cat.emoji}</span>
-              <span>{cat.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* Location picker overlay */}
+      {pickingLocation && (
+        <LocationPickerOverlay
+          onConfirm={handleConfirmLocation}
+          onCancel={handleCancelPicking}
+          hasPin={!!pickedLocation}
+        />
+      )}
 
-      {/* FAB */}
-      <button
-        onClick={() => setShowCreate(true)}
-        className="absolute bottom-24 right-4 z-10 w-14 h-14 bg-primary rounded-full flex items-center justify-center shadow-lifted active:scale-95 transition-transform"
-      >
-        <Plus className="w-7 h-7 text-primary-foreground" />
-      </button>
+      {/* Filter pills - hide during picking */}
+      {!pickingLocation && (
+        <div className="absolute top-4 left-0 right-0 z-10 px-4 safe-top">
+          <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
+            {filteredCategories.map(cat => (
+              <button
+                key={cat.key ?? 'all'}
+                onClick={() => setFilterCategory(cat.key)}
+                className={cn(
+                  'flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all shadow-soft',
+                  filterCategory === cat.key
+                    ? 'bg-primary text-primary-foreground'
+                    : 'glass text-foreground border border-border'
+                )}
+              >
+                <span>{cat.emoji}</span>
+                <span>{cat.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* FAB - hide during picking */}
+      {!pickingLocation && (
+        <button
+          onClick={() => setShowCreate(true)}
+          className="absolute bottom-24 right-4 z-10 w-14 h-14 bg-primary rounded-full flex items-center justify-center shadow-lifted active:scale-95 transition-transform"
+        >
+          <Plus className="w-7 h-7 text-primary-foreground" />
+        </button>
+      )}
 
       {/* Event bottom sheet */}
       {selectedEvent && (
@@ -228,7 +310,12 @@ export default function MapHome() {
 
       {/* Create event sheet */}
       {showCreate && (
-        <CreateEventSheet onClose={() => setShowCreate(false)} />
+        <CreateEventSheet
+          onClose={handleCloseCreate}
+          onPickLocation={handleStartPicking}
+          pickedLocation={pickedLocation}
+          onClearLocation={handleClearLocation}
+        />
       )}
     </div>
   );
