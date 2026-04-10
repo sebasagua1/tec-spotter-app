@@ -5,6 +5,7 @@ import { EVENT_CATEGORIES, TEC_CENTER } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { EventBottomSheet } from '@/components/map/EventBottomSheet';
 import { CreateEventSheet } from '@/components/map/CreateEventSheet';
+import { LocationPickerOverlay } from '@/components/map/LocationPickerOverlay';
 import { supabase } from '@/integrations/supabase/client';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
