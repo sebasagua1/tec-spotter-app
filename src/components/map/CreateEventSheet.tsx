@@ -38,8 +38,10 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
     if (!user || !title || !date || !time) return;
     setLoading(true);
 
-    const startsAt = new Date(`${date}T${time}`);
-    const endsAt = new Date(startsAt.getTime() + 2 * 60 * 60 * 1000);
+    if (!date) return;
+    const [hours, mins] = time.split(':').map(Number);
+    const startsAt = new Date(date);
+    startsAt.setHours(hours, mins, 0, 0);
 
     const { error } = await supabase.from('events').insert({
       creator_id: user.id,
