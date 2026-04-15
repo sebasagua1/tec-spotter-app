@@ -77,7 +77,7 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
       >
         <div className="drag-handle" />
 
-        <div className="px-5 pb-8">
+        <div className="px-5 pb-24">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-xl font-extrabold text-foreground">New Event</h2>
             <button onClick={onClose} className="p-1 text-muted-foreground">
