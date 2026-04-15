@@ -50,7 +50,7 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
       address: address || null,
       description: description || null,
       starts_at: startsAt.toISOString(),
-      ends_at: endsAt.toISOString(),
+      ends_at: new Date(startsAt.getTime() + 2 * 60 * 60 * 1000).toISOString(),
       max_spots: maxSpots,
       privacy,
       is_active: true,
@@ -121,11 +121,34 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-sm font-semibold text-foreground mb-1 block">Date</label>
-                <Input type="date" value={date} onChange={e => setDate(e.target.value)} className="h-12 rounded-xl" />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        'h-12 w-full justify-start text-left font-normal rounded-xl',
+                        !date && 'text-muted-foreground'
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {date ? format(date, 'MMM d, yyyy') : <span>Pick date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={date}
+                      onSelect={setDate}
+                      disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
               <div>
                 <label className="text-sm font-semibold text-foreground mb-1 block">Time</label>
-                <Input type="time" value={time} onChange={e => setTime(e.target.value)} className="h-12 rounded-xl" />
+                <TimePicker value={time} onChange={setTime} />
               </div>
             </div>
 
