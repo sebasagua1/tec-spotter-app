@@ -25,7 +25,7 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
   const { toast } = useToast();
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('study');
-  const [date, setDate] = useState('');
+  const [date, setDate] = useState<Date>();
   const [time, setTime] = useState('');
   const [address, setAddress] = useState('');
   const [maxSpots, setMaxSpots] = useState(10);
