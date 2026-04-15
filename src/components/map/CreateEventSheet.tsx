@@ -1,8 +1,12 @@
 import { useState } from 'react';
-import { X, Minus, Plus as PlusIcon, MapPin } from 'lucide-react';
+import { X, Minus, Plus as PlusIcon, MapPin, CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { TimePicker } from '@/components/ui/time-picker';
 import { EVENT_CATEGORIES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,7 +25,7 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
   const { toast } = useToast();
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('study');
-  const [date, setDate] = useState('');
+  const [date, setDate] = useState<Date>();
   const [time, setTime] = useState('');
   const [address, setAddress] = useState('');
   const [maxSpots, setMaxSpots] = useState(10);
@@ -34,8 +38,10 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
     if (!user || !title || !date || !time) return;
     setLoading(true);
 
-    const startsAt = new Date(`${date}T${time}`);
-    const endsAt = new Date(startsAt.getTime() + 2 * 60 * 60 * 1000);
+    if (!date) return;
+    const [hours, mins] = time.split(':').map(Number);
+    const startsAt = new Date(date);
+    startsAt.setHours(hours, mins, 0, 0);
 
     const { error } = await supabase.from('events').insert({
       creator_id: user.id,
@@ -44,7 +50,7 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
       address: address || null,
       description: description || null,
       starts_at: startsAt.toISOString(),
-      ends_at: endsAt.toISOString(),
+      ends_at: new Date(startsAt.getTime() + 2 * 60 * 60 * 1000).toISOString(),
       max_spots: maxSpots,
       privacy,
       is_active: true,
@@ -115,11 +121,34 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-sm font-semibold text-foreground mb-1 block">Date</label>
-                <Input type="date" value={date} onChange={e => setDate(e.target.value)} className="h-12 rounded-xl" />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        'h-12 w-full justify-start text-left font-normal rounded-xl',
+                        !date && 'text-muted-foreground'
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {date ? format(date, 'MMM d, yyyy') : <span>Pick date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={date}
+                      onSelect={setDate}
+                      disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
               <div>
                 <label className="text-sm font-semibold text-foreground mb-1 block">Time</label>
-                <Input type="time" value={time} onChange={e => setTime(e.target.value)} className="h-12 rounded-xl" />
+                <TimePicker value={time} onChange={setTime} />
               </div>
             </div>
 
