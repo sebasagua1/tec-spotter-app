@@ -1,7 +1,8 @@
+import { useEffect, useState } from 'react';
 import { MapEvent } from '@/stores/eventStore';
 import { EVENT_CATEGORIES } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
-import { Clock, MapPin, Users, X } from 'lucide-react';
+import { Clock, MapPin, Users, X, Loader2 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -17,9 +18,34 @@ export function EventBottomSheet({ event, onClose }: Props) {
   const { user } = useAuthStore();
   const { toast } = useToast();
   const spotsLeft = event.max_spots - event.current_spots;
+  const [hasJoined, setHasJoined] = useState(false);
+  const [checking, setChecking] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const isCreator = user?.id === event.creator_id;
+
+  useEffect(() => {
+    let cancelled = false;
+    const check = async () => {
+      if (!user) { setChecking(false); return; }
+      setChecking(true);
+      const { data } = await supabase
+        .from('event_participants')
+        .select('id')
+        .eq('event_id', event.id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (!cancelled) {
+        setHasJoined(!!data);
+        setChecking(false);
+      }
+    };
+    check();
+    return () => { cancelled = true; };
+  }, [event.id, user]);
 
   const handleJoin = async () => {
-    if (!user) return;
+    if (!user || submitting) return;
+    setSubmitting(true);
     const { error } = await supabase
       .from('event_participants')
       .insert({ event_id: event.id, user_id: user.id, status: 'joined' });
@@ -27,13 +53,34 @@ export function EventBottomSheet({ event, onClose }: Props) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
       toast({ title: '🎉 Joined!', description: `You joined "${event.title}"` });
-      // Update current spots
       await supabase
         .from('events')
         .update({ current_spots: event.current_spots + 1 })
         .eq('id', event.id);
-      onClose();
+      setHasJoined(true);
     }
+    setSubmitting(false);
+  };
+
+  const handleLeave = async () => {
+    if (!user || submitting) return;
+    setSubmitting(true);
+    const { error } = await supabase
+      .from('event_participants')
+      .delete()
+      .eq('event_id', event.id)
+      .eq('user_id', user.id);
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Left event', description: `You left "${event.title}"` });
+      await supabase
+        .from('events')
+        .update({ current_spots: Math.max(0, event.current_spots - 1) })
+        .eq('id', event.id);
+      setHasJoined(false);
+    }
+    setSubmitting(false);
   };
 
   return (
