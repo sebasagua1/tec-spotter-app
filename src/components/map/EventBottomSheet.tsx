@@ -142,19 +142,38 @@ export function EventBottomSheet({ event, onClose }: Props) {
         </div>
 
         <div className="flex gap-3">
-          <Button
-            onClick={handleJoin}
-            disabled={spotsLeft <= 0}
-            className="flex-1 h-12 rounded-xl font-bold"
-          >
-            Join
-          </Button>
+          {checking ? (
+            <Button disabled className="flex-1 h-12 rounded-xl font-bold">
+              <Loader2 className="w-4 h-4 animate-spin" />
+            </Button>
+          ) : isCreator ? (
+            <Button disabled variant="secondary" className="flex-1 h-12 rounded-xl font-bold">
+              You're hosting
+            </Button>
+          ) : hasJoined ? (
+            <Button
+              onClick={handleLeave}
+              disabled={submitting}
+              variant="destructive"
+              className="flex-1 h-12 rounded-xl font-bold"
+            >
+              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Leave event'}
+            </Button>
+          ) : (
+            <Button
+              onClick={handleJoin}
+              disabled={spotsLeft <= 0 || submitting}
+              className="flex-1 h-12 rounded-xl font-bold"
+            >
+              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Join'}
+            </Button>
+          )}
           <Button
             variant="outline"
             onClick={onClose}
             className="h-12 rounded-xl font-semibold px-6"
           >
-            See more
+            Close
           </Button>
         </div>
       </div>
