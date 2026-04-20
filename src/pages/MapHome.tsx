@@ -133,7 +133,11 @@ export default function MapHome() {
           font-size: 16px;
         `;
         el.innerHTML = cat.emoji;
-        el.addEventListener('click', () => setSelectedEvent(event));
+        el.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          mapRef.current?.flyTo({ center: [event.location!.lng, event.location!.lat], zoom: 17, duration: 600 });
+          setSelectedEvent(event);
+        });
 
         try {
           const marker = new mapboxgl.Marker({ element: el })
