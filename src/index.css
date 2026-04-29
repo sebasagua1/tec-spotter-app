@@ -135,3 +135,31 @@
 .drag-handle {
   @apply w-10 h-1 rounded-full bg-muted-foreground/30 mx-auto mt-2 mb-3;
 }
+
+/* User location marker (live GPS) */
+.user-location-marker {
+  position: relative;
+  width: 22px;
+  height: 22px;
+}
+.user-location-marker__dot {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: hsl(var(--primary));
+  border: 3px solid #fff;
+  box-shadow: 0 2px 10px hsl(var(--primary) / 0.45);
+  z-index: 2;
+}
+.user-location-marker__pulse {
+  position: absolute;
+  inset: -6px;
+  border-radius: 9999px;
+  background: hsl(var(--primary) / 0.35);
+  animation: user-loc-pulse 1.8s ease-out infinite;
+  z-index: 1;
+}
+@keyframes user-loc-pulse {
+  0%   { transform: scale(0.6); opacity: 0.8; }
+  100% { transform: scale(2.4); opacity: 0; }
+}

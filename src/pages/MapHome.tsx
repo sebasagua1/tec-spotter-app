@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, LocateFixed } from 'lucide-react';
 import { useEventStore } from '@/stores/eventStore';
 import { EVENT_CATEGORIES, TEC_CENTER } from '@/lib/constants';
 import { cn } from '@/lib/utils';
@@ -7,6 +7,8 @@ import { EventBottomSheet } from '@/components/map/EventBottomSheet';
 import { CreateEventSheet } from '@/components/map/CreateEventSheet';
 import { LocationPickerOverlay } from '@/components/map/LocationPickerOverlay';
 import { supabase } from '@/integrations/supabase/client';
+import { useUserLocation } from '@/hooks/useUserLocation';
+import { toast } from '@/hooks/use-toast';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 export default function MapHome() {
@@ -20,6 +22,16 @@ export default function MapHome() {
   const [pickingLocation, setPickingLocation] = useState(false);
   const [pickedLocation, setPickedLocation] = useState<{ lng: number; lat: number } | null>(null);
   const pickMarkerRef = useRef<any>(null);
+  const userMarkerRef = useRef<any>(null);
+  const hasAutoCenteredRef = useRef(false);
+  const deniedToastShownRef = useRef(false);
+
+  const { location: userLocation, error: geoError, permission } = useUserLocation({
+    enableHighAccuracy: true,
+    maximumAge: 4000,
+    timeout: 15000,
+  });
+
 
   // Fetch events
   useEffect(() => {
@@ -82,11 +94,8 @@ export default function MapHome() {
         attributionControl: false,
       });
 
-      map.addControl(new mapboxgl.GeolocateControl({
-        positionOptions: { enableHighAccuracy: true },
-        trackUserLocation: true,
-        showUserHeading: true,
-      }), 'bottom-left');
+      // Note: we use our own watchPosition-based marker instead of GeolocateControl
+
 
       map.on('load', () => {
         setMapLoaded(true);
@@ -221,10 +230,96 @@ export default function MapHome() {
     }
   };
 
+  // Live user location → reuse a single marker, smooth camera updates
+  useEffect(() => {
+    if (!mapRef.current || !mapLoaded || !userLocation) return;
+    let cancelled = false;
+
+    (async () => {
+      const mapboxgl = (await import('mapbox-gl')).default;
+      if (cancelled) return;
+      const lngLat: [number, number] = [userLocation.lng, userLocation.lat];
+
+      if (!userMarkerRef.current) {
+        const el = document.createElement('div');
+        el.className = 'user-location-marker';
+        el.innerHTML = '<div class="user-location-marker__pulse"></div><div class="user-location-marker__dot"></div>';
+        userMarkerRef.current = new mapboxgl.Marker({ element: el })
+          .setLngLat(lngLat)
+          .addTo(mapRef.current);
+      } else {
+        userMarkerRef.current.setLngLat(lngLat);
+      }
+
+      // Auto-center on first fix; afterwards only easeTo softly if user is far off-screen
+      if (!hasAutoCenteredRef.current) {
+        hasAutoCenteredRef.current = true;
+        mapRef.current.flyTo({ center: lngLat, zoom: 16, duration: 900, essential: true });
+      } else {
+        const bounds = mapRef.current.getBounds();
+        if (bounds && !bounds.contains(lngLat)) {
+          mapRef.current.easeTo({ center: lngLat, duration: 800 });
+        }
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [userLocation, mapLoaded]);
+
+  // Cleanup marker on unmount
+  useEffect(() => () => {
+    if (userMarkerRef.current) {
+      userMarkerRef.current.remove();
+      userMarkerRef.current = null;
+    }
+  }, []);
+
+  // Surface permission/GPS errors once
+  useEffect(() => {
+    if (permission === 'denied' && !deniedToastShownRef.current) {
+      deniedToastShownRef.current = true;
+      toast({
+        title: 'Ubicación denegada',
+        description: 'Activa los permisos de ubicación para ver tu posición en el mapa.',
+        variant: 'destructive',
+      });
+    } else if (permission === 'unsupported' && !deniedToastShownRef.current) {
+      deniedToastShownRef.current = true;
+      toast({
+        title: 'GPS no disponible',
+        description: 'Tu dispositivo o navegador no soporta geolocalización.',
+        variant: 'destructive',
+      });
+    }
+  }, [permission]);
+
+  useEffect(() => {
+    if (geoError && geoError.code !== geoError.PERMISSION_DENIED) {
+      toast({
+        title: 'No pudimos obtener tu ubicación',
+        description: geoError.message || 'Inténtalo de nuevo en un momento.',
+      });
+    }
+  }, [geoError]);
+
+  const handleRecenter = useCallback(() => {
+    if (!mapRef.current || !userLocation) {
+      toast({ title: 'Aún sin señal GPS', description: 'Esperando tu ubicación…' });
+      return;
+    }
+    mapRef.current.flyTo({
+      center: [userLocation.lng, userLocation.lat],
+      zoom: 16.5,
+      duration: 700,
+      essential: true,
+    });
+  }, [userLocation]);
+
   const filteredCategories = [
     { key: null, label: 'All', emoji: '🗺️' },
     ...EVENT_CATEGORIES,
   ];
+
 
   return (
     <div className="relative w-full h-screen">
@@ -292,6 +387,20 @@ export default function MapHome() {
             ))}
           </div>
         </div>
+      )}
+
+      {/* Recenter on user - hide during picking */}
+      {!pickingLocation && (
+        <button
+          onClick={handleRecenter}
+          aria-label="Centrar en mi ubicación"
+          className={cn(
+            'absolute bottom-44 right-4 z-10 w-12 h-12 rounded-full flex items-center justify-center shadow-lifted active:scale-95 transition-all glass border border-border',
+            userLocation ? 'text-primary' : 'text-muted-foreground'
+          )}
+        >
+          <LocateFixed className="w-5 h-5" />
+        </button>
       )}
 
       {/* FAB - hide during picking */}
