@@ -94,11 +94,8 @@ export default function MapHome() {
         attributionControl: false,
       });
 
-      map.addControl(new mapboxgl.GeolocateControl({
-        positionOptions: { enableHighAccuracy: true },
-        trackUserLocation: true,
-        showUserHeading: true,
-      }), 'bottom-left');
+      // Note: we use our own watchPosition-based marker instead of GeolocateControl
+
 
       map.on('load', () => {
         setMapLoaded(true);
