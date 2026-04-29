@@ -22,6 +22,16 @@ export default function MapHome() {
   const [pickingLocation, setPickingLocation] = useState(false);
   const [pickedLocation, setPickedLocation] = useState<{ lng: number; lat: number } | null>(null);
   const pickMarkerRef = useRef<any>(null);
+  const userMarkerRef = useRef<any>(null);
+  const hasAutoCenteredRef = useRef(false);
+  const deniedToastShownRef = useRef(false);
+
+  const { location: userLocation, error: geoError, permission } = useUserLocation({
+    enableHighAccuracy: true,
+    maximumAge: 4000,
+    timeout: 15000,
+  });
+
 
   // Fetch events
   useEffect(() => {
