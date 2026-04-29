@@ -389,6 +389,20 @@ export default function MapHome() {
         </div>
       )}
 
+      {/* Recenter on user - hide during picking */}
+      {!pickingLocation && (
+        <button
+          onClick={handleRecenter}
+          aria-label="Centrar en mi ubicación"
+          className={cn(
+            'absolute bottom-44 right-4 z-10 w-12 h-12 rounded-full flex items-center justify-center shadow-lifted active:scale-95 transition-all glass border border-border',
+            userLocation ? 'text-primary' : 'text-muted-foreground'
+          )}
+        >
+          <LocateFixed className="w-5 h-5" />
+        </button>
+      )}
+
       {/* FAB - hide during picking */}
       {!pickingLocation && (
         <button
