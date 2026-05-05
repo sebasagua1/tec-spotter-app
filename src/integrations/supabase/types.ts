@@ -381,7 +381,59 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_profiles: {
+        Row: {
+          avatar_url: string | null
+          campus_id: string | null
+          created_at: string | null
+          id: string | null
+          interests: string[] | null
+          languages: string[] | null
+          major: string | null
+          name: string | null
+          points: number | null
+          reputation: number | null
+          residence_type: string | null
+          semester: number | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          campus_id?: string | null
+          created_at?: string | null
+          id?: string | null
+          interests?: string[] | null
+          languages?: string[] | null
+          major?: string | null
+          name?: string | null
+          points?: number | null
+          reputation?: number | null
+          residence_type?: string | null
+          semester?: number | null
+        }
+        Update: {
+          avatar_url?: string | null
+          campus_id?: string | null
+          created_at?: string | null
+          id?: string | null
+          interests?: string[] | null
+          languages?: string[] | null
+          major?: string | null
+          name?: string | null
+          points?: number | null
+          reputation?: number | null
+          residence_type?: string | null
+          semester?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_campus_id_fkey"
+            columns: ["campus_id"]
+            isOneToOne: false
+            referencedRelation: "campuses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       [_ in never]: never
