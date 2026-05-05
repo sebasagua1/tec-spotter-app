@@ -37,10 +37,10 @@ export default function Friends() {
         );
         if (friendIds.length > 0) {
           const { data: profiles } = await supabase
-            .from('profiles')
+            .from('public_profiles' as any)
             .select('id, name, avatar_url, major')
             .in('id', friendIds);
-          if (profiles) setFriends(profiles);
+          if (profiles) setFriends(profiles as any);
         }
       }
     };
@@ -50,12 +50,12 @@ export default function Friends() {
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
     const { data } = await supabase
-      .from('profiles')
+      .from('public_profiles' as any)
       .select('id, name, avatar_url, major')
       .ilike('name', `%${searchQuery}%`)
       .neq('id', user?.id ?? '')
       .limit(10);
-    if (data) setSearchResults(data);
+    if (data) setSearchResults(data as any);
   };
 
   const sendFriendRequest = async (friendId: string) => {

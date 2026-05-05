@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { z } from 'zod';
 import { X, Minus, Plus as PlusIcon, MapPin, CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,18 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
+
+const eventSchema = z.object({
+  title: z.string().trim().min(3, 'Title must be at least 3 characters').max(80, 'Title too long'),
+  category: z.string().min(1),
+  address: z.string().trim().max(120, 'Location name too long').optional(),
+  description: z.string().trim().max(500, 'Description too long').optional(),
+  maxSpots: z.number().int().min(2).max(100),
+  privacy: z.enum(['open', 'friends', 'private']),
+  lng: z.number().min(-180).max(180),
+  lat: z.number().min(-90).max(90),
+  startsAt: z.date().refine((d) => d.getTime() > Date.now() - 60_000, 'Date must be in the future'),
+});
 
 interface Props {
   onClose: () => void;
@@ -35,29 +48,59 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
   const [loading, setLoading] = useState(false);
 
   const handlePublish = async () => {
-    if (!user || !title || !date || !time) return;
-    setLoading(true);
+    if (!user) return;
 
-    if (!date) return;
+    if (!date || !time) {
+      toast({ title: 'Missing info', description: 'Please pick a date and time.', variant: 'destructive' });
+      return;
+    }
+    if (!pickedLocation) {
+      toast({ title: 'Location required', description: 'Tap a spot on the map to place your event.', variant: 'destructive' });
+      return;
+    }
+
     const [hours, mins] = time.split(':').map(Number);
     const startsAt = new Date(date);
     startsAt.setHours(hours, mins, 0, 0);
 
-    const { error } = await supabase.from('events').insert({
-      creator_id: user.id,
+    const parsed = eventSchema.safeParse({
       title,
       category,
-      address: address || null,
-      description: description || null,
-      starts_at: startsAt.toISOString(),
-      ends_at: new Date(startsAt.getTime() + 2 * 60 * 60 * 1000).toISOString(),
-      max_spots: maxSpots,
+      address: address || undefined,
+      description: description || undefined,
+      maxSpots,
       privacy,
+      lng: pickedLocation.lng,
+      lat: pickedLocation.lat,
+      startsAt,
+    });
+
+    if (!parsed.success) {
+      toast({
+        title: 'Check your event',
+        description: parsed.error.errors[0]?.message ?? 'Invalid input',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setLoading(true);
+    const v = parsed.data;
+    const { error } = await supabase.from('events').insert({
+      creator_id: user.id,
+      title: v.title,
+      category: v.category,
+      address: v.address ?? null,
+      description: v.description ?? null,
+      starts_at: v.startsAt.toISOString(),
+      ends_at: new Date(v.startsAt.getTime() + 2 * 60 * 60 * 1000).toISOString(),
+      max_spots: v.maxSpots,
+      privacy: v.privacy,
       is_active: true,
       current_spots: 0,
       is_recurring: false,
-      lng: pickedLocation?.lng ?? null,
-      lat: pickedLocation?.lat ?? null,
+      lng: v.lng,
+      lat: v.lat,
     });
 
     if (error) {
@@ -243,7 +286,7 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
             {/* Publish */}
             <Button
               onClick={handlePublish}
-              disabled={loading || !title || !date || !time}
+              disabled={loading || !title || !date || !time || !pickedLocation}
               className="w-full h-12 rounded-xl font-bold text-base"
             >
               {loading ? 'Publishing...' : 'Publish Event 🚩'}
