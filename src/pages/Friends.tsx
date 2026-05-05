@@ -37,7 +37,7 @@ export default function Friends() {
         );
         if (friendIds.length > 0) {
           const { data: profiles } = await supabase
-            .from('profiles')
+            .from('public_profiles' as any)
             .select('id, name, avatar_url, major')
             .in('id', friendIds);
           if (profiles) setFriends(profiles);
