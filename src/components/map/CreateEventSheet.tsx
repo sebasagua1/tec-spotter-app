@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { z } from 'zod';
 import { X, Minus, Plus as PlusIcon, MapPin, CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,18 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
+
+const eventSchema = z.object({
+  title: z.string().trim().min(3, 'Title must be at least 3 characters').max(80, 'Title too long'),
+  category: z.string().min(1),
+  address: z.string().trim().max(120, 'Location name too long').optional(),
+  description: z.string().trim().max(500, 'Description too long').optional(),
+  maxSpots: z.number().int().min(2).max(100),
+  privacy: z.enum(['open', 'friends', 'private']),
+  lng: z.number().min(-180).max(180),
+  lat: z.number().min(-90).max(90),
+  startsAt: z.date().refine((d) => d.getTime() > Date.now() - 60_000, 'Date must be in the future'),
+});
 
 interface Props {
   onClose: () => void;
