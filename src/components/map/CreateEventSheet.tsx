@@ -48,29 +48,59 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
   const [loading, setLoading] = useState(false);
 
   const handlePublish = async () => {
-    if (!user || !title || !date || !time) return;
-    setLoading(true);
+    if (!user) return;
 
-    if (!date) return;
+    if (!date || !time) {
+      toast({ title: 'Missing info', description: 'Please pick a date and time.', variant: 'destructive' });
+      return;
+    }
+    if (!pickedLocation) {
+      toast({ title: 'Location required', description: 'Tap a spot on the map to place your event.', variant: 'destructive' });
+      return;
+    }
+
     const [hours, mins] = time.split(':').map(Number);
     const startsAt = new Date(date);
     startsAt.setHours(hours, mins, 0, 0);
 
-    const { error } = await supabase.from('events').insert({
-      creator_id: user.id,
+    const parsed = eventSchema.safeParse({
       title,
       category,
-      address: address || null,
-      description: description || null,
-      starts_at: startsAt.toISOString(),
-      ends_at: new Date(startsAt.getTime() + 2 * 60 * 60 * 1000).toISOString(),
-      max_spots: maxSpots,
+      address: address || undefined,
+      description: description || undefined,
+      maxSpots,
       privacy,
+      lng: pickedLocation.lng,
+      lat: pickedLocation.lat,
+      startsAt,
+    });
+
+    if (!parsed.success) {
+      toast({
+        title: 'Check your event',
+        description: parsed.error.errors[0]?.message ?? 'Invalid input',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setLoading(true);
+    const v = parsed.data;
+    const { error } = await supabase.from('events').insert({
+      creator_id: user.id,
+      title: v.title,
+      category: v.category,
+      address: v.address ?? null,
+      description: v.description ?? null,
+      starts_at: v.startsAt.toISOString(),
+      ends_at: new Date(v.startsAt.getTime() + 2 * 60 * 60 * 1000).toISOString(),
+      max_spots: v.maxSpots,
+      privacy: v.privacy,
       is_active: true,
       current_spots: 0,
       is_recurring: false,
-      lng: pickedLocation?.lng ?? null,
-      lat: pickedLocation?.lat ?? null,
+      lng: v.lng,
+      lat: v.lat,
     });
 
     if (error) {
