@@ -286,7 +286,7 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
             {/* Publish */}
             <Button
               onClick={handlePublish}
-              disabled={loading || !title || !date || !time}
+              disabled={loading || !title || !date || !time || !pickedLocation}
               className="w-full h-12 rounded-xl font-bold text-base"
             >
               {loading ? 'Publishing...' : 'Publish Event 🚩'}
