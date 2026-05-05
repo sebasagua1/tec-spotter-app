@@ -40,7 +40,7 @@ export default function Friends() {
             .from('public_profiles' as any)
             .select('id, name, avatar_url, major')
             .in('id', friendIds);
-          if (profiles) setFriends(profiles);
+          if (profiles) setFriends(profiles as any);
         }
       }
     };
