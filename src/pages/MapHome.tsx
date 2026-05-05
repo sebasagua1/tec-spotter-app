@@ -68,16 +68,14 @@ export default function MapHome() {
     const initMap = async () => {
       const mapboxgl = (await import('mapbox-gl')).default;
 
-      // Try build-time env first, then fetch from backend
-      let token = import.meta.env.VITE_MAPBOX_TOKEN || '';
-      if (!token) {
-        try {
-          const { data, error } = await supabase.functions.invoke('get-mapbox-token');
-          if (!error && data?.token) {
-            token = data.token;
-          }
-        } catch {}
-      }
+      // Always fetch token from backend — never expose in client bundle
+      let token = '';
+      try {
+        const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+        if (!error && data?.token) {
+          token = data.token;
+        }
+      } catch {}
       if (!token) {
         setMapboxToken(null);
         return;
