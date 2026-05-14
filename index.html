@@ -11,8 +11,27 @@
     <meta property="og:title" content="ConnectTec — Campus Social App" />
     <meta property="og:description" content="Conecta con estudiantes del Tec a través de actividades reales en el campus." />
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="/" />
     <link rel="manifest" href="/manifest.json" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "name": "ConnectTec",
+            "description": "Campus social app for the Tec de Monterrey community.",
+            "logo": "/icons/icon-512.png"
+          },
+          {
+            "@type": "WebSite",
+            "name": "ConnectTec",
+            "description": "Descubre, crea y únete a actividades reales en tu campus del Tec de Monterrey."
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
