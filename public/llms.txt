@@ -1,0 +1,12 @@
+# ConnectTec
+
+> Campus social app for the Tec de Monterrey community. Students discover, create, and join real activities happening on campus through a live event map.
+
+ConnectTec connects students through action, not status. The app is mobile-first (max 430px), uses a Mapbox-based live event map, and groups users by campus. There are no public posts, rankings, or social status metrics — focus is on privacy and spontaneous in-person activity.
+
+## Pages
+
+- [Map](/): Live campus event map with real-time pins, geolocation, and event creation.
+- [My Events](/events): Events the user has created or joined, split into upcoming and past.
+- [Friends](/friends): Search students, send friend requests, and manage friendships.
+- [Profile](/profile): User profile with reputation, points, badges, and stats.

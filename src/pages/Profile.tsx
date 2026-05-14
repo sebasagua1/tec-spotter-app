@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Settings, LogOut, Award, TrendingUp, Calendar, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/stores/authStore';
@@ -46,10 +47,18 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen pb-24 pt-4 px-4 safe-top">
+      <Helmet>
+        <title>Profile — ConnectTec</title>
+        <meta name="description" content="Tu perfil de ConnectTec: reputación, puntos, insignias y estadísticas de tu actividad en el campus." />
+        <link rel="canonical" href="/profile" />
+        <meta property="og:title" content="Profile — ConnectTec" />
+        <meta property="og:description" content="Tu perfil, reputación e insignias en ConnectTec." />
+        <meta property="og:url" content="/profile" />
+      </Helmet>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-extrabold text-foreground">Profile</h1>
-        <button onClick={signOut} className="p-2 text-muted-foreground">
+        <button onClick={signOut} aria-label="Sign out" className="p-2 text-muted-foreground">
           <LogOut className="w-5 h-5" />
         </button>
       </div>

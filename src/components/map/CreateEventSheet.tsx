@@ -123,7 +123,7 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
         <div className="px-5 pb-24">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-xl font-extrabold text-foreground">New Event</h2>
-            <button onClick={onClose} className="p-1 text-muted-foreground">
+            <button onClick={onClose} aria-label="Close" className="p-1 text-muted-foreground">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -132,6 +132,7 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
             {/* Title */}
             <Input
               placeholder="Event title"
+              aria-label="Event title"
               value={title}
               onChange={e => setTitle(e.target.value)}
               className="h-12 rounded-xl text-base"
@@ -219,6 +220,7 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
               )}
               <Input
                 placeholder="Location name (optional)"
+                aria-label="Location name"
                 value={address}
                 onChange={e => setAddress(e.target.value)}
                 className="h-12 rounded-xl text-base mt-2"
@@ -231,6 +233,7 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => setMaxSpots(Math.max(2, maxSpots - 1))}
+                  aria-label="Decrease max spots"
                   className="w-10 h-10 rounded-full bg-muted flex items-center justify-center"
                 >
                   <Minus className="w-4 h-4" />
@@ -238,6 +241,7 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
                 <span className="text-xl font-bold text-foreground w-8 text-center">{maxSpots}</span>
                 <button
                   onClick={() => setMaxSpots(Math.min(100, maxSpots + 1))}
+                  aria-label="Increase max spots"
                   className="w-10 h-10 rounded-full bg-muted flex items-center justify-center"
                 >
                   <PlusIcon className="w-4 h-4" />
@@ -248,6 +252,7 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
             {/* Description */}
             <Textarea
               placeholder="Short description (optional)"
+              aria-label="Event description"
               value={description}
               onChange={e => setDescription(e.target.value)}
               className="rounded-xl min-h-[80px]"

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { INTEREST_OPTIONS, LANGUAGE_OPTIONS, RESIDENCE_OPTIONS } from '@/lib/constants';
@@ -230,6 +231,12 @@ export default function Onboarding() {
 
   return (
     <div className="min-h-screen flex flex-col px-6 py-8 bg-background">
+      <Helmet>
+        <title>Complete Your Profile — ConnectTec</title>
+        <meta name="description" content="Configura tu perfil de ConnectTec: campus, carrera, intereses e idiomas para empezar a descubrir actividades del Tec." />
+        <link rel="canonical" href="/" />
+      </Helmet>
+      <h1 className="sr-only">Complete Your Profile</h1>
       {/* Progress */}
       <div className="flex gap-1.5 mb-8">
         {Array.from({ length: totalSteps }).map((_, i) => (

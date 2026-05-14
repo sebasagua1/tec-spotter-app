@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { CalendarDays, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
@@ -58,6 +59,14 @@ export default function MyEvents() {
 
   return (
     <div className="min-h-screen pb-24 pt-4 px-4 safe-top">
+      <Helmet>
+        <title>My Events — ConnectTec</title>
+        <meta name="description" content="Revisa los eventos que has creado o a los que te has unido en tu campus del Tec, próximos y pasados." />
+        <link rel="canonical" href="/events" />
+        <meta property="og:title" content="My Events — ConnectTec" />
+        <meta property="og:description" content="Tus eventos próximos y pasados en ConnectTec." />
+        <meta property="og:url" content="/events" />
+      </Helmet>
       <h1 className="text-2xl font-extrabold text-foreground mb-4">My Events</h1>
 
       {/* Tabs */}
@@ -96,7 +105,7 @@ export default function MyEvents() {
                   >
                     {cat?.emoji} {cat?.label}
                   </div>
-                  <h3 className="font-bold text-foreground">{event.title}</h3>
+                  <h2 className="font-bold text-foreground text-base">{event.title}</h2>
                   <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground">
                     <Clock className="w-3.5 h-3.5" />
                     <span>{format(new Date(event.starts_at), 'MMM d, h:mm a')}</span>

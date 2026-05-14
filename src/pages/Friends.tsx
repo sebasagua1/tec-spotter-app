@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Search, UserPlus, Users, MessageCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -74,7 +75,15 @@ export default function Friends() {
 
   return (
     <div className="min-h-screen pb-24 pt-4 px-4 safe-top">
-      <h1 className="text-2xl font-extrabold text-foreground mb-4">Friends & Groups</h1>
+      <Helmet>
+        <title>Friends &amp; Groups — ConnectTec</title>
+        <meta name="description" content="Encuentra estudiantes del Tec, envía solicitudes de amistad y conecta con tu comunidad de campus en ConnectTec." />
+        <link rel="canonical" href="/friends" />
+        <meta property="og:title" content="Friends &amp; Groups — ConnectTec" />
+        <meta property="og:description" content="Conecta con estudiantes del Tec en ConnectTec." />
+        <meta property="og:url" content="/friends" />
+      </Helmet>
+      <h1 className="text-2xl font-extrabold text-foreground mb-4">Friends &amp; Groups</h1>
 
       {/* Tabs */}
       <div className="flex gap-2 mb-5">
@@ -106,7 +115,7 @@ export default function Friends() {
                 className="pl-9 h-11 rounded-xl"
               />
             </div>
-            <Button onClick={handleSearch} size="icon" className="h-11 w-11 rounded-xl">
+            <Button onClick={handleSearch} size="icon" aria-label="Search students" className="h-11 w-11 rounded-xl">
               <Search className="w-4 h-4" />
             </Button>
           </div>
@@ -114,7 +123,7 @@ export default function Friends() {
           {/* Search results */}
           {searchResults.length > 0 && (
             <div className="space-y-2">
-              <h3 className="text-sm font-semibold text-muted-foreground">Results</h3>
+              <h2 className="text-sm font-semibold text-muted-foreground">Results</h2>
               {searchResults.map(s => (
                 <div key={s.id} className="flex items-center justify-between bg-card rounded-xl p-3 shadow-soft">
                   <div className="flex items-center gap-3">
@@ -128,6 +137,7 @@ export default function Friends() {
                   </div>
                   <button
                     onClick={() => sendFriendRequest(s.id)}
+                    aria-label={`Send friend request to ${s.name}`}
                     className="p-2 text-primary"
                   >
                     <UserPlus className="w-5 h-5" />
@@ -139,9 +149,9 @@ export default function Friends() {
 
           {/* Friends list */}
           <div className="space-y-2">
-            <h3 className="text-sm font-semibold text-muted-foreground">
+            <h2 className="text-sm font-semibold text-muted-foreground">
               My Friends ({friends.length})
-            </h3>
+            </h2>
             {friends.length === 0 && (
               <div className="text-center py-12">
                 <Users className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
@@ -159,7 +169,7 @@ export default function Friends() {
                     <p className="text-xs text-muted-foreground">{f.major}</p>
                   </div>
                 </div>
-                <button className="p-2 text-muted-foreground">
+                <button aria-label={`Message ${f.name}`} className="p-2 text-muted-foreground">
                   <MessageCircle className="w-5 h-5" />
                 </button>
               </div>
