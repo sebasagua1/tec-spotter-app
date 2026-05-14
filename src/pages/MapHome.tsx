@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Plus, LocateFixed } from 'lucide-react';
 import { useEventStore } from '@/stores/eventStore';
 import { EVENT_CATEGORIES, TEC_CENTER } from '@/lib/constants';
@@ -321,6 +322,15 @@ export default function MapHome() {
 
   return (
     <div className="relative w-full h-screen">
+      <Helmet>
+        <title>ConnectTec — Campus Event Map</title>
+        <meta name="description" content="Explora el mapa en vivo de tu campus del Tec: descubre, crea y únete a actividades reales cerca de ti." />
+        <link rel="canonical" href="/" />
+        <meta property="og:title" content="ConnectTec — Campus Event Map" />
+        <meta property="og:description" content="Mapa en vivo de actividades del Tec: descubre y únete a eventos cerca de ti." />
+        <meta property="og:url" content="/" />
+      </Helmet>
+      <h1 className="sr-only">ConnectTec — Campus Event Map</h1>
       {/* Map container */}
       <div ref={mapContainer} className="absolute inset-0" />
 
@@ -405,6 +415,7 @@ export default function MapHome() {
       {!pickingLocation && (
         <button
           onClick={() => setShowCreate(true)}
+          aria-label="Create new event"
           className="absolute bottom-24 right-4 z-10 w-14 h-14 bg-primary rounded-full flex items-center justify-center shadow-lifted active:scale-95 transition-transform"
         >
           <Plus className="w-7 h-7 text-primary-foreground" />
