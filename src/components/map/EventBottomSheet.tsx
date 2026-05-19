@@ -46,18 +46,24 @@ export function EventBottomSheet({ event, onClose }: Props) {
   const handleJoin = async () => {
     if (!user || submitting) return;
     setSubmitting(true);
+    // Optimistic UI
+    setHasJoined(true);
     const { error } = await supabase
       .from('event_participants')
       .insert({ event_id: event.id, user_id: user.id, status: 'joined' });
     if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      if ((error as any).code === '23505') {
+        toast({ title: 'Ya estás unido a este evento' });
+        setHasJoined(true);
+      } else if (error.message?.includes('EVENT_FULL')) {
+        setHasJoined(false);
+        toast({ title: 'Este evento ya está lleno', variant: 'destructive' });
+      } else {
+        setHasJoined(false);
+        toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      }
     } else {
       toast({ title: '🎉 Joined!', description: `You joined "${event.title}"` });
-      await supabase
-        .from('events')
-        .update({ current_spots: event.current_spots + 1 })
-        .eq('id', event.id);
-      setHasJoined(true);
     }
     setSubmitting(false);
   };
@@ -65,20 +71,17 @@ export function EventBottomSheet({ event, onClose }: Props) {
   const handleLeave = async () => {
     if (!user || submitting) return;
     setSubmitting(true);
+    setHasJoined(false);
     const { error } = await supabase
       .from('event_participants')
       .delete()
       .eq('event_id', event.id)
       .eq('user_id', user.id);
     if (error) {
+      setHasJoined(true);
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
       toast({ title: 'Left event', description: `You left "${event.title}"` });
-      await supabase
-        .from('events')
-        .update({ current_spots: Math.max(0, event.current_spots - 1) })
-        .eq('id', event.id);
-      setHasJoined(false);
     }
     setSubmitting(false);
   };
