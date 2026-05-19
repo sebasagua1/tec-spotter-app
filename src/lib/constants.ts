@@ -1,10 +1,10 @@
 export const EVENT_CATEGORIES = [
-  { key: 'study', label: 'Study', emoji: '📚', color: 'hsl(216, 100%, 50%)', twClass: 'bg-category-study' },
-  { key: 'sports', label: 'Sports', emoji: '⚽', color: 'hsl(160, 100%, 39%)', twClass: 'bg-category-sports' },
-  { key: 'social', label: 'Social', emoji: '🎉', color: 'hsl(263, 84%, 52%)', twClass: 'bg-category-social' },
-  { key: 'shopping', label: 'Shopping', emoji: '🛒', color: 'hsl(25, 95%, 53%)', twClass: 'bg-category-shopping' },
-  { key: 'volunteering', label: 'Volunteering', emoji: '❤️', color: 'hsl(0, 86%, 60%)', twClass: 'bg-category-volunteering' },
-  { key: 'other', label: 'Other', emoji: '⚙️', color: 'hsl(220, 9%, 46%)', twClass: 'bg-category-other' },
+  { key: 'study',        label: 'Study',        emoji: '📚', color: 'hsl(216, 100%, 45%)', textOnColor: 'white', twClass: 'bg-category-study' },
+  { key: 'sports',       label: 'Sports',       emoji: '⚽', color: 'hsl(160, 100%, 28%)', textOnColor: 'white', twClass: 'bg-category-sports' },
+  { key: 'social',       label: 'Social',       emoji: '🎉', color: 'hsl(263, 84%, 48%)',  textOnColor: 'white', twClass: 'bg-category-social' },
+  { key: 'shopping',     label: 'Shopping',     emoji: '🛒', color: 'hsl(25, 95%, 45%)',   textOnColor: 'white', twClass: 'bg-category-shopping' },
+  { key: 'volunteering', label: 'Volunteering', emoji: '❤️', color: 'hsl(0, 80%, 45%)',    textOnColor: 'white', twClass: 'bg-category-volunteering' },
+  { key: 'other',        label: 'Other',        emoji: '⚙️', color: 'hsl(220, 9%, 38%)',   textOnColor: 'white', twClass: 'bg-category-other' },
 ] as const;
 
 export type EventCategory = typeof EVENT_CATEGORIES[number]['key'];

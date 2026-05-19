@@ -52,12 +52,12 @@
     --sidebar-ring: 217.2 91.2% 59.8%;
 
     /* Category colors */
-    --cat-study: 216 100% 50%;
-    --cat-sports: 160 100% 39%;
-    --cat-social: 263 84% 52%;
-    --cat-shopping: 25 95% 53%;
-    --cat-volunteering: 0 86% 60%;
-    --cat-other: 220 9% 46%;
+    --cat-study: 216 100% 45%;
+    --cat-sports: 160 100% 28%;
+    --cat-social: 263 84% 48%;
+    --cat-shopping: 25 95% 45%;
+    --cat-volunteering: 0 80% 45%;
+    --cat-other: 220 9% 38%;
   }
 
   .dark {
