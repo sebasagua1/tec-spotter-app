@@ -119,7 +119,13 @@ export function EventBottomSheet({ event, onClose }: Props) {
           )}
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Users className="w-4 h-4" />
-            <span>{spotsLeft > 0 ? `${spotsLeft} spots left` : 'Full'}</span>
+            <span>
+              {spotsLeft <= 0
+                ? 'Full'
+                : spotsLeft === 1
+                  ? '1 spot left'
+                  : `${spotsLeft} spots left`}
+            </span>
           </div>
         </div>
 
