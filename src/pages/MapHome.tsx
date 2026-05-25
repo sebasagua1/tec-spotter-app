@@ -40,7 +40,8 @@ export default function MapHome() {
       const { data } = await supabase
         .from('events')
         .select('*')
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .gt('ends_at', new Date().toISOString());
       if (data) {
         const mapped = data.map((e: any) => ({
           ...e,

@@ -119,7 +119,13 @@ export function EventBottomSheet({ event, onClose }: Props) {
           )}
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Users className="w-4 h-4" />
-            <span>{spotsLeft > 0 ? `${spotsLeft} spots left` : 'Full'}</span>
+            <span>
+              {spotsLeft <= 0
+                ? 'Full'
+                : spotsLeft === 1
+                  ? '1 spot left'
+                  : `${spotsLeft} spots left`}
+            </span>
           </div>
         </div>
 
@@ -127,22 +133,12 @@ export function EventBottomSheet({ event, onClose }: Props) {
           <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{event.description}</p>
         )}
 
-        {/* Participant avatars placeholder */}
-        <div className="flex -space-x-2 mb-4">
-          {Array.from({ length: Math.min(event.current_spots, 5) }).map((_, i) => (
-            <div
-              key={i}
-              className="w-8 h-8 rounded-full bg-muted border-2 border-card flex items-center justify-center text-xs font-bold text-muted-foreground"
-            >
-              {String.fromCharCode(65 + i)}
-            </div>
-          ))}
-          {event.current_spots > 5 && (
-            <div className="w-8 h-8 rounded-full bg-muted border-2 border-card flex items-center justify-center text-xs font-bold text-muted-foreground">
-              +{event.current_spots - 5}
-            </div>
-          )}
-        </div>
+        {event.current_spots > 0 && (
+          <div className="mb-4 text-xs text-muted-foreground">
+            {event.current_spots}{' '}
+            {event.current_spots === 1 ? 'persona unida' : 'personas unidas'}
+          </div>
+        )}
 
         <div className="flex gap-3">
           {checking ? (

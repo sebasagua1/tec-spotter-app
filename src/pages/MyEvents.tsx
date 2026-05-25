@@ -39,12 +39,15 @@ export default function MyEvents() {
         .select('event_id, events(*)')
         .eq('user_id', user.id);
 
+      const seen = new Set<string>();
       const all: EventWithParticipation[] = [];
       created?.forEach((e: any) => {
+        seen.add(e.id);
         all.push({ ...e, role: 'organizer' });
       });
       participated?.forEach((p: any) => {
-        if (p.events && !all.find(a => a.id === p.events.id)) {
+        if (p.events && !seen.has(p.events.id)) {
+          seen.add(p.events.id);
           all.push({ ...p.events, role: 'joined' });
         }
       });
