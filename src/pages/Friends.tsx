@@ -50,10 +50,11 @@ export default function Friends() {
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
+    const safeQuery = searchQuery.replace(/[%_\\]/g, '\\$&');
     const { data } = await supabase
       .from('public_profiles' as any)
       .select('id, name, avatar_url, major')
-      .ilike('name', `%${searchQuery}%`)
+      .ilike('name', `%${safeQuery}%`)
       .neq('id', user?.id ?? '')
       .limit(10);
     if (data) setSearchResults(data as any);
@@ -67,7 +68,11 @@ export default function Friends() {
       status: 'pending',
     });
     if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      if ((error as any).code === '23505') {
+        toast({ title: 'Ya enviaste solicitud a esta persona' });
+      } else {
+        toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      }
     } else {
       toast({ title: 'Request sent! 🤝' });
     }
