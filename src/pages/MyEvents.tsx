@@ -24,35 +24,41 @@ export default function MyEvents() {
   const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
   const [events, setEvents] = useState<EventWithParticipation[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
     const fetchMyEvents = async () => {
-      // Events I created
-      const { data: created } = await supabase
-        .from('events')
-        .select('*')
-        .eq('creator_id', user.id);
+      setLoading(true);
+      try {
+        // Events I created
+        const { data: created } = await supabase
+          .from('events')
+          .select('*')
+          .eq('creator_id', user.id);
 
-      // Events I joined
-      const { data: participated } = await supabase
-        .from('event_participants')
-        .select('event_id, events(*)')
-        .eq('user_id', user.id);
+        // Events I joined
+        const { data: participated } = await supabase
+          .from('event_participants')
+          .select('event_id, events(*)')
+          .eq('user_id', user.id);
 
-      const seen = new Set<string>();
-      const all: EventWithParticipation[] = [];
-      created?.forEach((e: any) => {
-        seen.add(e.id);
-        all.push({ ...e, role: 'organizer' });
-      });
-      participated?.forEach((p: any) => {
-        if (p.events && !seen.has(p.events.id)) {
-          seen.add(p.events.id);
-          all.push({ ...p.events, role: 'joined' });
-        }
-      });
-      setEvents(all);
+        const seen = new Set<string>();
+        const all: EventWithParticipation[] = [];
+        created?.forEach((e: any) => {
+          seen.add(e.id);
+          all.push({ ...e, role: 'organizer' });
+        });
+        participated?.forEach((p: any) => {
+          if (p.events && !seen.has(p.events.id)) {
+            seen.add(p.events.id);
+            all.push({ ...p.events, role: 'joined' });
+          }
+        });
+        setEvents(all);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchMyEvents();
   }, [user]);
