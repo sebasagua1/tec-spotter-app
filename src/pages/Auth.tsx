@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { lovable } from '@/integrations/lovable/index';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { MapPin } from 'lucide-react';
 
@@ -90,21 +91,29 @@ export default function Auth() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
+            <Label htmlFor="auth-email">Email</Label>
             <Input
+              id="auth-email"
               type="email"
               placeholder="you@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="email"
               className="h-12 rounded-xl bg-card border-border text-base"
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="auth-password">Password</Label>
             <Input
+              id="auth-password"
               type="password"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
+              autoComplete={isSignUp ? 'new-password' : 'current-password'}
               className="h-12 rounded-xl bg-card border-border text-base"
             />
           </div>

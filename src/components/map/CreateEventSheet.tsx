@@ -141,11 +141,12 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
             {/* Category chips */}
             <div>
               <label className="text-sm font-semibold text-foreground mb-2 block">Category</label>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Event category">
                 {EVENT_CATEGORIES.map(cat => (
                   <button
                     key={cat.key}
                     onClick={() => setCategory(cat.key)}
+                    aria-pressed={category === cat.key}
                     className={cn(
                       'flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all',
                       category === cat.key
@@ -270,11 +271,12 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
               <div className="space-y-3">
                 <div>
                   <label className="text-sm font-semibold text-foreground mb-2 block">Privacy</label>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2" role="group" aria-label="Privacy">
                     {['open', 'friends', 'private'].map(p => (
                       <button
                         key={p}
                         onClick={() => setPrivacy(p)}
+                        aria-pressed={privacy === p}
                         className={cn(
                           'px-4 py-2 rounded-full text-xs font-semibold capitalize transition-all',
                           privacy === p ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'

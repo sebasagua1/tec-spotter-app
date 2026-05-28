@@ -2,6 +2,17 @@ import { useEffect, useState } from 'react';
 import { MapEvent } from '@/stores/eventStore';
 import { EVENT_CATEGORIES } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Clock, MapPin, Users, X, Loader2 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/integrations/supabase/client';
@@ -150,14 +161,34 @@ export function EventBottomSheet({ event, onClose }: Props) {
               You're hosting
             </Button>
           ) : hasJoined ? (
-            <Button
-              onClick={handleLeave}
-              disabled={submitting}
-              variant="destructive"
-              className="flex-1 h-12 rounded-xl font-bold"
-            >
-              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Leave event'}
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  disabled={submitting}
+                  variant="destructive"
+                  className="flex-1 h-12 rounded-xl font-bold"
+                >
+                  {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Leave event'}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>¿Salir del evento?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Liberarás tu lugar y otra persona podrá unirse.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleLeave}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Salir
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           ) : (
             <Button
               onClick={handleJoin}

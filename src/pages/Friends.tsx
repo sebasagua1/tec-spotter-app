@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import { Search, UserPlus, Users, MessageCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
@@ -22,27 +23,33 @@ export default function Friends() {
   const [searchQuery, setSearchQuery] = useState('');
   const [friends, setFriends] = useState<FriendData[]>([]);
   const [searchResults, setSearchResults] = useState<FriendData[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
     const fetchFriends = async () => {
-      const { data } = await supabase
-        .from('friendships')
-        .select('requester_id, addressee_id')
-        .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
-        .eq('status', 'accepted');
+      setLoading(true);
+      try {
+        const { data } = await supabase
+          .from('friendships')
+          .select('requester_id, addressee_id')
+          .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
+          .eq('status', 'accepted');
 
-      if (data) {
-        const friendIds = data.map((f: any) =>
-          f.requester_id === user.id ? f.addressee_id : f.requester_id
-        );
-        if (friendIds.length > 0) {
-          const { data: profiles } = await supabase
-            .from('public_profiles' as any)
-            .select('id, name, avatar_url, major')
-            .in('id', friendIds);
-          if (profiles) setFriends(profiles as any);
+        if (data) {
+          const friendIds = data.map((f: any) =>
+            f.requester_id === user.id ? f.addressee_id : f.requester_id
+          );
+          if (friendIds.length > 0) {
+            const { data: profiles } = await supabase
+              .from('public_profiles' as any)
+              .select('id, name, avatar_url, major')
+              .in('id', friendIds);
+            if (profiles) setFriends(profiles as any);
+          }
         }
+      } finally {
+        setLoading(false);
       }
     };
     fetchFriends();
@@ -157,13 +164,23 @@ export default function Friends() {
             <h2 className="text-sm font-semibold text-muted-foreground">
               My Friends ({friends.length})
             </h2>
-            {friends.length === 0 && (
+            {loading ? (
+              [1, 2, 3].map(i => (
+                <div key={i} className="flex items-center gap-3 bg-card rounded-xl p-3 shadow-soft">
+                  <Skeleton className="w-10 h-10 rounded-full" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-1/3" />
+                    <Skeleton className="h-3 w-1/4" />
+                  </div>
+                </div>
+              ))
+            ) : friends.length === 0 ? (
               <div className="text-center py-12">
                 <Users className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
                 <p className="text-muted-foreground text-sm">No friends yet. Search and connect!</p>
               </div>
-            )}
-            {friends.map(f => (
+            ) : null}
+            {!loading && friends.map(f => (
               <div key={f.id} className="flex items-center justify-between bg-card rounded-xl p-3 shadow-soft">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">

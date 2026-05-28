@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 import { EVENT_CATEGORIES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 import { format, isPast, formatDistanceToNow } from 'date-fns';
 
 interface EventWithParticipation {
@@ -23,35 +24,41 @@ export default function MyEvents() {
   const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
   const [events, setEvents] = useState<EventWithParticipation[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
     const fetchMyEvents = async () => {
-      // Events I created
-      const { data: created } = await supabase
-        .from('events')
-        .select('*')
-        .eq('creator_id', user.id);
+      setLoading(true);
+      try {
+        // Events I created
+        const { data: created } = await supabase
+          .from('events')
+          .select('*')
+          .eq('creator_id', user.id);
 
-      // Events I joined
-      const { data: participated } = await supabase
-        .from('event_participants')
-        .select('event_id, events(*)')
-        .eq('user_id', user.id);
+        // Events I joined
+        const { data: participated } = await supabase
+          .from('event_participants')
+          .select('event_id, events(*)')
+          .eq('user_id', user.id);
 
-      const seen = new Set<string>();
-      const all: EventWithParticipation[] = [];
-      created?.forEach((e: any) => {
-        seen.add(e.id);
-        all.push({ ...e, role: 'organizer' });
-      });
-      participated?.forEach((p: any) => {
-        if (p.events && !seen.has(p.events.id)) {
-          seen.add(p.events.id);
-          all.push({ ...p.events, role: 'joined' });
-        }
-      });
-      setEvents(all);
+        const seen = new Set<string>();
+        const all: EventWithParticipation[] = [];
+        created?.forEach((e: any) => {
+          seen.add(e.id);
+          all.push({ ...e, role: 'organizer' });
+        });
+        participated?.forEach((p: any) => {
+          if (p.events && !seen.has(p.events.id)) {
+            seen.add(p.events.id);
+            all.push({ ...p.events, role: 'joined' });
+          }
+        });
+        setEvents(all);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchMyEvents();
   }, [user]);
@@ -90,13 +97,21 @@ export default function MyEvents() {
 
       {/* Event cards */}
       <div className="space-y-3">
-        {filtered.length === 0 && (
+        {loading ? (
+          [1, 2, 3].map(i => (
+            <div key={i} className="bg-card rounded-2xl p-4 shadow-soft space-y-2">
+              <Skeleton className="h-4 w-20 rounded-full" />
+              <Skeleton className="h-5 w-3/4" />
+              <Skeleton className="h-3 w-1/2" />
+            </div>
+          ))
+        ) : filtered.length === 0 ? (
           <div className="text-center py-16">
             <CalendarDays className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
             <p className="text-muted-foreground text-sm">No {activeTab} events</p>
           </div>
-        )}
-        {filtered.map(event => {
+        ) : null}
+        {!loading && filtered.map(event => {
           const cat = EVENT_CATEGORIES.find(c => c.key === event.category);
           return (
             <div key={event.id} className="bg-card rounded-2xl p-4 shadow-soft">

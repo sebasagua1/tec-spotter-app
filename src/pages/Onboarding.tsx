@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { INTEREST_OPTIONS, LANGUAGE_OPTIONS, RESIDENCE_OPTIONS } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -135,9 +136,18 @@ export default function Onboarding() {
             <h2 className="text-2xl font-extrabold text-foreground mb-1">Welcome! 👋</h2>
             <p className="text-muted-foreground text-sm">Let's set up your profile</p>
           </div>
-          <Input placeholder="Your full name" value={name} onChange={e => setName(e.target.value)} className="h-12 rounded-xl text-base" />
-          <Input placeholder="Major (e.g. ITC, IMT, LAD)" value={major} onChange={e => setMajor(e.target.value)} className="h-12 rounded-xl text-base" />
-          <Input placeholder="Semester (1-12)" type="number" min="1" max="12" value={semester} onChange={e => setSemester(e.target.value)} className="h-12 rounded-xl text-base" />
+          <div className="space-y-2">
+            <Label htmlFor="onb-name">Full name</Label>
+            <Input id="onb-name" placeholder="Your full name" value={name} onChange={e => setName(e.target.value)} className="h-12 rounded-xl text-base" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="onb-major">Major</Label>
+            <Input id="onb-major" placeholder="e.g. ITC, IMT, LAD" value={major} onChange={e => setMajor(e.target.value)} className="h-12 rounded-xl text-base" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="onb-semester">Semester</Label>
+            <Input id="onb-semester" placeholder="1-12" type="number" min="1" max="12" value={semester} onChange={e => setSemester(e.target.value)} className="h-12 rounded-xl text-base" />
+          </div>
         </div>
       );
     }
@@ -149,11 +159,12 @@ export default function Onboarding() {
             <h2 className="text-2xl font-extrabold text-foreground mb-1">Residence</h2>
             <p className="text-muted-foreground text-sm">Where are you from?</p>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-3" role="group" aria-label="Residence type">
             {RESIDENCE_OPTIONS.map(opt => (
               <button
                 key={opt.key}
                 onClick={() => setResidence(opt.key)}
+                aria-pressed={residence === opt.key}
                 className={cn(
                   'w-full p-4 rounded-xl text-left font-semibold transition-all border-2',
                   residence === opt.key
@@ -176,11 +187,12 @@ export default function Onboarding() {
             <h2 className="text-2xl font-extrabold text-foreground mb-1">Interests</h2>
             <p className="text-muted-foreground text-sm">Pick what you're into</p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Interests">
             {INTEREST_OPTIONS.map(interest => (
               <button
                 key={interest}
                 onClick={() => toggleItem(interests, interest, setInterests)}
+                aria-pressed={interests.includes(interest)}
                 className={cn(
                   'px-4 py-2 rounded-full text-sm font-semibold transition-all',
                   interests.includes(interest) ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
@@ -201,11 +213,12 @@ export default function Onboarding() {
             <h2 className="text-2xl font-extrabold text-foreground mb-1">Languages</h2>
             <p className="text-muted-foreground text-sm">Which languages do you speak?</p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Languages">
             {LANGUAGE_OPTIONS.map(lang => (
               <button
                 key={lang}
                 onClick={() => toggleItem(languages, lang, setLanguages)}
+                aria-pressed={languages.includes(lang)}
                 className={cn(
                   'px-4 py-2 rounded-full text-sm font-semibold transition-all',
                   languages.includes(lang) ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'

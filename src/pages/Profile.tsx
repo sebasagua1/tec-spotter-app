@@ -2,6 +2,18 @@ import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Settings, LogOut, Award, TrendingUp, Calendar, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/integrations/supabase/client';
 import { BADGE_DEFINITIONS } from '@/lib/constants';
@@ -11,6 +23,7 @@ export default function Profile() {
   const { profile, signOut, fetchProfile } = useAuthStore();
   const [stats, setStats] = useState({ attended: 0, created: 0 });
   const [badges, setBadges] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchProfile();
@@ -19,29 +32,43 @@ export default function Profile() {
   useEffect(() => {
     if (!profile) return;
     const fetchStats = async () => {
-      const { count: created } = await supabase
-        .from('events')
-        .select('*', { count: 'exact', head: true })
-        .eq('creator_id', profile.id);
+      setLoading(true);
+      try {
+        const { count: created } = await supabase
+          .from('events')
+          .select('*', { count: 'exact', head: true })
+          .eq('creator_id', profile.id);
 
-      const { count: attended } = await supabase
-        .from('event_participants')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', profile.id)
-        .eq('checked_in', true);
+        const { count: attended } = await supabase
+          .from('event_participants')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', profile.id)
+          .eq('checked_in', true);
 
-      setStats({ created: created ?? 0, attended: attended ?? 0 });
+        setStats({ created: created ?? 0, attended: attended ?? 0 });
 
-      const { data: badgeData } = await supabase
-        .from('badges')
-        .select('badge_type')
-        .eq('user_id', profile.id);
-      if (badgeData) setBadges(badgeData.map((b: any) => b.badge_type));
+        const { data: badgeData } = await supabase
+          .from('badges')
+          .select('badge_type')
+          .eq('user_id', profile.id);
+        if (badgeData) setBadges(badgeData.map((b: any) => b.badge_type));
+      } finally {
+        setLoading(false);
+      }
     };
     fetchStats();
   }, [profile]);
 
-  if (!profile) return null;
+  if (!profile) {
+    return (
+      <div className="min-h-screen pb-24 pt-4 px-4 safe-top space-y-4">
+        <Skeleton className="h-8 w-32" />
+        <Skeleton className="h-28 w-full rounded-2xl" />
+        <Skeleton className="h-24 w-full rounded-2xl" />
+        <Skeleton className="h-32 w-full rounded-2xl" />
+      </div>
+    );
+  }
 
   const reputationPercent = Math.min((profile.reputation / 1000) * 100, 100);
 
@@ -58,9 +85,30 @@ export default function Profile() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-extrabold text-foreground">Profile</h1>
-        <button onClick={signOut} aria-label="Sign out" className="p-2 text-muted-foreground">
-          <LogOut className="w-5 h-5" />
-        </button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <button aria-label="Sign out" className="p-2 text-muted-foreground">
+              <LogOut className="w-5 h-5" />
+            </button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Cerrar sesión?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tendrás que iniciar sesión de nuevo para volver a entrar.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={signOut}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Cerrar sesión
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
       {/* Profile card */}
