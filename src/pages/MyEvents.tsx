@@ -97,13 +97,21 @@ export default function MyEvents() {
 
       {/* Event cards */}
       <div className="space-y-3">
-        {filtered.length === 0 && (
+        {loading ? (
+          [1, 2, 3].map(i => (
+            <div key={i} className="bg-card rounded-2xl p-4 shadow-soft space-y-2">
+              <Skeleton className="h-4 w-20 rounded-full" />
+              <Skeleton className="h-5 w-3/4" />
+              <Skeleton className="h-3 w-1/2" />
+            </div>
+          ))
+        ) : filtered.length === 0 ? (
           <div className="text-center py-16">
             <CalendarDays className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
             <p className="text-muted-foreground text-sm">No {activeTab} events</p>
           </div>
-        )}
-        {filtered.map(event => {
+        ) : null}
+        {!loading && filtered.map(event => {
           const cat = EVENT_CATEGORIES.find(c => c.key === event.category);
           return (
             <div key={event.id} className="bg-card rounded-2xl p-4 shadow-soft">
