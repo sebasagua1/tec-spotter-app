@@ -85,9 +85,30 @@ export default function Profile() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-extrabold text-foreground">Profile</h1>
-        <button onClick={signOut} aria-label="Sign out" className="p-2 text-muted-foreground">
-          <LogOut className="w-5 h-5" />
-        </button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <button aria-label="Sign out" className="p-2 text-muted-foreground">
+              <LogOut className="w-5 h-5" />
+            </button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Cerrar sesión?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tendrás que iniciar sesión de nuevo para volver a entrar.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={signOut}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Cerrar sesión
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
       {/* Profile card */}
