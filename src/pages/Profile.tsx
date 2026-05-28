@@ -2,6 +2,18 @@ import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Settings, LogOut, Award, TrendingUp, Calendar, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/integrations/supabase/client';
 import { BADGE_DEFINITIONS } from '@/lib/constants';
