@@ -180,7 +180,7 @@ export default function Friends() {
                 <p className="text-muted-foreground text-sm">No friends yet. Search and connect!</p>
               </div>
             ) : null}
-            {friends.map(f => (
+            {!loading && friends.map(f => (
               <div key={f.id} className="flex items-center justify-between bg-card rounded-xl p-3 shadow-soft">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
