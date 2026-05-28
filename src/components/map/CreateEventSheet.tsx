@@ -141,11 +141,12 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
             {/* Category chips */}
             <div>
               <label className="text-sm font-semibold text-foreground mb-2 block">Category</label>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Event category">
                 {EVENT_CATEGORIES.map(cat => (
                   <button
                     key={cat.key}
                     onClick={() => setCategory(cat.key)}
+                    aria-pressed={category === cat.key}
                     className={cn(
                       'flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all',
                       category === cat.key
