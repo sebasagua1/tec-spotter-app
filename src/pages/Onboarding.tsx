@@ -159,11 +159,12 @@ export default function Onboarding() {
             <h2 className="text-2xl font-extrabold text-foreground mb-1">Residence</h2>
             <p className="text-muted-foreground text-sm">Where are you from?</p>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-3" role="group" aria-label="Residence type">
             {RESIDENCE_OPTIONS.map(opt => (
               <button
                 key={opt.key}
                 onClick={() => setResidence(opt.key)}
+                aria-pressed={residence === opt.key}
                 className={cn(
                   'w-full p-4 rounded-xl text-left font-semibold transition-all border-2',
                   residence === opt.key
