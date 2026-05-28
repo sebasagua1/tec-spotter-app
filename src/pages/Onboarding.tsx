@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { INTEREST_OPTIONS, LANGUAGE_OPTIONS, RESIDENCE_OPTIONS } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
