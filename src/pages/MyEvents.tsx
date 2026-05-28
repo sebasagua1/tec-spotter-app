@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 import { EVENT_CATEGORIES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 import { format, isPast, formatDistanceToNow } from 'date-fns';
 
 interface EventWithParticipation {
