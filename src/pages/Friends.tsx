@@ -23,27 +23,33 @@ export default function Friends() {
   const [searchQuery, setSearchQuery] = useState('');
   const [friends, setFriends] = useState<FriendData[]>([]);
   const [searchResults, setSearchResults] = useState<FriendData[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
     const fetchFriends = async () => {
-      const { data } = await supabase
-        .from('friendships')
-        .select('requester_id, addressee_id')
-        .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
-        .eq('status', 'accepted');
+      setLoading(true);
+      try {
+        const { data } = await supabase
+          .from('friendships')
+          .select('requester_id, addressee_id')
+          .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
+          .eq('status', 'accepted');
 
-      if (data) {
-        const friendIds = data.map((f: any) =>
-          f.requester_id === user.id ? f.addressee_id : f.requester_id
-        );
-        if (friendIds.length > 0) {
-          const { data: profiles } = await supabase
-            .from('public_profiles' as any)
-            .select('id, name, avatar_url, major')
-            .in('id', friendIds);
-          if (profiles) setFriends(profiles as any);
+        if (data) {
+          const friendIds = data.map((f: any) =>
+            f.requester_id === user.id ? f.addressee_id : f.requester_id
+          );
+          if (friendIds.length > 0) {
+            const { data: profiles } = await supabase
+              .from('public_profiles' as any)
+              .select('id, name, avatar_url, major')
+              .in('id', friendIds);
+            if (profiles) setFriends(profiles as any);
+          }
         }
+      } finally {
+        setLoading(false);
       }
     };
     fetchFriends();
