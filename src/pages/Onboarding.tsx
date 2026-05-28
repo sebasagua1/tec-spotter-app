@@ -136,9 +136,18 @@ export default function Onboarding() {
             <h2 className="text-2xl font-extrabold text-foreground mb-1">Welcome! 👋</h2>
             <p className="text-muted-foreground text-sm">Let's set up your profile</p>
           </div>
-          <Input placeholder="Your full name" value={name} onChange={e => setName(e.target.value)} className="h-12 rounded-xl text-base" />
-          <Input placeholder="Major (e.g. ITC, IMT, LAD)" value={major} onChange={e => setMajor(e.target.value)} className="h-12 rounded-xl text-base" />
-          <Input placeholder="Semester (1-12)" type="number" min="1" max="12" value={semester} onChange={e => setSemester(e.target.value)} className="h-12 rounded-xl text-base" />
+          <div className="space-y-2">
+            <Label htmlFor="onb-name">Full name</Label>
+            <Input id="onb-name" placeholder="Your full name" value={name} onChange={e => setName(e.target.value)} className="h-12 rounded-xl text-base" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="onb-major">Major</Label>
+            <Input id="onb-major" placeholder="e.g. ITC, IMT, LAD" value={major} onChange={e => setMajor(e.target.value)} className="h-12 rounded-xl text-base" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="onb-semester">Semester</Label>
+            <Input id="onb-semester" placeholder="1-12" type="number" min="1" max="12" value={semester} onChange={e => setSemester(e.target.value)} className="h-12 rounded-xl text-base" />
+          </div>
         </div>
       );
     }
