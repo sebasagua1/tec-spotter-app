@@ -164,12 +164,22 @@ export default function Friends() {
             <h2 className="text-sm font-semibold text-muted-foreground">
               My Friends ({friends.length})
             </h2>
-            {friends.length === 0 && (
+            {loading ? (
+              [1, 2, 3].map(i => (
+                <div key={i} className="flex items-center gap-3 bg-card rounded-xl p-3 shadow-soft">
+                  <Skeleton className="w-10 h-10 rounded-full" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-1/3" />
+                    <Skeleton className="h-3 w-1/4" />
+                  </div>
+                </div>
+              ))
+            ) : friends.length === 0 ? (
               <div className="text-center py-12">
                 <Users className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
                 <p className="text-muted-foreground text-sm">No friends yet. Search and connect!</p>
               </div>
-            )}
+            ) : null}
             {friends.map(f => (
               <div key={f.id} className="flex items-center justify-between bg-card rounded-xl p-3 shadow-soft">
                 <div className="flex items-center gap-3">
