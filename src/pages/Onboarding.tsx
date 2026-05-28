@@ -187,11 +187,12 @@ export default function Onboarding() {
             <h2 className="text-2xl font-extrabold text-foreground mb-1">Interests</h2>
             <p className="text-muted-foreground text-sm">Pick what you're into</p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Interests">
             {INTEREST_OPTIONS.map(interest => (
               <button
                 key={interest}
                 onClick={() => toggleItem(interests, interest, setInterests)}
+                aria-pressed={interests.includes(interest)}
                 className={cn(
                   'px-4 py-2 rounded-full text-sm font-semibold transition-all',
                   interests.includes(interest) ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
