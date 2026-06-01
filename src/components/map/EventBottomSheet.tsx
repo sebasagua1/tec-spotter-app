@@ -163,7 +163,7 @@ export function EventBottomSheet({ event, onClose }: Props) {
             </Button>
           ) : isCreator ? (
             <Button disabled variant="secondary" className="flex-1 h-12 rounded-xl font-bold">
-              You're hosting
+              {t('event.hosting')}
             </Button>
           ) : hasJoined ? (
             <AlertDialog>
@@ -173,23 +173,21 @@ export function EventBottomSheet({ event, onClose }: Props) {
                   variant="destructive"
                   className="flex-1 h-12 rounded-xl font-bold"
                 >
-                  {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Leave event'}
+                  {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : t('event.leave')}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>¿Salir del evento?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Liberarás tu lugar y otra persona podrá unirse.
-                  </AlertDialogDescription>
+                  <AlertDialogTitle>{t('event.leaveConfirmTitle')}</AlertDialogTitle>
+                  <AlertDialogDescription>{t('event.leaveConfirmDesc')}</AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleLeave}
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   >
-                    Salir
+                    {t('event.leaveConfirmAction')}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -200,7 +198,7 @@ export function EventBottomSheet({ event, onClose }: Props) {
               disabled={spotsLeft <= 0 || submitting}
               className="flex-1 h-12 rounded-xl font-bold"
             >
-              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Join'}
+              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : t('event.join')}
             </Button>
           )}
           <Button
@@ -208,7 +206,7 @@ export function EventBottomSheet({ event, onClose }: Props) {
             onClick={onClose}
             className="h-12 rounded-xl font-semibold px-6"
           >
-            Close
+            {t('common.close')}
           </Button>
         </div>
       </div>
