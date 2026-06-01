@@ -404,7 +404,7 @@ export default function MapHome() {
       {!pickingLocation && (
         <button
           onClick={handleRecenter}
-          aria-label="Centrar en mi ubicación"
+          aria-label={t('map.recenter')}
           className={cn(
             'absolute bottom-44 right-4 z-10 w-12 h-12 rounded-full flex items-center justify-center shadow-lifted active:scale-95 transition-all glass border border-border',
             userLocation ? 'text-primary' : 'text-muted-foreground'
@@ -418,7 +418,7 @@ export default function MapHome() {
       {!pickingLocation && (
         <button
           onClick={() => setShowCreate(true)}
-          aria-label="Create new event"
+          aria-label={t('map.createEvent')}
           className="absolute bottom-24 right-4 z-10 w-14 h-14 bg-primary rounded-full flex items-center justify-center shadow-lifted active:scale-95 transition-transform"
         >
           <Plus className="w-7 h-7 text-primary-foreground" />
