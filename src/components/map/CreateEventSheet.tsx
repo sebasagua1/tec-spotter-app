@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { z } from 'zod';
+import { useTranslation } from 'react-i18next';
 import { X, Minus, Plus as PlusIcon, MapPin, CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
+import { es as esLocale, enUS } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,15 +17,15 @@ import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
 
 const eventSchema = z.object({
-  title: z.string().trim().min(3, 'Title must be at least 3 characters').max(80, 'Title too long'),
+  title: z.string().trim().min(3).max(80),
   category: z.string().min(1),
-  address: z.string().trim().max(120, 'Location name too long').optional(),
-  description: z.string().trim().max(500, 'Description too long').optional(),
+  address: z.string().trim().max(120).optional(),
+  description: z.string().trim().max(500).optional(),
   maxSpots: z.number().int().min(2).max(100),
   privacy: z.enum(['open', 'friends', 'private']),
   lng: z.number().min(-180).max(180),
   lat: z.number().min(-90).max(90),
-  startsAt: z.date().refine((d) => d.getTime() > Date.now() - 60_000, 'Date must be in the future'),
+  startsAt: z.date().refine((d) => d.getTime() > Date.now() - 60_000),
 });
 
 interface Props {
@@ -36,6 +38,8 @@ interface Props {
 export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onClearLocation }: Props) {
   const { user } = useAuthStore();
   const { toast } = useToast();
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language?.startsWith('en') ? enUS : esLocale;
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('study');
   const [date, setDate] = useState<Date>();
@@ -51,11 +55,11 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
     if (!user) return;
 
     if (!date || !time) {
-      toast({ title: 'Missing info', description: 'Please pick a date and time.', variant: 'destructive' });
+      toast({ title: t('create.missingInfo'), description: t('create.missingInfoDesc'), variant: 'destructive' });
       return;
     }
     if (!pickedLocation) {
-      toast({ title: 'Location required', description: 'Tap a spot on the map to place your event.', variant: 'destructive' });
+      toast({ title: t('create.locationRequired'), description: t('create.locationRequiredDesc'), variant: 'destructive' });
       return;
     }
 
@@ -77,7 +81,7 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
 
     if (!parsed.success) {
       toast({
-        title: 'Check your event',
+        title: t('create.checkEvent'),
         description: parsed.error.errors[0]?.message ?? 'Invalid input',
         variant: 'destructive',
       });
@@ -104,13 +108,16 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
     });
 
     if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
     } else {
-      toast({ title: '🚩 Event created!', description: 'Your event is now live on the map.' });
+      toast({ title: t('create.created'), description: t('create.createdDesc') });
       onClose();
     }
     setLoading(false);
   };
+
+  const privacyLabel = (p: string) =>
+    p === 'open' ? t('create.privacyOpen') : p === 'friends' ? t('create.privacyFriends') : t('create.privacyPrivate');
 
   return (
     <div className="fixed inset-0 z-30 bg-foreground/40 animate-fade-in" onClick={onClose}>
@@ -122,8 +129,8 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
 
         <div className="px-5 pb-24">
           <div className="flex items-center justify-between mb-5">
-            <h2 className="text-xl font-extrabold text-foreground">New Event</h2>
-            <button onClick={onClose} aria-label="Close" className="p-1 text-muted-foreground">
+            <h2 className="text-xl font-extrabold text-foreground">{t('create.title')}</h2>
+            <button onClick={onClose} aria-label={t('common.close')} className="p-1 text-muted-foreground">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -131,8 +138,8 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
           <div className="space-y-5">
             {/* Title */}
             <Input
-              placeholder="Event title"
-              aria-label="Event title"
+              placeholder={t('create.titlePh')}
+              aria-label={t('create.titlePh')}
               value={title}
               onChange={e => setTitle(e.target.value)}
               className="h-12 rounded-xl text-base"
@@ -140,8 +147,8 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
 
             {/* Category chips */}
             <div>
-              <label className="text-sm font-semibold text-foreground mb-2 block">Category</label>
-              <div className="flex flex-wrap gap-2" role="group" aria-label="Event category">
+              <label className="text-sm font-semibold text-foreground mb-2 block">{t('create.category')}</label>
+              <div className="flex flex-wrap gap-2" role="group" aria-label={t('create.category')}>
                 {EVENT_CATEGORIES.map(cat => (
                   <button
                     key={cat.key}
@@ -165,7 +172,7 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
             {/* Date & Time */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-sm font-semibold text-foreground mb-1 block">Date</label>
+                <label className="text-sm font-semibold text-foreground mb-1 block">{t('create.date')}</label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -176,7 +183,7 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {date ? format(date, 'MMM d, yyyy') : <span>Pick date</span>}
+                      {date ? format(date, 'MMM d, yyyy', { locale: dateLocale }) : <span>{t('create.pickDate')}</span>}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
@@ -192,14 +199,14 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
                 </Popover>
               </div>
               <div>
-                <label className="text-sm font-semibold text-foreground mb-1 block">Time</label>
+                <label className="text-sm font-semibold text-foreground mb-1 block">{t('create.time')}</label>
                 <TimePicker value={time} onChange={setTime} />
               </div>
             </div>
 
             {/* Location - Pick on map */}
             <div>
-              <label className="text-sm font-semibold text-foreground mb-2 block">Location</label>
+              <label className="text-sm font-semibold text-foreground mb-2 block">{t('create.location')}</label>
               {pickedLocation ? (
                 <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-xl border border-primary/20">
                   <MapPin className="w-5 h-5 text-primary flex-shrink-0" />
@@ -207,7 +214,7 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
                     📍 {pickedLocation.lat.toFixed(5)}, {pickedLocation.lng.toFixed(5)}
                   </span>
                   <button onClick={onClearLocation} className="text-xs text-muted-foreground underline">
-                    Remove
+                    {t('common.remove')}
                   </button>
                 </div>
               ) : (
@@ -216,12 +223,12 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
                   className="w-full flex items-center gap-2 p-3 bg-muted rounded-xl text-sm font-medium text-muted-foreground hover:bg-muted/80 transition-colors"
                 >
                   <MapPin className="w-5 h-5" />
-                  Tap to pick location on map
+                  {t('create.pickOnMap')}
                 </button>
               )}
               <Input
-                placeholder="Location name (optional)"
-                aria-label="Location name"
+                placeholder={t('create.locationNamePh')}
+                aria-label={t('create.locationNamePh')}
                 value={address}
                 onChange={e => setAddress(e.target.value)}
                 className="h-12 rounded-xl text-base mt-2"
@@ -230,11 +237,11 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
 
             {/* Max spots stepper */}
             <div>
-              <label className="text-sm font-semibold text-foreground mb-2 block">Max spots</label>
+              <label className="text-sm font-semibold text-foreground mb-2 block">{t('create.maxSpots')}</label>
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => setMaxSpots(Math.max(2, maxSpots - 1))}
-                  aria-label="Decrease max spots"
+                  aria-label={t('create.decreaseSpots')}
                   className="w-10 h-10 rounded-full bg-muted flex items-center justify-center"
                 >
                   <Minus className="w-4 h-4" />
@@ -242,7 +249,7 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
                 <span className="text-xl font-bold text-foreground w-8 text-center">{maxSpots}</span>
                 <button
                   onClick={() => setMaxSpots(Math.min(100, maxSpots + 1))}
-                  aria-label="Increase max spots"
+                  aria-label={t('create.increaseSpots')}
                   className="w-10 h-10 rounded-full bg-muted flex items-center justify-center"
                 >
                   <PlusIcon className="w-4 h-4" />
@@ -252,8 +259,8 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
 
             {/* Description */}
             <Textarea
-              placeholder="Short description (optional)"
-              aria-label="Event description"
+              placeholder={t('create.descriptionPh')}
+              aria-label={t('create.descriptionPh')}
               value={description}
               onChange={e => setDescription(e.target.value)}
               className="rounded-xl min-h-[80px]"
@@ -264,25 +271,25 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
               onClick={() => setShowAdvanced(!showAdvanced)}
               className="text-sm font-semibold text-primary"
             >
-              {showAdvanced ? 'Hide advanced' : 'Advanced options'}
+              {showAdvanced ? t('create.hideAdvanced') : t('create.showAdvanced')}
             </button>
 
             {showAdvanced && (
               <div className="space-y-3">
                 <div>
-                  <label className="text-sm font-semibold text-foreground mb-2 block">Privacy</label>
-                  <div className="flex gap-2" role="group" aria-label="Privacy">
+                  <label className="text-sm font-semibold text-foreground mb-2 block">{t('create.privacy')}</label>
+                  <div className="flex gap-2" role="group" aria-label={t('create.privacy')}>
                     {['open', 'friends', 'private'].map(p => (
                       <button
                         key={p}
                         onClick={() => setPrivacy(p)}
                         aria-pressed={privacy === p}
                         className={cn(
-                          'px-4 py-2 rounded-full text-xs font-semibold capitalize transition-all',
+                          'px-4 py-2 rounded-full text-xs font-semibold transition-all',
                           privacy === p ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
                         )}
                       >
-                        {p}
+                        {privacyLabel(p)}
                       </button>
                     ))}
                   </div>
@@ -296,7 +303,7 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
               disabled={loading || !title || !date || !time || !pickedLocation}
               className="w-full h-12 rounded-xl font-bold text-base"
             >
-              {loading ? 'Publishing...' : 'Publish Event 🚩'}
+              {loading ? t('create.publishing') : t('create.publish')}
             </Button>
           </div>
         </div>
