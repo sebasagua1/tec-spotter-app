@@ -1,13 +1,16 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { lovable } from '@/integrations/lovable/index';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { useToast } from '@/hooks/use-toast';
 import { MapPin } from 'lucide-react';
 
 export default function Auth() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
@@ -26,13 +29,13 @@ export default function Auth() {
           options: { emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
-        toast({ title: 'Check your email', description: 'We sent you a verification link.' });
+        toast({ title: t('auth.checkEmail'), description: t('auth.verifyLink') });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       }
     } catch (err: any) {
-      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+      toast({ title: t('common.error'), description: err.message, variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -46,14 +49,17 @@ export default function Auth() {
       });
       if (error) throw error;
     } catch (err: any) {
-      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+      toast({ title: t('common.error'), description: err.message, variant: 'destructive' });
     } finally {
       setGoogleLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 bg-background">
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 bg-background relative">
+      <div className="absolute top-4 right-4 safe-top">
+        <LanguageSwitcher />
+      </div>
       <div className="w-full max-w-[380px] space-y-8">
         {/* Logo */}
         <div className="text-center space-y-2">
@@ -61,7 +67,7 @@ export default function Auth() {
             <MapPin className="w-8 h-8 text-primary-foreground" />
           </div>
           <h1 className="text-3xl font-extrabold text-foreground tracking-tight">ConnectTec</h1>
-          <p className="text-muted-foreground text-sm">Connect through action, not status.</p>
+          <p className="text-muted-foreground text-sm">{t('auth.tagline')}</p>
         </div>
 
         {/* Google Sign-In */}
@@ -78,24 +84,24 @@ export default function Auth() {
             <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.997 8.997 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332Z" fill="#FBBC05"/>
             <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 2.58 9 3.58Z" fill="#EA4335"/>
           </svg>
-          {googleLoading ? 'Signing in...' : 'Continue with Google'}
+          {googleLoading ? t('auth.signingIn') : t('auth.continueGoogle')}
         </Button>
 
         {/* Divider */}
         <div className="flex items-center gap-3">
           <div className="flex-1 h-px bg-border" />
-          <span className="text-xs text-muted-foreground font-medium">or</span>
+          <span className="text-xs text-muted-foreground font-medium">{t('auth.or')}</span>
           <div className="flex-1 h-px bg-border" />
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="auth-email">Email</Label>
+            <Label htmlFor="auth-email">{t('auth.email')}</Label>
             <Input
               id="auth-email"
               type="email"
-              placeholder="you@email.com"
+              placeholder={t('auth.emailPlaceholder')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -104,11 +110,11 @@ export default function Auth() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="auth-password">Password</Label>
+            <Label htmlFor="auth-password">{t('auth.password')}</Label>
             <Input
               id="auth-password"
               type="password"
-              placeholder="Password"
+              placeholder={t('auth.passwordPlaceholder')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -122,17 +128,17 @@ export default function Auth() {
             disabled={loading}
             className="w-full h-12 rounded-xl text-base font-bold"
           >
-            {loading ? 'Loading...' : isSignUp ? 'Create Account' : 'Sign In'}
+            {loading ? t('common.loading') : isSignUp ? t('auth.createAccount') : t('auth.signIn')}
           </Button>
         </form>
 
         <p className="text-center text-sm text-muted-foreground">
-          {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+          {isSignUp ? t('auth.hasAccount') : t('auth.noAccount')}{' '}
           <button
             onClick={() => setIsSignUp(!isSignUp)}
             className="text-primary font-semibold hover:underline"
           >
-            {isSignUp ? 'Sign In' : 'Sign Up'}
+            {isSignUp ? t('auth.signIn') : t('auth.signUp')}
           </button>
         </p>
       </div>

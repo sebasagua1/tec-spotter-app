@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { useTranslation } from 'react-i18next';
 import { CalendarDays, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
@@ -7,6 +8,7 @@ import { EVENT_CATEGORIES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format, isPast, formatDistanceToNow } from 'date-fns';
+import { es as esLocale, enUS } from 'date-fns/locale';
 
 interface EventWithParticipation {
   id: string;
@@ -22,6 +24,8 @@ interface EventWithParticipation {
 
 export default function MyEvents() {
   const { user } = useAuthStore();
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language?.startsWith('en') ? enUS : esLocale;
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
   const [events, setEvents] = useState<EventWithParticipation[]>([]);
   const [loading, setLoading] = useState(true);
