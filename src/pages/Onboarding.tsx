@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
 import { ChevronRight, ChevronLeft, Search } from 'lucide-react';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 interface Campus {
   id: string;
@@ -19,6 +21,7 @@ interface Campus {
 export default function Onboarding() {
   const { user, fetchProfile } = useAuthStore();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
   const [major, setMajor] = useState('');
@@ -75,7 +78,7 @@ export default function Onboarding() {
     }).eq('id', user.id);
 
     if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
     } else {
       await fetchProfile();
     }
@@ -94,13 +97,13 @@ export default function Onboarding() {
       return (
         <div className="space-y-6 flex-1">
           <div>
-            <h2 className="text-2xl font-extrabold text-foreground mb-1">Your Campus 🏫</h2>
-            <p className="text-muted-foreground text-sm">Select your university or campus</p>
+            <h2 className="text-2xl font-extrabold text-foreground mb-1">{t('onboarding.campusTitle')}</h2>
+            <p className="text-muted-foreground text-sm">{t('onboarding.campusSubtitle')}</p>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Search campuses..."
+              placeholder={t('onboarding.campusSearch')}
               value={campusSearch}
               onChange={e => setCampusSearch(e.target.value)}
               className="h-12 rounded-xl text-base pl-10"
@@ -122,7 +125,7 @@ export default function Onboarding() {
               </button>
             ))}
             {filtered.length === 0 && (
-              <p className="text-muted-foreground text-sm text-center py-4">No campuses found</p>
+              <p className="text-muted-foreground text-sm text-center py-4">{t('onboarding.campusEmpty')}</p>
             )}
           </div>
         </div>
@@ -133,20 +136,20 @@ export default function Onboarding() {
       return (
         <div className="space-y-6 flex-1">
           <div>
-            <h2 className="text-2xl font-extrabold text-foreground mb-1">Welcome! 👋</h2>
-            <p className="text-muted-foreground text-sm">Let's set up your profile</p>
+            <h2 className="text-2xl font-extrabold text-foreground mb-1">{t('onboarding.welcomeTitle')}</h2>
+            <p className="text-muted-foreground text-sm">{t('onboarding.welcomeSubtitle')}</p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="onb-name">Full name</Label>
-            <Input id="onb-name" placeholder="Your full name" value={name} onChange={e => setName(e.target.value)} className="h-12 rounded-xl text-base" />
+            <Label htmlFor="onb-name">{t('onboarding.fullName')}</Label>
+            <Input id="onb-name" placeholder={t('onboarding.fullNamePh')} value={name} onChange={e => setName(e.target.value)} className="h-12 rounded-xl text-base" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="onb-major">Major</Label>
-            <Input id="onb-major" placeholder="e.g. ITC, IMT, LAD" value={major} onChange={e => setMajor(e.target.value)} className="h-12 rounded-xl text-base" />
+            <Label htmlFor="onb-major">{t('onboarding.major')}</Label>
+            <Input id="onb-major" placeholder={t('onboarding.majorPh')} value={major} onChange={e => setMajor(e.target.value)} className="h-12 rounded-xl text-base" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="onb-semester">Semester</Label>
-            <Input id="onb-semester" placeholder="1-12" type="number" min="1" max="12" value={semester} onChange={e => setSemester(e.target.value)} className="h-12 rounded-xl text-base" />
+            <Label htmlFor="onb-semester">{t('onboarding.semester')}</Label>
+            <Input id="onb-semester" placeholder={t('onboarding.semesterPh')} type="number" min="1" max="12" value={semester} onChange={e => setSemester(e.target.value)} className="h-12 rounded-xl text-base" />
           </div>
         </div>
       );
@@ -156,10 +159,10 @@ export default function Onboarding() {
       return (
         <div className="space-y-6 flex-1">
           <div>
-            <h2 className="text-2xl font-extrabold text-foreground mb-1">Residence</h2>
-            <p className="text-muted-foreground text-sm">Where are you from?</p>
+            <h2 className="text-2xl font-extrabold text-foreground mb-1">{t('onboarding.residenceTitle')}</h2>
+            <p className="text-muted-foreground text-sm">{t('onboarding.residenceSubtitle')}</p>
           </div>
-          <div className="space-y-3" role="group" aria-label="Residence type">
+          <div className="space-y-3" role="group" aria-label={t('onboarding.residenceTitle')}>
             {RESIDENCE_OPTIONS.map(opt => (
               <button
                 key={opt.key}
@@ -184,10 +187,10 @@ export default function Onboarding() {
       return (
         <div className="space-y-6 flex-1">
           <div>
-            <h2 className="text-2xl font-extrabold text-foreground mb-1">Interests</h2>
-            <p className="text-muted-foreground text-sm">Pick what you're into</p>
+            <h2 className="text-2xl font-extrabold text-foreground mb-1">{t('onboarding.interestsTitle')}</h2>
+            <p className="text-muted-foreground text-sm">{t('onboarding.interestsSubtitle')}</p>
           </div>
-          <div className="flex flex-wrap gap-2" role="group" aria-label="Interests">
+          <div className="flex flex-wrap gap-2" role="group" aria-label={t('onboarding.interestsTitle')}>
             {INTEREST_OPTIONS.map(interest => (
               <button
                 key={interest}
@@ -210,10 +213,10 @@ export default function Onboarding() {
       return (
         <div className="space-y-6 flex-1">
           <div>
-            <h2 className="text-2xl font-extrabold text-foreground mb-1">Languages</h2>
-            <p className="text-muted-foreground text-sm">Which languages do you speak?</p>
+            <h2 className="text-2xl font-extrabold text-foreground mb-1">{t('onboarding.languagesTitle')}</h2>
+            <p className="text-muted-foreground text-sm">{t('onboarding.languagesSubtitle')}</p>
           </div>
-          <div className="flex flex-wrap gap-2" role="group" aria-label="Languages">
+          <div className="flex flex-wrap gap-2" role="group" aria-label={t('onboarding.languagesTitle')}>
             {LANGUAGE_OPTIONS.map(lang => (
               <button
                 key={lang}
@@ -243,13 +246,17 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col px-6 py-8 bg-background">
+    <div className="min-h-screen flex flex-col px-6 py-8 bg-background relative">
+      <div className="absolute top-4 right-4 safe-top">
+        {/* Language switcher imported lazily to avoid extra refactor */}
+        <LanguageSwitcher />
+      </div>
       <Helmet>
-        <title>Complete Your Profile — ConnectTec</title>
-        <meta name="description" content="Configura tu perfil de ConnectTec: campus, carrera, intereses e idiomas para empezar a descubrir actividades del Tec." />
+        <title>{t('onboarding.complete')} — ConnectTec</title>
+        <meta name="description" content="Configura tu perfil de ConnectTec: campus, carrera, intereses e idiomas." />
         <link rel="canonical" href="/" />
       </Helmet>
-      <h1 className="sr-only">Complete Your Profile</h1>
+      <h1 className="sr-only">{t('onboarding.complete')}</h1>
       {/* Progress */}
       <div className="flex gap-1.5 mb-8">
         {Array.from({ length: totalSteps }).map((_, i) => (
@@ -271,7 +278,7 @@ export default function Onboarding() {
       <div className="flex gap-3 mt-8">
         {step > 0 && (
           <Button variant="outline" onClick={() => setStep(step - 1)} className="h-12 rounded-xl px-6">
-            <ChevronLeft className="w-4 h-4 mr-1" /> Back
+            <ChevronLeft className="w-4 h-4 mr-1" /> {t('common.back')}
           </Button>
         )}
         {step < totalSteps - 1 ? (
@@ -280,7 +287,7 @@ export default function Onboarding() {
             className="flex-1 h-12 rounded-xl font-bold"
             disabled={!canProceed()}
           >
-            Next <ChevronRight className="w-4 h-4 ml-1" />
+            {t('common.next')} <ChevronRight className="w-4 h-4 ml-1" />
           </Button>
         ) : (
           <Button
@@ -288,7 +295,7 @@ export default function Onboarding() {
             className="flex-1 h-12 rounded-xl font-bold"
             disabled={loading}
           >
-            {loading ? 'Saving...' : 'Get Started 🚀'}
+            {loading ? t('common.saving') : t('onboarding.getStarted')}
           </Button>
         )}
       </div>

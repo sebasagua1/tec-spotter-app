@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Settings, LogOut, Award, TrendingUp, Calendar, Star } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useTranslation } from 'react-i18next';
+import { LogOut, Award, TrendingUp, Calendar, Star } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,6 +22,7 @@ import { cn } from '@/lib/utils';
 
 export default function Profile() {
   const { profile, signOut, fetchProfile } = useAuthStore();
+  const { t } = useTranslation();
   const [stats, setStats] = useState({ attended: 0, created: 0 });
   const [badges, setBadges] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,44 +73,49 @@ export default function Profile() {
   }
 
   const reputationPercent = Math.min((profile.reputation / 1000) * 100, 100);
+  const rankKey =
+    profile.reputation < 250 ? 'newcomer' :
+    profile.reputation < 500 ? 'regular' :
+    profile.reputation < 750 ? 'active' : 'legend';
 
   return (
     <div className="min-h-screen pb-24 pt-4 px-4 safe-top">
       <Helmet>
-        <title>Profile — ConnectTec</title>
-        <meta name="description" content="Tu perfil de ConnectTec: reputación, puntos, insignias y estadísticas de tu actividad en el campus." />
+        <title>{t('profile.title')} — ConnectTec</title>
+        <meta name="description" content={t('profile.metaDesc')} />
         <link rel="canonical" href="/profile" />
-        <meta property="og:title" content="Profile — ConnectTec" />
-        <meta property="og:description" content="Tu perfil, reputación e insignias en ConnectTec." />
+        <meta property="og:title" content={`${t('profile.title')} — ConnectTec`} />
+        <meta property="og:description" content={t('profile.metaDesc')} />
         <meta property="og:url" content="/profile" />
       </Helmet>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-extrabold text-foreground">Profile</h1>
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <button aria-label="Sign out" className="p-2 text-muted-foreground">
-              <LogOut className="w-5 h-5" />
-            </button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>¿Cerrar sesión?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Tendrás que iniciar sesión de nuevo para volver a entrar.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={signOut}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                Cerrar sesión
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <h1 className="text-2xl font-extrabold text-foreground">{t('profile.title')}</h1>
+        <div className="flex items-center gap-3">
+          <LanguageSwitcher />
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button aria-label={t('profile.signOut')} className="p-2 text-muted-foreground">
+                <LogOut className="w-5 h-5" />
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{t('profile.signOutConfirmTitle')}</AlertDialogTitle>
+                <AlertDialogDescription>{t('profile.signOutConfirmDesc')}</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={signOut}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  {t('profile.signOut')}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </div>
 
       {/* Profile card */}
@@ -118,10 +125,10 @@ export default function Profile() {
             {profile.name?.[0] ?? '?'}
           </div>
           <div className="flex-1">
-            <h2 className="text-lg font-extrabold text-foreground">{profile.name ?? 'Student'}</h2>
-            <p className="text-sm text-muted-foreground">{profile.major ?? 'No major set'}</p>
+            <h2 className="text-lg font-extrabold text-foreground">{profile.name ?? t('profile.student')}</h2>
+            <p className="text-sm text-muted-foreground">{profile.major ?? t('profile.noMajor')}</p>
             <p className="text-xs text-muted-foreground capitalize">
-              {profile.residence_type ?? ''} · Semester {profile.semester ?? '—'}
+              {profile.residence_type ?? ''} · {t('profile.semester')} {profile.semester ?? '—'}
             </p>
           </div>
         </div>
@@ -141,14 +148,14 @@ export default function Profile() {
       {/* Stats row */}
       <div className="grid grid-cols-3 gap-3 mb-5">
         {[
-          { label: 'Attended', value: stats.attended, icon: Calendar },
-          { label: 'Created', value: stats.created, icon: Star },
-          { label: 'Points', value: profile.points, icon: TrendingUp },
+          { key: 'attended', value: stats.attended, icon: Calendar },
+          { key: 'created', value: stats.created, icon: Star },
+          { key: 'points', value: profile.points, icon: TrendingUp },
         ].map(stat => (
-          <div key={stat.label} className="bg-card rounded-2xl p-4 shadow-soft text-center">
+          <div key={stat.key} className="bg-card rounded-2xl p-4 shadow-soft text-center">
             <stat.icon className="w-5 h-5 text-primary mx-auto mb-1" />
             <p className="text-xl font-extrabold text-foreground">{stat.value}</p>
-            <p className="text-[10px] text-muted-foreground font-semibold">{stat.label}</p>
+            <p className="text-[10px] text-muted-foreground font-semibold">{t(`profile.${stat.key}`)}</p>
           </div>
         ))}
       </div>
@@ -157,7 +164,7 @@ export default function Profile() {
       <div className="bg-card rounded-2xl p-5 shadow-soft mb-5">
         <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
           <Award className="w-4 h-4 text-primary" />
-          Reputation
+          {t('profile.reputation')}
         </h3>
         <div className="flex items-center gap-4">
           <div className="relative w-20 h-20">
@@ -182,19 +189,15 @@ export default function Profile() {
             </span>
           </div>
           <div>
-            <p className="text-sm text-muted-foreground">
-              {profile.reputation < 250 ? 'Newcomer' :
-               profile.reputation < 500 ? 'Regular' :
-               profile.reputation < 750 ? 'Active' : 'Legend'}
-            </p>
-            <p className="text-xs text-muted-foreground">{Math.round(1000 - profile.reputation)} pts to next level</p>
+            <p className="text-sm text-muted-foreground">{t(`profile.rank.${rankKey}`)}</p>
+            <p className="text-xs text-muted-foreground">{Math.round(1000 - profile.reputation)} {t('profile.ptsToNext')}</p>
           </div>
         </div>
       </div>
 
       {/* Badges */}
       <div className="bg-card rounded-2xl p-5 shadow-soft">
-        <h3 className="text-sm font-bold text-foreground mb-3">Badges</h3>
+        <h3 className="text-sm font-bold text-foreground mb-3">{t('profile.badges')}</h3>
         <div className="grid grid-cols-3 gap-3">
           {BADGE_DEFINITIONS.map(badge => {
             const earned = badges.includes(badge.type);
