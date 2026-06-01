@@ -20,6 +20,7 @@ interface Campus {
 export default function Onboarding() {
   const { user, fetchProfile } = useAuthStore();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
   const [major, setMajor] = useState('');
