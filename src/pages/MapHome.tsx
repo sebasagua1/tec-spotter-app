@@ -281,32 +281,32 @@ export default function MapHome() {
     if (permission === 'denied' && !deniedToastShownRef.current) {
       deniedToastShownRef.current = true;
       toast({
-        title: 'Ubicación denegada',
-        description: 'Activa los permisos de ubicación para ver tu posición en el mapa.',
+        title: t('map.locDenied'),
+        description: t('map.locDeniedDesc'),
         variant: 'destructive',
       });
     } else if (permission === 'unsupported' && !deniedToastShownRef.current) {
       deniedToastShownRef.current = true;
       toast({
-        title: 'GPS no disponible',
-        description: 'Tu dispositivo o navegador no soporta geolocalización.',
+        title: t('map.gpsUnavailable'),
+        description: t('map.gpsUnavailableDesc'),
         variant: 'destructive',
       });
     }
-  }, [permission]);
+  }, [permission, t]);
 
   useEffect(() => {
     if (geoError && geoError.code !== geoError.PERMISSION_DENIED) {
       toast({
-        title: 'No pudimos obtener tu ubicación',
-        description: geoError.message || 'Inténtalo de nuevo en un momento.',
+        title: t('map.locError'),
+        description: geoError.message || t('map.locErrorDesc'),
       });
     }
-  }, [geoError]);
+  }, [geoError, t]);
 
   const handleRecenter = useCallback(() => {
     if (!mapRef.current || !userLocation) {
-      toast({ title: 'Aún sin señal GPS', description: 'Esperando tu ubicación…' });
+      toast({ title: t('map.waitingGps'), description: t('map.waitingGpsDesc') });
       return;
     }
     mapRef.current.flyTo({
@@ -315,10 +315,10 @@ export default function MapHome() {
       duration: 700,
       essential: true,
     });
-  }, [userLocation]);
+  }, [userLocation, t]);
 
   const filteredCategories = [
-    { key: null, label: 'All', emoji: '🗺️' },
+    { key: null, label: t('map.all'), emoji: '🗺️' },
     ...EVENT_CATEGORIES,
   ];
 
@@ -326,14 +326,14 @@ export default function MapHome() {
   return (
     <div className="relative w-full h-screen">
       <Helmet>
-        <title>ConnectTec — Campus Event Map</title>
-        <meta name="description" content="Explora el mapa en vivo de tu campus del Tec: descubre, crea y únete a actividades reales cerca de ti." />
+        <title>{t('map.title')}</title>
+        <meta name="description" content={t('map.metaDesc')} />
         <link rel="canonical" href="/" />
-        <meta property="og:title" content="ConnectTec — Campus Event Map" />
-        <meta property="og:description" content="Mapa en vivo de actividades del Tec: descubre y únete a eventos cerca de ti." />
+        <meta property="og:title" content={t('map.title')} />
+        <meta property="og:description" content={t('map.metaDesc')} />
         <meta property="og:url" content="/" />
       </Helmet>
-      <h1 className="sr-only">ConnectTec — Campus Event Map</h1>
+      <h1 className="sr-only">{t('map.title')}</h1>
       {/* Map container */}
       <div ref={mapContainer} className="absolute inset-0" />
 
