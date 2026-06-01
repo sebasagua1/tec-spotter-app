@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MapEvent } from '@/stores/eventStore';
 import { EVENT_CATEGORIES } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { es as esLocale, enUS } from 'date-fns/locale';
 
 interface Props {
   event: MapEvent;
