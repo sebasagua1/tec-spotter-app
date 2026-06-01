@@ -30,6 +30,8 @@ export function EventBottomSheet({ event, onClose }: Props) {
   const cat = EVENT_CATEGORIES.find(c => c.key === event.category);
   const { user } = useAuthStore();
   const { toast } = useToast();
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language?.startsWith('en') ? enUS : esLocale;
   const spotsLeft = event.max_spots - event.current_spots;
   const [hasJoined, setHasJoined] = useState(false);
   const [checking, setChecking] = useState(true);
@@ -66,17 +68,17 @@ export function EventBottomSheet({ event, onClose }: Props) {
       .insert({ event_id: event.id, user_id: user.id, status: 'joined' });
     if (error) {
       if ((error as any).code === '23505') {
-        toast({ title: 'Ya estás unido a este evento' });
+        toast({ title: t('event.alreadyJoined') });
         setHasJoined(true);
       } else if (error.message?.includes('EVENT_FULL')) {
         setHasJoined(false);
-        toast({ title: 'Este evento ya está lleno', variant: 'destructive' });
+        toast({ title: t('event.eventFull'), variant: 'destructive' });
       } else {
         setHasJoined(false);
-        toast({ title: 'Error', description: error.message, variant: 'destructive' });
+        toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
       }
     } else {
-      toast({ title: '🎉 Joined!', description: `You joined "${event.title}"` });
+      toast({ title: `🎉 ${t('event.joinedToast')}`, description: t('event.joinedDesc', { title: event.title }) });
     }
     setSubmitting(false);
   };
@@ -92,9 +94,9 @@ export function EventBottomSheet({ event, onClose }: Props) {
       .eq('user_id', user.id);
     if (error) {
       setHasJoined(true);
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
     } else {
-      toast({ title: 'Left event', description: `You left "${event.title}"` });
+      toast({ title: t('event.leftToast'), description: t('event.leftDesc', { title: event.title }) });
     }
     setSubmitting(false);
   };
@@ -122,7 +124,7 @@ export function EventBottomSheet({ event, onClose }: Props) {
         <div className="space-y-2 mb-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Clock className="w-4 h-4" />
-            <span>{format(new Date(event.starts_at), 'MMM d, h:mm a')}</span>
+            <span>{format(new Date(event.starts_at), 'MMM d, h:mm a', { locale: dateLocale })}</span>
           </div>
           {event.address && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -134,10 +136,10 @@ export function EventBottomSheet({ event, onClose }: Props) {
             <Users className="w-4 h-4" />
             <span>
               {spotsLeft <= 0
-                ? 'Full'
+                ? t('event.full')
                 : spotsLeft === 1
-                  ? '1 spot left'
-                  : `${spotsLeft} spots left`}
+                  ? t('event.spotLeftOne')
+                  : t('event.spotLeftOther', { count: spotsLeft })}
             </span>
           </div>
         </div>
@@ -148,8 +150,9 @@ export function EventBottomSheet({ event, onClose }: Props) {
 
         {event.current_spots > 0 && (
           <div className="mb-4 text-xs text-muted-foreground">
-            {event.current_spots}{' '}
-            {event.current_spots === 1 ? 'persona unida' : 'personas unidas'}
+            {event.current_spots === 1
+              ? t('event.joinedPersonOne', { count: event.current_spots })
+              : t('event.joinedPersonOther', { count: event.current_spots })}
           </div>
         )}
 
