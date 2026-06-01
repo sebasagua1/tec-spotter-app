@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { useTranslation } from 'react-i18next';
 import { Search, UserPlus, Users, MessageCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,7 @@ interface FriendData {
 export default function Friends() {
   const { user } = useAuthStore();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'friends' | 'groups'>('friends');
   const [searchQuery, setSearchQuery] = useState('');
   const [friends, setFriends] = useState<FriendData[]>([]);
@@ -76,26 +78,26 @@ export default function Friends() {
     });
     if (error) {
       if ((error as any).code === '23505') {
-        toast({ title: 'Ya enviaste solicitud a esta persona' });
+        toast({ title: t('friends.alreadySent') });
       } else {
-        toast({ title: 'Error', description: error.message, variant: 'destructive' });
+        toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
       }
     } else {
-      toast({ title: 'Request sent! 🤝' });
+      toast({ title: t('friends.requestSent') });
     }
   };
 
   return (
     <div className="min-h-screen pb-24 pt-4 px-4 safe-top">
       <Helmet>
-        <title>Friends &amp; Groups — ConnectTec</title>
-        <meta name="description" content="Encuentra estudiantes del Tec, envía solicitudes de amistad y conecta con tu comunidad de campus en ConnectTec." />
+        <title>{t('friends.title')} — ConnectTec</title>
+        <meta name="description" content={t('friends.metaDesc')} />
         <link rel="canonical" href="/friends" />
-        <meta property="og:title" content="Friends &amp; Groups — ConnectTec" />
-        <meta property="og:description" content="Conecta con estudiantes del Tec en ConnectTec." />
+        <meta property="og:title" content={`${t('friends.title')} — ConnectTec`} />
+        <meta property="og:description" content={t('friends.metaDesc')} />
         <meta property="og:url" content="/friends" />
       </Helmet>
-      <h1 className="text-2xl font-extrabold text-foreground mb-4">Friends &amp; Groups</h1>
+      <h1 className="text-2xl font-extrabold text-foreground mb-4">{t('friends.title')}</h1>
 
       {/* Tabs */}
       <div className="flex gap-2 mb-5">
@@ -104,11 +106,11 @@ export default function Friends() {
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={cn(
-              'px-5 py-2 rounded-full text-sm font-semibold capitalize transition-all',
+              'px-5 py-2 rounded-full text-sm font-semibold transition-all',
               activeTab === tab ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
             )}
           >
-            {tab}
+            {t(tab === 'friends' ? 'friends.tabFriends' : 'friends.tabGroups')}
           </button>
         ))}
       </div>
@@ -120,14 +122,14 @@ export default function Friends() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Search students..."
+                placeholder={t('friends.searchPh')}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleSearch()}
                 className="pl-9 h-11 rounded-xl"
               />
             </div>
-            <Button onClick={handleSearch} size="icon" aria-label="Search students" className="h-11 w-11 rounded-xl">
+            <Button onClick={handleSearch} size="icon" aria-label={t('common.search')} className="h-11 w-11 rounded-xl">
               <Search className="w-4 h-4" />
             </Button>
           </div>
@@ -135,7 +137,7 @@ export default function Friends() {
           {/* Search results */}
           {searchResults.length > 0 && (
             <div className="space-y-2">
-              <h2 className="text-sm font-semibold text-muted-foreground">Results</h2>
+              <h2 className="text-sm font-semibold text-muted-foreground">{t('friends.results')}</h2>
               {searchResults.map(s => (
                 <div key={s.id} className="flex items-center justify-between bg-card rounded-xl p-3 shadow-soft">
                   <div className="flex items-center gap-3">
@@ -149,7 +151,7 @@ export default function Friends() {
                   </div>
                   <button
                     onClick={() => sendFriendRequest(s.id)}
-                    aria-label={`Send friend request to ${s.name}`}
+                    aria-label={`${t('friends.tabFriends')}: ${s.name}`}
                     className="p-2 text-primary"
                   >
                     <UserPlus className="w-5 h-5" />
@@ -162,7 +164,7 @@ export default function Friends() {
           {/* Friends list */}
           <div className="space-y-2">
             <h2 className="text-sm font-semibold text-muted-foreground">
-              My Friends ({friends.length})
+              {t('friends.myFriends')} ({friends.length})
             </h2>
             {loading ? (
               [1, 2, 3].map(i => (
@@ -177,7 +179,7 @@ export default function Friends() {
             ) : friends.length === 0 ? (
               <div className="text-center py-12">
                 <Users className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
-                <p className="text-muted-foreground text-sm">No friends yet. Search and connect!</p>
+                <p className="text-muted-foreground text-sm">{t('friends.empty')}</p>
               </div>
             ) : null}
             {!loading && friends.map(f => (
@@ -203,7 +205,7 @@ export default function Friends() {
       {activeTab === 'groups' && (
         <div className="text-center py-16">
           <Users className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
-          <p className="text-muted-foreground text-sm">Groups coming soon</p>
+          <p className="text-muted-foreground text-sm">{t('friends.groupsSoon')}</p>
         </div>
       )}
     </div>
