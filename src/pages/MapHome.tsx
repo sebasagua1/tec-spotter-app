@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { useTranslation } from 'react-i18next';
 import { Plus, LocateFixed } from 'lucide-react';
 import { useEventStore } from '@/stores/eventStore';
 import { EVENT_CATEGORIES, TEC_CENTER } from '@/lib/constants';
@@ -13,6 +14,7 @@ import { toast } from '@/hooks/use-toast';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 export default function MapHome() {
+  const { t } = useTranslation();
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
