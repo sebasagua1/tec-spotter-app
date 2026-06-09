@@ -1,23 +1,9 @@
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
+import type { Database } from '@/integrations/supabase/types';
 
-interface Profile {
-  id: string;
-  email: string;
-  name: string | null;
-  avatar_url: string | null;
-  major: string | null;
-  semester: number | null;
-  residence_type: string | null;
-  interests: string[] | null;
-  languages: string[] | null;
-  campus_id: string | null;
-  availability: any;
-  points: number;
-  reputation: number;
-  onboarding_completed: boolean;
-}
+type Profile = Database['public']['Tables']['profiles']['Row'];
 
 interface AuthState {
   user: User | null;
@@ -51,6 +37,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       .select('*')
       .eq('id', user.id)
       .single();
-    if (data) set({ profile: data as Profile });
+    if (data) set({ profile: data });
   },
 }));

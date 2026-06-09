@@ -279,6 +279,41 @@ export type Database = {
           },
         ]
       }
+      point_events: {
+        Row: {
+          created_at: string
+          event_id: string | null
+          id: string
+          points: number
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          points: number
+          reason: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          points?: number
+          reason?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "point_events_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           availability: Json | null
@@ -436,6 +471,14 @@ export type Database = {
       }
     }
     Functions: {
+      are_friends: {
+        Args: { a: string; b: string }
+        Returns: boolean
+      }
+      check_in_to_event: {
+        Args: { _event_id: string; _lat: number; _lng: number }
+        Returns: Json
+      }
       is_event_creator: {
         Args: { _event_id: string; _user_id: string }
         Returns: boolean

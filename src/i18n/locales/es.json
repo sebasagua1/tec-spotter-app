@@ -9,7 +9,8 @@
     "error": "Error",
     "search": "Buscar",
     "remove": "Quitar",
-    "language": "Idioma"
+    "language": "Idioma",
+    "loadMore": "Cargar más"
   },
   "bottomNav": {
     "map": "Mapa",
@@ -76,6 +77,10 @@
     },
     "ptsToNext": "pts para el siguiente nivel",
     "badges": "Insignias",
+    "edit": "Editar perfil",
+    "save": "Guardar cambios",
+    "saved": "Perfil actualizado",
+    "changePhoto": "Cambiar foto",
     "metaDesc": "Tu perfil de ConnectTec: reputación, puntos, insignias y estadísticas."
   },
   "myEvents": {
@@ -92,14 +97,54 @@
     "title": "Amigos y grupos",
     "tabFriends": "Amigos",
     "tabGroups": "Grupos",
+    "tabLeaderboard": "Top",
     "searchPh": "Buscar estudiantes…",
     "results": "Resultados",
     "myFriends": "Mis amigos",
     "empty": "Aún sin amigos. ¡Busca y conecta!",
-    "groupsSoon": "Grupos próximamente",
+    "requests": "Solicitudes",
+    "accept": "Aceptar",
+    "decline": "Rechazar",
     "requestSent": "¡Solicitud enviada! 🤝",
+    "requestAccepted": "Solicitud de amistad aceptada",
+    "requestDeclined": "Solicitud rechazada",
     "alreadySent": "Ya enviaste solicitud a esta persona",
     "metaDesc": "Encuentra estudiantes del Tec y conecta con tu comunidad en ConnectTec."
+  },
+  "groups": {
+    "myGroups": "Mis grupos",
+    "empty": "Sin grupos aún. ¡Crea uno!",
+    "new": "Nuevo grupo",
+    "createTitle": "Crear grupo",
+    "namePh": "Nombre del grupo…",
+    "members": "{{count}} miembros",
+    "created": "¡Grupo creado!",
+    "messagePh": "Mensaje…",
+    "noMessages": "Sin mensajes aún. ¡Di hola! 👋",
+    "send": "Enviar",
+    "backToGroups": "Atrás",
+    "directMessage": "Mensaje directo",
+    "membersTitle": "Miembros",
+    "you": "Tú",
+    "inviteFriends": "Invitar amigos",
+    "invite": "Invitar",
+    "memberAdded": "¡Miembro agregado!",
+    "leave": "Salir del grupo",
+    "leaveConfirmTitle": "¿Salir del grupo?",
+    "leaveConfirmDesc": "Ya no recibirás mensajes de este grupo."
+  },
+  "leaderboard": {
+    "title": "Clasificación",
+    "pts": "pts",
+    "empty": "Sin datos aún"
+  },
+  "pointsHistory": {
+    "title": "Historial de puntos",
+    "empty": "Sin actividad aún",
+    "join": "Te uniste a un evento",
+    "organize": "Organizaste un evento",
+    "check_in": "Registraste asistencia",
+    "rate": "Calificaste un evento"
   },
   "event": {
     "spotLeftOne": "1 lugar disponible",
@@ -116,10 +161,25 @@
     "leaveConfirmAction": "Salir",
     "alreadyJoined": "Ya estás unido a este evento",
     "eventFull": "Este evento ya está lleno",
-    "joinedToast": "¡Te uniste!",
+    "joinedToast": "🎊 ¡Te uniste!",
     "joinedDesc": "Te uniste a \"{{title}}\"",
     "leftToast": "Saliste del evento",
-    "leftDesc": "Saliste de \"{{title}}\""
+    "leftDesc": "Saliste de \"{{title}}\"",
+    "checkIn": "Registrar asistencia",
+    "checkedIn": "Asistencia registrada ✓",
+    "checkInSuccess": "¡Asistencia registrada!",
+    "checkInTooFar": "Estás demasiado lejos del evento",
+    "checkInWindow": "Fuera del horario del evento",
+    "checkInNotParticipant": "No te has unido a este evento",
+    "organizedByYou": "Organizado por ti",
+    "attendees": "{{count}} asistentes",
+    "noAttendees": "Nadie se ha unido aún",
+    "cancelEvent": "Cancelar evento",
+    "cancelEventConfirm": "¿Cancelar este evento?",
+    "cancelEventConfirmDesc": "Esto ocultará el evento para todos en el mapa.",
+    "rateEvent": "¿Cómo estuvo? Califica este evento",
+    "yourRating": "Tu calificación",
+    "ratingSubmitted": "¡Gracias por calificar! +5 pts"
   },
   "create": {
     "title": "Nuevo evento",
@@ -141,15 +201,68 @@
     "privacyOpen": "Abierto",
     "privacyFriends": "Amigos",
     "privacyPrivate": "Privado",
-    "publish": "Publicar evento 🚩",
+    "publish": "Publicar evento",
     "publishing": "Publicando…",
     "missingInfo": "Falta información",
     "missingInfoDesc": "Elige una fecha y hora.",
     "locationRequired": "Ubicación requerida",
     "locationRequiredDesc": "Toca un punto en el mapa para colocar tu evento.",
     "checkEvent": "Revisa tu evento",
-    "created": "🚩 ¡Evento creado!",
+    "duration": "Duración",
+    "duration30": "30 min",
+    "duration60": "1 hora",
+    "duration120": "2 horas",
+    "duration180": "3 horas",
+    "duration240": "4 horas",
+    "created": "🎊 ¡Evento creado!",
     "createdDesc": "Tu evento ya está en el mapa."
+  },
+  "edit": {
+    "title": "Editar evento",
+    "starts": "Inicia",
+    "ends": "Termina",
+    "save": "Guardar cambios",
+    "saved": "Evento actualizado",
+    "titleRequired": "El título es obligatorio",
+    "endBeforeStart": "La hora de fin debe ser después del inicio",
+    "spotsBelowCurrent": "El cupo no puede ser menor al número de asistentes actuales",
+    "spotsAtMin": "Mínimo: {{count}} (asistentes actuales)"
+  },
+  "categories": {
+    "study": "Estudio",
+    "sports": "Deportes",
+    "social": "Social",
+    "shopping": "Compras",
+    "volunteering": "Voluntariado",
+    "other": "Otro"
+  },
+  "interests": {
+    "Music": "Música",
+    "Sports": "Deportes",
+    "Tech": "Tecnología",
+    "Art": "Arte",
+    "Food": "Gastronomía",
+    "Gaming": "Videojuegos",
+    "Travel": "Viajes",
+    "Volunteering": "Voluntariado",
+    "Photography": "Fotografía",
+    "Reading": "Lectura",
+    "Movies": "Cine",
+    "Fitness": "Fitness",
+    "Cooking": "Cocina",
+    "Dance": "Baile"
+  },
+  "residence": {
+    "local": "Local",
+    "foraneo": "Foráneo",
+    "international": "Internacional"
+  },
+  "badges": {
+    "organizer": "Organizador",
+    "explorer": "Explorador",
+    "study_buddy": "Compañero de estudio",
+    "team_player": "Jugador en equipo",
+    "streak_7": "Racha de 7 días"
   },
   "map": {
     "title": "ConnectTec — Mapa de eventos del campus",
@@ -164,6 +277,10 @@
     "locError": "No pudimos obtener tu ubicación",
     "locErrorDesc": "Inténtalo de nuevo en un momento.",
     "waitingGps": "Aún sin señal GPS",
-    "waitingGpsDesc": "Esperando tu ubicación…"
+    "waitingGpsDesc": "Esperando tu ubicación…",
+    "listView": "Ver como lista",
+    "mapView": "Ver mapa",
+    "noEvents": "No hay eventos en esta categoría",
+    "searchEvents": "Buscar eventos…"
   }
 }

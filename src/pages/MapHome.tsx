@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
-import { Plus, LocateFixed } from 'lucide-react';
+import { Plus, LocateFixed, Layers, List, Map as MapIcon, Search, X as XIcon, type LucideIcon } from 'lucide-react';
 import { useEventStore } from '@/stores/eventStore';
 import { EVENT_CATEGORIES, TEC_CENTER } from '@/lib/constants';
+import { CATEGORY_ICONS, getCategoryMarkerSVG } from '@/lib/categoryIcons';
+import { EventListView } from '@/components/map/EventListView';
 import { cn } from '@/lib/utils';
 import { EventBottomSheet } from '@/components/map/EventBottomSheet';
 import { CreateEventSheet } from '@/components/map/CreateEventSheet';
@@ -21,9 +23,14 @@ export default function MapHome() {
   const { events, setEvents, selectedEvent, setSelectedEvent, filterCategory, setFilterCategory } = useEventStore();
   const [showCreate, setShowCreate] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
-  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
+  const [mapboxToken, setMapboxToken] = useState<string | null>(
+    (import.meta.env.VITE_MAPBOX_TOKEN as string) ?? null
+  );
   const [pickingLocation, setPickingLocation] = useState(false);
   const [pickedLocation, setPickedLocation] = useState<{ lng: number; lat: number } | null>(null);
+  const [pickReturnsToForm, setPickReturnsToForm] = useState(false);
+  const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
+  const [searchQuery, setSearchQuery] = useState('');
   const pickMarkerRef = useRef<any>(null);
   const userMarkerRef = useRef<any>(null);
   const hasAutoCenteredRef = useRef(false);
@@ -45,7 +52,7 @@ export default function MapHome() {
         .eq('is_active', true)
         .gt('ends_at', new Date().toISOString());
       if (data) {
-        const mapped = data.map((e: any) => ({
+        const mapped = data.map(e => ({
           ...e,
           location: e.lng != null && e.lat != null ? { lng: e.lng, lat: e.lat } : null,
         }));
@@ -72,14 +79,16 @@ export default function MapHome() {
     const initMap = async () => {
       const mapboxgl = (await import('mapbox-gl')).default;
 
-      // Always fetch token from backend — never expose in client bundle
-      let token = '';
-      try {
-        const { data, error } = await supabase.functions.invoke('get-mapbox-token');
-        if (!error && data?.token) {
-          token = data.token;
+      // Prefer the env-var token (zero round-trip); fall back to the edge function
+      let token = (import.meta.env.VITE_MAPBOX_TOKEN as string) ?? '';
+      if (!token) {
+        try {
+          const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+          if (!error && data?.token) token = data.token;
+        } catch (err) {
+          console.error('Failed to fetch Mapbox token from edge function:', err);
         }
-      } catch {}
+      }
       if (!token) {
         setMapboxToken(null);
         return;
@@ -125,25 +134,34 @@ export default function MapHome() {
       markersRef.current.forEach(m => m.remove());
       markersRef.current = [];
 
-      const filtered = filterCategory
-        ? events.filter(e => e.category === filterCategory)
-        : events;
+      const q = searchQuery.trim().toLowerCase();
+      const filtered = events.filter(e =>
+        (!filterCategory || e.category === filterCategory) &&
+        (!q || e.title.toLowerCase().includes(q))
+      );
 
       filtered.forEach(event => {
         if (!event.location) return;
         const cat = EVENT_CATEGORIES.find(c => c.key === event.category);
         if (!cat) return;
 
+        // Root element: sized only — Mapbox writes transform here for positioning.
+        // No transform-based animation on the root or it overwrites Mapbox's translate.
         const el = document.createElement('div');
-        el.className = 'animate-flag-pulse cursor-pointer';
-        el.style.cssText = `
-          width: 36px; height: 36px; border-radius: 50%;
+        el.style.cssText = 'width: 36px; height: 36px; cursor: pointer;';
+
+        // Inner child carries all visuals and the pulse animation.
+        const inner = document.createElement('div');
+        inner.className = 'animate-flag-pulse';
+        inner.style.cssText = `
+          width: 100%; height: 100%; border-radius: 50%;
           background: ${cat.color}; border: 3px solid white;
           box-shadow: 0 2px 12px rgba(0,0,0,0.2);
           display: flex; align-items: center; justify-content: center;
-          font-size: 16px;
         `;
-        el.innerHTML = cat.emoji;
+        inner.innerHTML = getCategoryMarkerSVG(event.category);
+        el.appendChild(inner);
+
         el.addEventListener('click', (ev) => {
           ev.stopPropagation();
           mapRef.current?.flyTo({ center: [event.location!.lng, event.location!.lat], zoom: 17, duration: 600 });
@@ -155,12 +173,14 @@ export default function MapHome() {
             .setLngLat([event.location.lng, event.location.lat])
             .addTo(mapRef.current!);
           markersRef.current.push(marker);
-        } catch {}
+        } catch (err) {
+          console.error('Failed to add marker for event:', event.id, err);
+        }
       });
     };
 
     updateMarkers();
-  }, [events, filterCategory, mapLoaded, setSelectedEvent]);
+  }, [events, filterCategory, searchQuery, mapLoaded, setSelectedEvent]);
 
   // Handle map click for location picking
   useEffect(() => {
@@ -181,9 +201,8 @@ export default function MapHome() {
         background: hsl(var(--primary)); border: 3px solid white;
         box-shadow: 0 2px 16px rgba(0,0,0,0.3);
         display: flex; align-items: center; justify-content: center;
-        font-size: 20px;
       `;
-      el.innerHTML = '📍';
+      el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>`;
       pickMarkerRef.current = new mapboxgl.Marker({ element: el })
         .setLngLat([lng, lat])
         .addTo(mapRef.current!);
@@ -196,6 +215,7 @@ export default function MapHome() {
   }, [pickingLocation, mapLoaded]);
 
   const handleStartPicking = () => {
+    setPickReturnsToForm(true);
     setShowCreate(false);
     setPickingLocation(true);
   };
@@ -207,12 +227,15 @@ export default function MapHome() {
 
   const handleCancelPicking = () => {
     setPickingLocation(false);
-    setPickedLocation(null);
     if (pickMarkerRef.current) {
       pickMarkerRef.current.remove();
       pickMarkerRef.current = null;
     }
-    setShowCreate(true);
+    if (pickReturnsToForm) {
+      setShowCreate(true);
+    } else {
+      setPickedLocation(null);
+    }
   };
 
   const handleClearLocation = () => {
@@ -317,9 +340,9 @@ export default function MapHome() {
     });
   }, [userLocation, t]);
 
-  const filteredCategories = [
-    { key: null, label: t('map.all'), emoji: '🗺️' },
-    ...EVENT_CATEGORIES,
+  const filteredCategories: Array<{ key: string | null; label: string; Icon: LucideIcon }> = [
+    { key: null, label: t('map.all'), Icon: Layers },
+    ...EVENT_CATEGORIES.map(c => ({ key: c.key as string | null, label: c.label, Icon: CATEGORY_ICONS[c.key] })),
   ];
 
 
@@ -357,7 +380,7 @@ export default function MapHome() {
                     className="w-full p-3 bg-card rounded-xl shadow-soft text-left"
                   >
                     <div className="flex items-center gap-2">
-                      <span>{cat?.emoji}</span>
+                      {cat && (() => { const Icon = CATEGORY_ICONS[cat.key]; return <Icon className="w-4 h-4 text-muted-foreground" />; })()}
                       <span className="font-semibold text-sm">{event.title}</span>
                     </div>
                   </button>
@@ -377,26 +400,68 @@ export default function MapHome() {
         />
       )}
 
-      {/* Filter pills - hide during picking */}
+      {/* Filter pills + view toggle - hide during picking */}
       {!pickingLocation && (
         <div className="absolute top-4 left-0 right-0 z-10 px-4 safe-top">
-          <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
-            {filteredCategories.map(cat => (
-              <button
-                key={cat.key ?? 'all'}
-                onClick={() => setFilterCategory(cat.key)}
-                className={cn(
-                  'flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all shadow-soft',
-                  filterCategory === cat.key
-                    ? 'bg-primary text-primary-foreground'
-                    : 'glass text-foreground border border-border'
-                )}
-              >
-                <span>{cat.emoji}</span>
-                <span>{cat.label}</span>
-              </button>
-            ))}
+          {/* Search bar */}
+          <div className="flex items-center gap-2 mb-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder={t('map.searchEvents')}
+                className="w-full h-9 pl-8 pr-8 rounded-full text-xs font-medium glass border border-border shadow-soft bg-background/80 backdrop-blur focus:outline-none focus:ring-2 focus:ring-primary/40"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+                >
+                  <XIcon className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
           </div>
+          <div className="flex gap-2 items-center">
+            <div className="flex gap-2 overflow-x-auto no-scrollbar py-1 flex-1">
+              {filteredCategories.map(cat => (
+                <button
+                  key={cat.key ?? 'all'}
+                  onClick={() => setFilterCategory(cat.key)}
+                  className={cn(
+                    'flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all shadow-soft',
+                    filterCategory === cat.key
+                      ? 'bg-primary text-primary-foreground'
+                      : 'glass text-foreground border border-border'
+                  )}
+                >
+                  <cat.Icon className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span>{cat.key != null ? t('categories.' + cat.key) : cat.label}</span>
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setViewMode(v => v === 'map' ? 'list' : 'map')}
+              aria-label={viewMode === 'map' ? t('map.listView') : t('map.mapView')}
+              className="flex-shrink-0 w-9 h-9 rounded-full glass border border-border flex items-center justify-center shadow-soft text-foreground"
+            >
+              {viewMode === 'map' ? <List className="w-4 h-4" /> : <MapIcon className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* List view overlay */}
+      {!pickingLocation && viewMode === 'list' && (
+        <div className="absolute inset-0 z-10 bg-background overflow-y-auto pt-20 px-4 safe-top pb-24">
+          <EventListView
+            events={events}
+            filterCategory={filterCategory}
+            searchQuery={searchQuery}
+            onSelect={(event) => { setSelectedEvent(event); setViewMode('map'); }}
+          />
         </div>
       )}
 
@@ -417,7 +482,15 @@ export default function MapHome() {
       {/* FAB - hide during picking */}
       {!pickingLocation && (
         <button
-          onClick={() => setShowCreate(true)}
+          onClick={() => {
+            if (pickMarkerRef.current) {
+              pickMarkerRef.current.remove();
+              pickMarkerRef.current = null;
+            }
+            setPickedLocation(null);
+            setPickReturnsToForm(false);
+            setPickingLocation(true);
+          }}
           aria-label={t('map.createEvent')}
           className="absolute bottom-24 right-4 z-10 w-14 h-14 bg-primary rounded-full flex items-center justify-center shadow-lifted active:scale-95 transition-transform"
         >

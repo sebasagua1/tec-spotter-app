@@ -1,4 +1,5 @@
-import { X, Check } from 'lucide-react';
+import { X, Check, MapPin } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   onConfirm: () => void;
@@ -7,6 +8,7 @@ interface Props {
 }
 
 export function LocationPickerOverlay({ onConfirm, onCancel, hasPin }: Props) {
+  const { t } = useTranslation();
   return (
     <div className="absolute top-4 left-0 right-0 z-20 px-4 safe-top">
       <div className="flex items-center gap-3 bg-card/95 backdrop-blur-md rounded-2xl shadow-lifted p-3 mx-auto max-w-[430px]">
@@ -16,8 +18,9 @@ export function LocationPickerOverlay({ onConfirm, onCancel, hasPin }: Props) {
         >
           <X className="w-5 h-5 text-foreground" />
         </button>
-        <span className="text-sm font-semibold text-foreground flex-1 text-center">
-          📍 Tap the map to place your event
+        <span className="text-sm font-semibold text-foreground flex-1 text-center flex items-center justify-center gap-1.5">
+          <MapPin className="w-4 h-4 flex-shrink-0" />
+          {t('create.pickOnMap')}
         </span>
         {hasPin && (
           <button

@@ -1,10 +1,10 @@
 export const EVENT_CATEGORIES = [
-  { key: 'study',        label: 'Study',        emoji: '📚', color: 'hsl(216, 100%, 45%)', textOnColor: 'white', twClass: 'bg-category-study' },
-  { key: 'sports',       label: 'Sports',       emoji: '⚽', color: 'hsl(160, 100%, 28%)', textOnColor: 'white', twClass: 'bg-category-sports' },
-  { key: 'social',       label: 'Social',       emoji: '🎉', color: 'hsl(263, 84%, 48%)',  textOnColor: 'white', twClass: 'bg-category-social' },
-  { key: 'shopping',     label: 'Shopping',     emoji: '🛒', color: 'hsl(25, 95%, 45%)',   textOnColor: 'white', twClass: 'bg-category-shopping' },
-  { key: 'volunteering', label: 'Volunteering', emoji: '❤️', color: 'hsl(0, 80%, 45%)',    textOnColor: 'white', twClass: 'bg-category-volunteering' },
-  { key: 'other',        label: 'Other',        emoji: '⚙️', color: 'hsl(220, 9%, 38%)',   textOnColor: 'white', twClass: 'bg-category-other' },
+  { key: 'study',        label: 'categories.study',        color: 'hsl(216, 100%, 45%)', textOnColor: 'white', twClass: 'bg-category-study' },
+  { key: 'sports',       label: 'categories.sports',       color: 'hsl(160, 100%, 28%)', textOnColor: 'white', twClass: 'bg-category-sports' },
+  { key: 'social',       label: 'categories.social',       color: 'hsl(263, 84%, 48%)',  textOnColor: 'white', twClass: 'bg-category-social' },
+  { key: 'shopping',     label: 'categories.shopping',     color: 'hsl(25, 95%, 45%)',   textOnColor: 'white', twClass: 'bg-category-shopping' },
+  { key: 'volunteering', label: 'categories.volunteering', color: 'hsl(0, 80%, 45%)',    textOnColor: 'white', twClass: 'bg-category-volunteering' },
+  { key: 'other',        label: 'categories.other',        color: 'hsl(220, 9%, 38%)',   textOnColor: 'white', twClass: 'bg-category-other' },
 ] as const;
 
 export type EventCategory = typeof EVENT_CATEGORIES[number]['key'];
@@ -19,17 +19,17 @@ export const LANGUAGE_OPTIONS = [
 ] as const;
 
 export const RESIDENCE_OPTIONS = [
-  { key: 'local', label: 'Local' },
-  { key: 'foraneo', label: 'Foráneo' },
-  { key: 'international', label: 'Internacional' },
+  { key: 'local', label: 'residence.local' },
+  { key: 'foraneo', label: 'residence.foraneo' },
+  { key: 'international', label: 'residence.international' },
 ] as const;
 
 export const BADGE_DEFINITIONS = [
-  { type: 'organizer', label: 'Organizer', description: 'Created 5+ events', icon: '🎯' },
-  { type: 'explorer', label: 'Explorer', description: 'Joined 10+ events', icon: '🧭' },
-  { type: 'study_buddy', label: 'Study Buddy', description: 'Attended 5+ study sessions', icon: '📖' },
-  { type: 'team_player', label: 'Team Player', description: 'Joined 5+ sports events', icon: '🏆' },
-  { type: 'streak_7', label: '7-Day Streak', description: 'Active 7 days in a row', icon: '🔥' },
+  { type: 'organizer' },
+  { type: 'explorer' },
+  { type: 'study_buddy' },
+  { type: 'team_player' },
+  { type: 'streak_7' },
 ] as const;
 
 export const POINTS = {

@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
-import { LogOut, Award, TrendingUp, Calendar, Star } from 'lucide-react';
+import { LogOut, Award, TrendingUp, Calendar, Star, Pencil, Zap } from 'lucide-react';
+import { format } from 'date-fns';
+import { BADGE_ICONS } from '@/lib/categoryIcons';
+import { EditProfileSheet } from '@/components/profile/EditProfileSheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import {
@@ -25,7 +28,9 @@ export default function Profile() {
   const { t } = useTranslation();
   const [stats, setStats] = useState({ attended: 0, created: 0 });
   const [badges, setBadges] = useState<string[]>([]);
+  const [pointsHistory, setPointsHistory] = useState<{ id: string; points: number; reason: string; created_at: string }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editOpen, setEditOpen] = useState(false);
 
   useEffect(() => {
     fetchProfile();
@@ -53,7 +58,15 @@ export default function Profile() {
           .from('badges')
           .select('badge_type')
           .eq('user_id', profile.id);
-        if (badgeData) setBadges(badgeData.map((b: any) => b.badge_type));
+        if (badgeData) setBadges(badgeData.map((b) => b.badge_type));
+
+        const { data: historyData } = await supabase
+          .from('point_events')
+          .select('id, points, reason, created_at')
+          .eq('user_id', profile.id)
+          .order('created_at', { ascending: false })
+          .limit(10);
+        if (historyData) setPointsHistory(historyData);
       } finally {
         setLoading(false);
       }
@@ -121,8 +134,12 @@ export default function Profile() {
       {/* Profile card */}
       <div className="bg-card rounded-2xl p-5 shadow-soft mb-5">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary">
-            {profile.name?.[0] ?? '?'}
+          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary overflow-hidden">
+            {profile.avatar_url ? (
+              <img src={profile.avatar_url} alt={profile.name ?? ''} className="w-full h-full object-cover" />
+            ) : (
+              profile.name?.[0] ?? '?'
+            )}
           </div>
           <div className="flex-1">
             <h2 className="text-lg font-extrabold text-foreground">{profile.name ?? t('profile.student')}</h2>
@@ -131,6 +148,13 @@ export default function Profile() {
               {profile.residence_type ?? ''} · {t('profile.semester')} {profile.semester ?? '—'}
             </p>
           </div>
+          <button
+            onClick={() => setEditOpen(true)}
+            aria-label={t('profile.edit')}
+            className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Pencil className="w-4 h-4" />
+          </button>
         </div>
 
         {/* Interests */}
@@ -138,7 +162,7 @@ export default function Profile() {
           <div className="flex flex-wrap gap-1.5 mt-4">
             {profile.interests.map((i: string) => (
               <span key={i} className="px-2.5 py-1 bg-muted rounded-full text-xs font-medium text-muted-foreground">
-                {i}
+                {t('interests.' + i)}
               </span>
             ))}
           </div>
@@ -209,13 +233,51 @@ export default function Profile() {
                   earned ? 'bg-primary/5' : 'bg-muted/50 opacity-40'
                 )}
               >
-                <span className="text-2xl">{badge.icon}</span>
-                <span className="text-[10px] font-bold text-foreground">{badge.label}</span>
+                {(() => { const Icon = BADGE_ICONS[badge.type]; return <Icon className="w-7 h-7" />; })()}
+                <span className="text-[10px] font-bold text-foreground">{t('badges.' + badge.type)}</span>
               </div>
             );
           })}
         </div>
       </div>
+
+      {/* Points history */}
+      <div className="bg-card rounded-2xl p-5 shadow-soft mt-5">
+        <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+          <Zap className="w-4 h-4 text-primary" />
+          {t('pointsHistory.title')}
+        </h3>
+        {loading ? (
+          <div className="space-y-2">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex justify-between items-center py-1">
+                <div className="h-4 bg-muted rounded w-2/3" />
+                <div className="h-4 bg-muted rounded w-10" />
+              </div>
+            ))}
+          </div>
+        ) : pointsHistory.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t('pointsHistory.empty')}</p>
+        ) : (
+          <div className="space-y-2">
+            {pointsHistory.map((entry) => (
+              <div key={entry.id} className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-foreground">{t(`pointsHistory.${entry.reason}`)}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {format(new Date(entry.created_at), 'MMM d, yyyy')}
+                  </p>
+                </div>
+                <span className="text-sm font-bold text-primary">+{entry.points}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {editOpen && (
+        <EditProfileSheet profile={profile} onClose={() => setEditOpen(false)} />
+      )}
     </div>
   );
 }

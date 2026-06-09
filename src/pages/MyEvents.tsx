@@ -5,6 +5,7 @@ import { CalendarDays, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 import { EVENT_CATEGORIES } from '@/lib/constants';
+import { CATEGORY_ICONS } from '@/lib/categoryIcons';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format, isPast, formatDistanceToNow } from 'date-fns';
@@ -29,6 +30,8 @@ export default function MyEvents() {
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
   const [events, setEvents] = useState<EventWithParticipation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(10);
+  const PAGE_SIZE = 10;
 
   useEffect(() => {
     if (!user) return;
@@ -49,11 +52,11 @@ export default function MyEvents() {
 
         const seen = new Set<string>();
         const all: EventWithParticipation[] = [];
-        created?.forEach((e: any) => {
+        created?.forEach((e) => {
           seen.add(e.id);
           all.push({ ...e, role: 'organizer' });
         });
-        participated?.forEach((p: any) => {
+        participated?.forEach((p) => {
           if (p.events && !seen.has(p.events.id)) {
             seen.add(p.events.id);
             all.push({ ...p.events, role: 'joined' });
@@ -67,9 +70,10 @@ export default function MyEvents() {
     fetchMyEvents();
   }, [user]);
 
-  const filtered = events.filter(e =>
+  const allFiltered = events.filter(e =>
     activeTab === 'upcoming' ? !isPast(new Date(e.ends_at)) : isPast(new Date(e.ends_at))
   );
+  const filtered = allFiltered.slice(0, visibleCount);
 
   return (
     <div className="min-h-screen pb-24 pt-4 px-4 safe-top">
@@ -88,7 +92,7 @@ export default function MyEvents() {
         {(['upcoming', 'past'] as const).map(tab => (
           <button
             key={tab}
-            onClick={() => setActiveTab(tab)}
+            onClick={() => { setActiveTab(tab); setVisibleCount(PAGE_SIZE); }}
             className={cn(
               'px-5 py-2 rounded-full text-sm font-semibold transition-all',
               activeTab === tab ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
@@ -125,7 +129,8 @@ export default function MyEvents() {
                     className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold text-primary-foreground mb-2"
                     style={{ background: cat?.color }}
                   >
-                    {cat?.emoji} {cat?.label}
+                    {cat && (() => { const Icon = CATEGORY_ICONS[cat.key]; return <Icon className="w-2.5 h-2.5 mr-0.5 inline" />; })()}
+                    {cat ? t('categories.' + cat.key) : ''}
                   </div>
                   <h2 className="font-bold text-foreground text-base">{event.title}</h2>
                   <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground">
@@ -150,6 +155,14 @@ export default function MyEvents() {
             </div>
           );
         })}
+        {!loading && visibleCount < allFiltered.length && (
+          <button
+            onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
+            className="w-full py-2 text-sm font-semibold text-primary"
+          >
+            {t('common.loadMore')}
+          </button>
+        )}
       </div>
     </div>
   );

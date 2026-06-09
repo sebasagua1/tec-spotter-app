@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -12,9 +11,8 @@ import MapHome from '@/pages/MapHome';
 import MyEvents from '@/pages/MyEvents';
 import Friends from '@/pages/Friends';
 import Profile from '@/pages/Profile';
+import GroupChat from '@/pages/GroupChat';
 import NotFound from '@/pages/NotFound';
-
-const queryClient = new QueryClient();
 
 function AuthGate() {
   const { user, session, profile, loading, setSession, setLoading, fetchProfile } = useAuthStore();
@@ -58,22 +56,21 @@ function AuthGate() {
 }
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/*" element={<AuthGate />}>
-            <Route index element={<MapHome />} />
-            <Route path="events" element={<MyEvents />} />
-            <Route path="friends" element={<Friends />} />
-            <Route path="profile" element={<Profile />} />
-          </Route>
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <TooltipProvider>
+    <Toaster />
+    <BrowserRouter>
+      <Routes>
+        <Route path="/*" element={<AuthGate />}>
+          <Route index element={<MapHome />} />
+          <Route path="events" element={<MyEvents />} />
+          <Route path="friends" element={<Friends />} />
+          <Route path="groups/:id" element={<GroupChat />} />
+          <Route path="profile" element={<Profile />} />
+        </Route>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </BrowserRouter>
+  </TooltipProvider>
 );
 
 export default App;

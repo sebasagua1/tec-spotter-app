@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
 import { X, Minus, Plus as PlusIcon, MapPin, CalendarIcon } from 'lucide-react';
+import { CATEGORY_ICONS } from '@/lib/categoryIcons';
 import { format } from 'date-fns';
 import { es as esLocale, enUS } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
@@ -48,8 +49,17 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
   const [maxSpots, setMaxSpots] = useState(10);
   const [description, setDescription] = useState('');
   const [privacy, setPrivacy] = useState('open');
+  const [durationMins, setDurationMins] = useState(120);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const DURATION_OPTIONS = [
+    { mins: 30, label: t('create.duration30') },
+    { mins: 60, label: t('create.duration60') },
+    { mins: 120, label: t('create.duration120') },
+    { mins: 180, label: t('create.duration180') },
+    { mins: 240, label: t('create.duration240') },
+  ];
 
   const handlePublish = async () => {
     if (!user) return;
@@ -97,12 +107,11 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
       address: v.address ?? null,
       description: v.description ?? null,
       starts_at: v.startsAt.toISOString(),
-      ends_at: new Date(v.startsAt.getTime() + 2 * 60 * 60 * 1000).toISOString(),
+      ends_at: new Date(v.startsAt.getTime() + durationMins * 60 * 1000).toISOString(),
       max_spots: v.maxSpots,
       privacy: v.privacy,
       is_active: true,
       current_spots: 0,
-      is_recurring: false,
       lng: v.lng,
       lat: v.lat,
     });
@@ -162,8 +171,8 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
                     )}
                     style={category === cat.key ? { background: cat.color } : undefined}
                   >
-                    <span>{cat.emoji}</span>
-                    <span>{cat.label}</span>
+                    {(() => { const Icon = CATEGORY_ICONS[cat.key]; return <Icon className="w-4 h-4" />; })()}
+                    <span>{t('categories.' + cat.key)}</span>
                   </button>
                 ))}
               </div>
@@ -204,6 +213,29 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
               </div>
             </div>
 
+            {/* Duration */}
+            <div>
+              <label className="text-sm font-semibold text-foreground mb-2 block">{t('create.duration')}</label>
+              <div className="flex flex-wrap gap-2" role="group" aria-label={t('create.duration')}>
+                {DURATION_OPTIONS.map(opt => (
+                  <button
+                    key={opt.mins}
+                    type="button"
+                    onClick={() => setDurationMins(opt.mins)}
+                    aria-pressed={durationMins === opt.mins}
+                    className={cn(
+                      'px-4 py-2 rounded-full text-xs font-semibold transition-all',
+                      durationMins === opt.mins
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-muted-foreground'
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Location - Pick on map */}
             <div>
               <label className="text-sm font-semibold text-foreground mb-2 block">{t('create.location')}</label>
@@ -211,7 +243,7 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
                 <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-xl border border-primary/20">
                   <MapPin className="w-5 h-5 text-primary flex-shrink-0" />
                   <span className="text-sm font-medium text-foreground flex-1">
-                    📍 {pickedLocation.lat.toFixed(5)}, {pickedLocation.lng.toFixed(5)}
+                    {pickedLocation.lat.toFixed(5)}, {pickedLocation.lng.toFixed(5)}
                   </span>
                   <button onClick={onClearLocation} className="text-xs text-muted-foreground underline">
                     {t('common.remove')}

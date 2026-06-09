@@ -9,7 +9,8 @@
     "error": "Error",
     "search": "Search",
     "remove": "Remove",
-    "language": "Language"
+    "language": "Language",
+    "loadMore": "Load more"
   },
   "bottomNav": {
     "map": "Map",
@@ -76,6 +77,10 @@
     },
     "ptsToNext": "pts to next level",
     "badges": "Badges",
+    "edit": "Edit profile",
+    "save": "Save changes",
+    "saved": "Profile updated",
+    "changePhoto": "Change photo",
     "metaDesc": "Your ConnectTec profile: reputation, points, badges and stats."
   },
   "myEvents": {
@@ -92,14 +97,54 @@
     "title": "Friends & Groups",
     "tabFriends": "Friends",
     "tabGroups": "Groups",
+    "tabLeaderboard": "Top",
     "searchPh": "Search students…",
     "results": "Results",
     "myFriends": "My Friends",
     "empty": "No friends yet. Search and connect!",
-    "groupsSoon": "Groups coming soon",
+    "requests": "Requests",
+    "accept": "Accept",
+    "decline": "Decline",
     "requestSent": "Request sent! 🤝",
+    "requestAccepted": "Friend request accepted",
+    "requestDeclined": "Request declined",
     "alreadySent": "You already sent a request to this person",
     "metaDesc": "Find Tec students and connect with your campus community on ConnectTec."
+  },
+  "groups": {
+    "myGroups": "My Groups",
+    "empty": "No groups yet. Create one!",
+    "new": "New Group",
+    "createTitle": "Create Group",
+    "namePh": "Group name…",
+    "members": "{{count}} members",
+    "created": "Group created!",
+    "messagePh": "Message…",
+    "noMessages": "No messages yet. Say hi! 👋",
+    "send": "Send",
+    "backToGroups": "Back",
+    "directMessage": "Direct Message",
+    "membersTitle": "Members",
+    "you": "You",
+    "inviteFriends": "Invite friends",
+    "invite": "Invite",
+    "memberAdded": "Member added!",
+    "leave": "Leave group",
+    "leaveConfirmTitle": "Leave group?",
+    "leaveConfirmDesc": "You'll no longer receive messages from this group."
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "pts": "pts",
+    "empty": "No data yet"
+  },
+  "pointsHistory": {
+    "title": "Points History",
+    "empty": "No activity yet",
+    "join": "Joined an event",
+    "organize": "Organized an event",
+    "check_in": "Checked in",
+    "rate": "Rated an event"
   },
   "event": {
     "spotLeftOne": "1 spot left",
@@ -116,10 +161,25 @@
     "leaveConfirmAction": "Leave",
     "alreadyJoined": "You already joined this event",
     "eventFull": "This event is full",
-    "joinedToast": "Joined!",
+    "joinedToast": "🎊 Joined!",
     "joinedDesc": "You joined \"{{title}}\"",
     "leftToast": "Left event",
-    "leftDesc": "You left \"{{title}}\""
+    "leftDesc": "You left \"{{title}}\"",
+    "checkIn": "Check In",
+    "checkedIn": "Checked In ✓",
+    "checkInSuccess": "You're checked in!",
+    "checkInTooFar": "Too far from the event location",
+    "checkInWindow": "Outside the event time window",
+    "checkInNotParticipant": "You haven't joined this event",
+    "organizedByYou": "Organized by you",
+    "attendees": "{{count}} attendees",
+    "noAttendees": "No one has joined yet",
+    "cancelEvent": "Cancel event",
+    "cancelEventConfirm": "Cancel this event?",
+    "cancelEventConfirmDesc": "This will hide the event for everyone on the map.",
+    "rateEvent": "How was it? Rate this event",
+    "yourRating": "Your rating",
+    "ratingSubmitted": "Thanks for rating! +5 pts"
   },
   "create": {
     "title": "New Event",
@@ -141,15 +201,68 @@
     "privacyOpen": "Open",
     "privacyFriends": "Friends",
     "privacyPrivate": "Private",
-    "publish": "Publish Event 🚩",
+    "publish": "Publish Event",
     "publishing": "Publishing…",
     "missingInfo": "Missing info",
     "missingInfoDesc": "Please pick a date and time.",
     "locationRequired": "Location required",
     "locationRequiredDesc": "Tap a spot on the map to place your event.",
     "checkEvent": "Check your event",
-    "created": "🚩 Event created!",
+    "duration": "Duration",
+    "duration30": "30 min",
+    "duration60": "1 hour",
+    "duration120": "2 hours",
+    "duration180": "3 hours",
+    "duration240": "4 hours",
+    "created": "🎊 Event created!",
     "createdDesc": "Your event is now live on the map."
+  },
+  "edit": {
+    "title": "Edit event",
+    "starts": "Starts",
+    "ends": "Ends",
+    "save": "Save changes",
+    "saved": "Event updated",
+    "titleRequired": "Title is required",
+    "endBeforeStart": "End time must be after start time",
+    "spotsBelowCurrent": "Capacity cannot be lower than current attendees",
+    "spotsAtMin": "Minimum: {{count}} (current attendees)"
+  },
+  "categories": {
+    "study": "Study",
+    "sports": "Sports",
+    "social": "Social",
+    "shopping": "Shopping",
+    "volunteering": "Volunteering",
+    "other": "Other"
+  },
+  "interests": {
+    "Music": "Music",
+    "Sports": "Sports",
+    "Tech": "Tech",
+    "Art": "Art",
+    "Food": "Food",
+    "Gaming": "Gaming",
+    "Travel": "Travel",
+    "Volunteering": "Volunteering",
+    "Photography": "Photography",
+    "Reading": "Reading",
+    "Movies": "Movies",
+    "Fitness": "Fitness",
+    "Cooking": "Cooking",
+    "Dance": "Dance"
+  },
+  "residence": {
+    "local": "Local",
+    "foraneo": "Non-local",
+    "international": "International"
+  },
+  "badges": {
+    "organizer": "Organizer",
+    "explorer": "Explorer",
+    "study_buddy": "Study Buddy",
+    "team_player": "Team Player",
+    "streak_7": "7-Day Streak"
   },
   "map": {
     "title": "ConnectTec — Campus Event Map",
@@ -164,6 +277,10 @@
     "locError": "Couldn't get your location",
     "locErrorDesc": "Try again in a moment.",
     "waitingGps": "Still waiting for GPS",
-    "waitingGpsDesc": "Waiting for your location…"
+    "waitingGpsDesc": "Waiting for your location…",
+    "listView": "List view",
+    "mapView": "Map view",
+    "noEvents": "No events in this category",
+    "searchEvents": "Search events…"
   }
 }

@@ -52,7 +52,7 @@ export default function Onboarding() {
     } else {
       setNeedsCampusSelection(true);
       supabase.from('campuses').select('*').then(({ data }) => {
-        if (data) setCampuses(data as Campus[]);
+        if (data) setCampuses(data);
       });
     }
   }, [user]);
@@ -175,7 +175,7 @@ export default function Onboarding() {
                     : 'border-border bg-card text-muted-foreground'
                 )}
               >
-                {opt.label}
+                {t('residence.' + opt.key)}
               </button>
             ))}
           </div>
@@ -201,7 +201,7 @@ export default function Onboarding() {
                   interests.includes(interest) ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
                 )}
               >
-                {interest}
+                {t('interests.' + interest)}
               </button>
             ))}
           </div>

@@ -14,6 +14,20 @@
  *      - cannot SELECT rows from A's private event_participants / group_members / groups
  *      - cannot read A's email from profiles
  *
+ * Acceptance tests (three-bug fix):
+ *  Issue 1 — public_profiles cross-user visibility:
+ *      - B can query public_profiles and find A's row (id, name, etc.)
+ *      - email column is not selectable from public_profiles
+ *      - Direct SELECT on profiles for another user's row returns 0 rows
+ *  Issue 2 — score/badge/checkin integrity:
+ *      - Authenticated user cannot UPDATE profiles SET points=999999
+ *      - Authenticated user cannot self-INSERT into badges
+ *      - Participant cannot flip their own checked_in to true
+ *  Issue 3 — friends event privacy:
+ *      - anon cannot call are_friends
+ *      - Accepted friend B CAN see A's 'friends' event
+ *      - Non-friend C CANNOT see A's 'friends' event
+ *
  * Requires Supabase auto-confirm email signups (default in Lovable Cloud dev).
  * If signup is rate-limited or email confirmation is enforced, the suite skips.
  */
@@ -32,10 +46,16 @@ type Ctx = {
   anon: SupabaseClient;
   a: SupabaseClient;
   b: SupabaseClient;
+  c: SupabaseClient;
   aId: string;
   bId: string;
-  eventId: string;
+  cId: string;
+  eventId: string;           // A's private event
+  openEventId: string;       // A's open event (B joins for checked_in test)
+  friendsEventId: string;    // A's friends-only event
   groupId: string;
+  pointTestEventId: string;  // Goal A: fresh event for join/organize point tests
+  checkinEventId: string;    // Goal B: active event with lat/lng for check-in tests
 };
 
 const ctx: Partial<Ctx> = {};
@@ -62,12 +82,15 @@ beforeAll(async () => {
     ctx.anon = newClient();
     ctx.a = newClient();
     ctx.b = newClient();
+    ctx.c = newClient();
     ctx.aId = await signUp(ctx.a);
     ctx.bId = await signUp(ctx.b);
+    ctx.cId = await signUp(ctx.c);
 
-    // A creates a private event
     const startsAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
     const endsAt = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
+
+    // A creates a private event
     const { data: ev, error: evErr } = await ctx.a
       .from("events")
       .insert({
@@ -83,11 +106,96 @@ beforeAll(async () => {
     if (evErr) throw evErr;
     ctx.eventId = ev.id;
 
-    // A joins their event
+    // A joins their private event
     const { error: epErr } = await ctx.a
       .from("event_participants")
       .insert({ event_id: ctx.eventId, user_id: ctx.aId });
     if (epErr) throw epErr;
+
+    // A creates an open event (used for Issue 2c checked_in test)
+    const { data: openEv, error: openEvErr } = await ctx.a
+      .from("events")
+      .insert({
+        creator_id: ctx.aId,
+        title: `open-${rand()}`,
+        category: "study",
+        starts_at: startsAt,
+        ends_at: endsAt,
+        privacy: "open",
+      })
+      .select("id")
+      .single();
+    if (openEvErr) throw openEvErr;
+    ctx.openEventId = openEv.id;
+
+    // B joins the open event (so B has a participation row with checked_in=false)
+    const { error: bJoinErr } = await ctx.b
+      .from("event_participants")
+      .insert({ event_id: ctx.openEventId, user_id: ctx.bId });
+    if (bJoinErr) throw bJoinErr;
+
+    // A creates a friends-only event (Issue 3)
+    const { data: friendsEv, error: friendsEvErr } = await ctx.a
+      .from("events")
+      .insert({
+        creator_id: ctx.aId,
+        title: `friends-${rand()}`,
+        category: "social",
+        starts_at: startsAt,
+        ends_at: endsAt,
+        privacy: "friends",
+      })
+      .select("id")
+      .single();
+    if (friendsEvErr) throw friendsEvErr;
+    ctx.friendsEventId = friendsEv.id;
+
+    // Make A and B accepted friends (A is requester — INSERT policy allows this;
+    // directly using status='accepted' bypasses the pending step for test setup)
+    const { error: fErr } = await ctx.a
+      .from("friendships")
+      .insert({ requester_id: ctx.aId, addressee_id: ctx.bId, status: "accepted" });
+    if (fErr) throw fErr;
+
+    // A creates a fresh open event for point-award tests (no prior participants)
+    const { data: ptEv, error: ptEvErr } = await ctx.a
+      .from("events")
+      .insert({
+        creator_id: ctx.aId,
+        title: `pts-${rand()}`,
+        category: "study",
+        starts_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+        ends_at:   new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+        privacy: "open",
+      })
+      .select("id")
+      .single();
+    if (ptEvErr) throw ptEvErr;
+    ctx.pointTestEventId = ptEv.id;
+
+    // A creates an active event with TEC campus coordinates for check-in tests
+    const { data: ciEv, error: ciEvErr } = await ctx.a
+      .from("events")
+      .insert({
+        creator_id: ctx.aId,
+        title: `ci-${rand()}`,
+        category: "study",
+        starts_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+        ends_at:   new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+        lat: 20.6134,
+        lng: -100.4063,
+        privacy: "open",
+      })
+      .select("id")
+      .single();
+    if (ciEvErr) throw ciEvErr;
+    ctx.checkinEventId = ciEv.id;
+
+    // B joins checkinEvent so B can attempt a check-in in Goal B tests
+    const { error: bCiErr } = await ctx.b
+      .from("event_participants")
+      .insert({ event_id: ctx.checkinEventId, user_id: ctx.bId });
+    if (bCiErr) throw bCiErr;
 
     // A creates a group and joins it
     const { data: g, error: gErr } = await ctx.a
@@ -110,16 +218,37 @@ beforeAll(async () => {
 
 afterAll(async () => {
   if (skip) return;
-  // Best-effort cleanup
   try {
+    // Delete private event participants then event
     if (ctx.eventId) await ctx.a!.from("event_participants").delete().eq("event_id", ctx.eventId);
     if (ctx.eventId) await ctx.a!.from("events").delete().eq("id", ctx.eventId);
+    // Delete open and friends events (cascade removes participants)
+    if (ctx.openEventId) await ctx.a!.from("events").delete().eq("id", ctx.openEventId);
+    if (ctx.friendsEventId) await ctx.a!.from("events").delete().eq("id", ctx.friendsEventId);
+    // Delete point/check-in test events (cascade removes participants;
+    // point_events rows remain with event_id=NULL via ON DELETE SET NULL — harmless)
+    if (ctx.pointTestEventId) await ctx.a!.from("events").delete().eq("id", ctx.pointTestEventId);
+    if (ctx.checkinEventId) await ctx.a!.from("events").delete().eq("id", ctx.checkinEventId);
+    // Delete group members then group
     if (ctx.groupId) await ctx.a!.from("group_members").delete().eq("group_id", ctx.groupId);
     if (ctx.groupId) await ctx.a!.from("groups").delete().eq("id", ctx.groupId);
+    // Delete friendship
+    if (ctx.aId && ctx.bId) {
+      await ctx.a!
+        .from("friendships")
+        .delete()
+        .eq("requester_id", ctx.aId)
+        .eq("addressee_id", ctx.bId);
+    }
   } catch {}
   await ctx.a?.auth.signOut();
   await ctx.b?.auth.signOut();
+  await ctx.c?.auth.signOut();
 });
+
+// ============================================================
+// Original suite — must continue to pass
+// ============================================================
 
 describe("SECURITY DEFINER helpers — anonymous access denied", () => {
   it("anon cannot RPC is_event_participant", async () => {
@@ -243,5 +372,283 @@ describe("SECURITY DEFINER helpers — cross-user isolation", () => {
     if (skip) return;
     const { data } = await ctx.b!.from("events").select("*").eq("id", ctx.eventId!);
     expect(data ?? []).toHaveLength(0);
+  });
+});
+
+// ============================================================
+// Issue 1 acceptance tests — public_profiles cross-user visibility
+// ============================================================
+
+describe("Issue 1 — public_profiles cross-user visibility", () => {
+  it("B can read A's row from public_profiles (cross-user SELECT works)", async () => {
+    if (skip) return;
+    const { data, error } = await ctx.b!
+      .from("public_profiles")
+      .select("id, name, major")
+      .eq("id", ctx.aId!);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(1);
+    expect(data![0].id).toBe(ctx.aId);
+  });
+
+  it("email is not a column in public_profiles (selecting it returns an error)", async () => {
+    if (skip) return;
+    // PostgREST returns an error when you request a column that does not exist in the view
+    const { error } = await ctx.b!
+      .from("public_profiles")
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .select("email" as any)
+      .eq("id", ctx.aId!);
+    expect(error).toBeTruthy();
+  });
+
+  it("direct SELECT on profiles for another user returns 0 rows (own-row RLS policy)", async () => {
+    if (skip) return;
+    const { data } = await ctx.b!.from("profiles").select("id").eq("id", ctx.aId!);
+    expect(data ?? []).toHaveLength(0);
+  });
+});
+
+// ============================================================
+// Issue 2 acceptance tests — score / badge / check-in integrity
+// ============================================================
+
+describe("Issue 2 — score / badge / check-in integrity", () => {
+  it("authenticated user cannot UPDATE own points directly", async () => {
+    if (skip) return;
+    const { error } = await ctx.a!
+      .from("profiles")
+      .update({ points: 999999 })
+      .eq("id", ctx.aId!);
+    expect(error).toBeTruthy();
+  });
+
+  it("authenticated user cannot UPDATE own reputation directly", async () => {
+    if (skip) return;
+    const { error } = await ctx.a!
+      .from("profiles")
+      .update({ reputation: 9999 })
+      .eq("id", ctx.aId!);
+    expect(error).toBeTruthy();
+  });
+
+  it("authenticated user cannot self-insert a badge", async () => {
+    if (skip) return;
+    const { error } = await ctx.b!
+      .from("badges")
+      .insert({ user_id: ctx.bId!, badge_type: "test_self_award" });
+    expect(error).toBeTruthy();
+  });
+
+  it("participant cannot flip their own checked_in to true", async () => {
+    if (skip) return;
+    // B joined ctx.openEventId in beforeAll; now B tries to self-check-in
+    const { error } = await ctx.b!
+      .from("event_participants")
+      .update({ checked_in: true })
+      .eq("event_id", ctx.openEventId!)
+      .eq("user_id", ctx.bId!);
+    expect(error).toBeTruthy();
+  });
+});
+
+// ============================================================
+// Issue 3 acceptance tests — friends event privacy
+// ============================================================
+
+describe("Issue 3 — friends event privacy", () => {
+  it("anon cannot call are_friends", async () => {
+    if (skip) return;
+    const { error } = await ctx.anon!.rpc("are_friends", { a: ctx.aId!, b: ctx.bId! });
+    expect(error).toBeTruthy();
+  });
+
+  it("accepted friend B can see A's friends-only event", async () => {
+    if (skip) return;
+    const { data, error } = await ctx.b!
+      .from("events")
+      .select("id, privacy")
+      .eq("id", ctx.friendsEventId!);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(1);
+    expect(data![0].privacy).toBe("friends");
+  });
+
+  it("non-friend C cannot see A's friends-only event", async () => {
+    if (skip) return;
+    const { data } = await ctx.c!
+      .from("events")
+      .select("id")
+      .eq("id", ctx.friendsEventId!);
+    expect(data ?? []).toHaveLength(0);
+  });
+
+  it("non-friend C still cannot see A's private event", async () => {
+    if (skip) return;
+    const { data } = await ctx.c!
+      .from("events")
+      .select("id")
+      .eq("id", ctx.eventId!);
+    expect(data ?? []).toHaveLength(0);
+  });
+});
+
+// ============================================================
+// Goal A acceptance tests — server-side point awards
+// ============================================================
+
+describe("Goal A — server-side point awards", () => {
+  it("join → point_events +10 exactly once; leave + rejoin → no second row", async () => {
+    if (skip) return;
+    // B joins pointTestEventId for the first time
+    const { error: joinErr } = await ctx.b!
+      .from("event_participants")
+      .insert({ event_id: ctx.pointTestEventId!, user_id: ctx.bId! });
+    expect(joinErr).toBeNull();
+
+    // Ledger has exactly one 'join' row for B + this event
+    const { data: r1, error: r1Err } = await ctx.b!
+      .from("point_events")
+      .select("points")
+      .eq("event_id", ctx.pointTestEventId!)
+      .eq("reason", "join");
+    expect(r1Err).toBeNull();
+    expect(r1).toHaveLength(1);
+    expect(r1![0].points).toBe(10);
+
+    // B leaves
+    await ctx.b!
+      .from("event_participants")
+      .delete()
+      .eq("event_id", ctx.pointTestEventId!)
+      .eq("user_id", ctx.bId!);
+
+    // B rejoins — ON CONFLICT DO NOTHING keeps ledger idempotent
+    const { error: rejoinErr } = await ctx.b!
+      .from("event_participants")
+      .insert({ event_id: ctx.pointTestEventId!, user_id: ctx.bId! });
+    expect(rejoinErr).toBeNull();
+
+    const { data: r2 } = await ctx.b!
+      .from("point_events")
+      .select("points")
+      .eq("event_id", ctx.pointTestEventId!)
+      .eq("reason", "join");
+    expect(r2).toHaveLength(1); // still one row, not two
+  });
+
+  it("create event → point_events +25 (organize) for the creator", async () => {
+    if (skip) return;
+    // pointTestEvent was created by A in beforeAll; the AFTER INSERT trigger
+    // on events should have fired and placed an 'organize' row in the ledger
+    const { data, error } = await ctx.a!
+      .from("point_events")
+      .select("points")
+      .eq("event_id", ctx.pointTestEventId!)
+      .eq("reason", "organize");
+    expect(error).toBeNull();
+    expect(data).toHaveLength(1);
+    expect(data![0].points).toBe(25);
+  });
+
+  it("authenticated user cannot call award_points directly (permission denied)", async () => {
+    if (skip) return;
+    const { error } = await ctx.a!.rpc("award_points", {
+      _user_id: ctx.aId!,
+      _event_id: ctx.pointTestEventId!,
+      _reason: "join",
+      _points: 100,
+    });
+    expect(error).toBeTruthy();
+  });
+
+  it("authenticated UPDATE profiles SET points=999999 → still blocked (regression)", async () => {
+    if (skip) return;
+    const { error } = await ctx.a!
+      .from("profiles")
+      .update({ points: 999999 })
+      .eq("id", ctx.aId!);
+    expect(error).toBeTruthy();
+  });
+});
+
+// ============================================================
+// Goal B acceptance tests — location-verified check-in
+// ============================================================
+
+describe("Goal B — location-verified check-in", () => {
+  it("check_in within 150 m and inside window → checked_in=true, +15 in ledger", async () => {
+    if (skip) return;
+    // B joined checkinEvent in beforeAll; call with exact event coordinates (0 m)
+    const { data, error } = await ctx.b!.rpc("check_in_to_event", {
+      _event_id: ctx.checkinEventId!,
+      _lat: 20.6134,
+      _lng: -100.4063,
+    });
+    expect(error).toBeNull();
+    expect((data as { checked_in: boolean; distance_m: number }).checked_in).toBe(true);
+    expect((data as { checked_in: boolean; distance_m: number }).distance_m).toBeLessThanOrEqual(150);
+
+    const { data: rows, error: ledgerErr } = await ctx.b!
+      .from("point_events")
+      .select("points")
+      .eq("event_id", ctx.checkinEventId!)
+      .eq("reason", "check_in");
+    expect(ledgerErr).toBeNull();
+    expect(rows).toHaveLength(1);
+    expect(rows![0].points).toBe(15);
+  });
+
+  it("second check_in call is idempotent → no extra point_events row", async () => {
+    if (skip) return;
+    // B is already checked in from the previous test
+    const { error } = await ctx.b!.rpc("check_in_to_event", {
+      _event_id: ctx.checkinEventId!,
+      _lat: 20.6134,
+      _lng: -100.4063,
+    });
+    expect(error).toBeNull(); // idempotent — not an error
+
+    const { data: rows } = await ctx.b!
+      .from("point_events")
+      .select("points")
+      .eq("event_id", ctx.checkinEventId!)
+      .eq("reason", "check_in");
+    expect(rows).toHaveLength(1); // still exactly one row
+  });
+
+  it("check_in > 150 m away → TOO_FAR_FROM_EVENT, checked_in stays false, no ledger row", async () => {
+    if (skip) return;
+    // C joins checkinEvent so they are a valid participant
+    const { error: joinErr } = await ctx.c!
+      .from("event_participants")
+      .insert({ event_id: ctx.checkinEventId!, user_id: ctx.cId! });
+    expect(joinErr).toBeNull();
+
+    // Attempt check-in from Mexico City (~1 000 km away)
+    const { error } = await ctx.c!.rpc("check_in_to_event", {
+      _event_id: ctx.checkinEventId!,
+      _lat: 19.4326,
+      _lng: -99.1332,
+    });
+    expect(error).toBeTruthy();
+    expect(error!.message).toContain("TOO_FAR_FROM_EVENT");
+
+    // C must NOT be checked in
+    const { data: ep } = await ctx.c!
+      .from("event_participants")
+      .select("checked_in")
+      .eq("event_id", ctx.checkinEventId!)
+      .eq("user_id", ctx.cId!);
+    expect(ep).toHaveLength(1);
+    expect(ep![0].checked_in).toBe(false);
+
+    // No check_in ledger row for C
+    const { data: rows } = await ctx.c!
+      .from("point_events")
+      .select("points")
+      .eq("event_id", ctx.checkinEventId!)
+      .eq("reason", "check_in");
+    expect(rows ?? []).toHaveLength(0);
   });
 });
