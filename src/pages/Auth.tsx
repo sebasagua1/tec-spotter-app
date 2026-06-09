@@ -33,8 +33,9 @@ export default function Auth() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       }
-    } catch (err: any) {
-      toast({ title: t('common.error'), description: err.message, variant: 'destructive' });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : t('common.error');
+      toast({ title: t('common.error'), description: msg, variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -48,8 +49,9 @@ export default function Auth() {
         options: { redirectTo: window.location.origin },
       });
       if (error) throw error;
-    } catch (err: any) {
-      toast({ title: t('common.error'), description: err.message, variant: 'destructive' });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : t('common.error');
+      toast({ title: t('common.error'), description: msg, variant: 'destructive' });
     } finally {
       setGoogleLoading(false);
     }
