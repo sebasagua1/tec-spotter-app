@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
 import { X, Minus, Plus as PlusIcon, MapPin, CalendarIcon } from 'lucide-react';
+import { PrivacySelector } from '@/components/ui/privacy-selector';
 import { CATEGORY_ICONS } from '@/lib/categoryIcons';
 import { format } from 'date-fns';
 import { es as esLocale, enUS } from 'date-fns/locale';
@@ -125,8 +126,6 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
     setLoading(false);
   };
 
-  const privacyLabel = (p: string) =>
-    p === 'open' ? t('create.privacyOpen') : p === 'friends' ? t('create.privacyFriends') : t('create.privacyPrivate');
 
   return (
     <div className="fixed inset-0 z-30 bg-foreground/40 animate-fade-in" onClick={onClose}>
@@ -308,24 +307,7 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
 
             {showAdvanced && (
               <div className="space-y-3">
-                <div>
-                  <label className="text-sm font-semibold text-foreground mb-2 block">{t('create.privacy')}</label>
-                  <div className="flex gap-2" role="group" aria-label={t('create.privacy')}>
-                    {['open', 'friends', 'private'].map(p => (
-                      <button
-                        key={p}
-                        onClick={() => setPrivacy(p)}
-                        aria-pressed={privacy === p}
-                        className={cn(
-                          'px-4 py-2 rounded-full text-xs font-semibold transition-all',
-                          privacy === p ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                        )}
-                      >
-                        {privacyLabel(p)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                <PrivacySelector value={privacy} onChange={setPrivacy} />
               </div>
             )}
 

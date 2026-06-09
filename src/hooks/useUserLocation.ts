@@ -41,11 +41,10 @@ export function useUserLocation(options: Options = {}) {
       setPermission('unsupported');
       return;
     }
-    const anyNav = navigator as any;
-    if (anyNav.permissions?.query) {
-      anyNav.permissions
-        .query({ name: 'geolocation' as PermissionName })
-        .then((res: PermissionStatus) => {
+    if ('permissions' in navigator && navigator.permissions?.query) {
+      navigator.permissions
+        .query({ name: 'geolocation' })
+        .then((res) => {
           setPermission(res.state as GeoPermissionStatus);
           res.onchange = () => setPermission(res.state as GeoPermissionStatus);
         })

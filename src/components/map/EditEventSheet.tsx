@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, CalendarIcon, Minus, Plus as PlusIcon, Loader2 } from 'lucide-react';
+import { PrivacySelector } from '@/components/ui/privacy-selector';
 import { format } from 'date-fns';
 import { es as esLocale, enUS } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { TimePicker } from '@/components/ui/time-picker';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
 import type { MapEvent } from '@/stores/eventStore';
 
 interface Props {
@@ -86,12 +86,6 @@ export function EditEventSheet({ event, onClose, onSaved }: Props) {
     }
     setSaving(false);
   };
-
-  const privacyOptions = [
-    { key: 'open', label: t('create.privacyOpen') },
-    { key: 'friends', label: t('create.privacyFriends') },
-    { key: 'private', label: t('create.privacyPrivate') },
-  ] as const;
 
   return (
     <div className="fixed inset-0 z-50 bg-foreground/40 animate-fade-in" onClick={onClose}>
@@ -202,26 +196,7 @@ export function EditEventSheet({ event, onClose, onSaved }: Props) {
             </div>
 
             {/* Privacy */}
-            <div>
-              <label className="text-sm font-semibold text-foreground mb-2 block">{t('create.privacy')}</label>
-              <div className="flex gap-2 flex-wrap">
-                {privacyOptions.map(opt => (
-                  <button
-                    key={opt.key}
-                    onClick={() => setPrivacy(opt.key)}
-                    aria-pressed={privacy === opt.key}
-                    className={cn(
-                      'px-4 py-2 rounded-full text-sm font-semibold transition-all',
-                      privacy === opt.key
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted text-muted-foreground'
-                    )}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <PrivacySelector value={privacy} onChange={setPrivacy} />
           </div>
         </div>
 

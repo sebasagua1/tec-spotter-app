@@ -4,8 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { INTEREST_OPTIONS, LANGUAGE_OPTIONS, RESIDENCE_OPTIONS } from '@/lib/constants';
+import { INTEREST_OPTIONS, LANGUAGE_OPTIONS } from '@/lib/constants';
 import { cn } from '@/lib/utils';
+import { ChipSelector } from '@/components/ui/chip-selector';
+import { ResidencePicker } from '@/components/ui/residence-picker';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
@@ -162,23 +164,7 @@ export default function Onboarding() {
             <h2 className="text-2xl font-extrabold text-foreground mb-1">{t('onboarding.residenceTitle')}</h2>
             <p className="text-muted-foreground text-sm">{t('onboarding.residenceSubtitle')}</p>
           </div>
-          <div className="space-y-3" role="group" aria-label={t('onboarding.residenceTitle')}>
-            {RESIDENCE_OPTIONS.map(opt => (
-              <button
-                key={opt.key}
-                onClick={() => setResidence(opt.key)}
-                aria-pressed={residence === opt.key}
-                className={cn(
-                  'w-full p-4 rounded-xl text-left font-semibold transition-all border-2',
-                  residence === opt.key
-                    ? 'border-primary bg-primary/5 text-foreground'
-                    : 'border-border bg-card text-muted-foreground'
-                )}
-              >
-                {t('residence.' + opt.key)}
-              </button>
-            ))}
-          </div>
+          <ResidencePicker value={residence} onChange={setResidence} />
         </div>
       );
     }
@@ -190,21 +176,12 @@ export default function Onboarding() {
             <h2 className="text-2xl font-extrabold text-foreground mb-1">{t('onboarding.interestsTitle')}</h2>
             <p className="text-muted-foreground text-sm">{t('onboarding.interestsSubtitle')}</p>
           </div>
-          <div className="flex flex-wrap gap-2" role="group" aria-label={t('onboarding.interestsTitle')}>
-            {INTEREST_OPTIONS.map(interest => (
-              <button
-                key={interest}
-                onClick={() => toggleItem(interests, interest, setInterests)}
-                aria-pressed={interests.includes(interest)}
-                className={cn(
-                  'px-4 py-2 rounded-full text-sm font-semibold transition-all',
-                  interests.includes(interest) ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                )}
-              >
-                {t('interests.' + interest)}
-              </button>
-            ))}
-          </div>
+          <ChipSelector
+            options={INTEREST_OPTIONS}
+            selected={interests}
+            onToggle={(item) => toggleItem(interests, item, setInterests)}
+            renderLabel={(item) => t('interests.' + item)}
+          />
         </div>
       );
     }
@@ -216,21 +193,11 @@ export default function Onboarding() {
             <h2 className="text-2xl font-extrabold text-foreground mb-1">{t('onboarding.languagesTitle')}</h2>
             <p className="text-muted-foreground text-sm">{t('onboarding.languagesSubtitle')}</p>
           </div>
-          <div className="flex flex-wrap gap-2" role="group" aria-label={t('onboarding.languagesTitle')}>
-            {LANGUAGE_OPTIONS.map(lang => (
-              <button
-                key={lang}
-                onClick={() => toggleItem(languages, lang, setLanguages)}
-                aria-pressed={languages.includes(lang)}
-                className={cn(
-                  'px-4 py-2 rounded-full text-sm font-semibold transition-all',
-                  languages.includes(lang) ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                )}
-              >
-                {lang}
-              </button>
-            ))}
-          </div>
+          <ChipSelector
+            options={LANGUAGE_OPTIONS}
+            selected={languages}
+            onToggle={(item) => toggleItem(languages, item, setLanguages)}
+          />
         </div>
       );
     }

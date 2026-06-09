@@ -186,7 +186,7 @@ export default function MapHome() {
   useEffect(() => {
     if (!mapRef.current || !mapLoaded) return;
 
-    const handleClick = async (e: any) => {
+    const handleClick = async (e: { lngLat: { lng: number; lat: number } }) => {
       if (!pickingLocation) return;
       const { lng, lat } = e.lngLat;
       setPickedLocation({ lng, lat });

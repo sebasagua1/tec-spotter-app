@@ -7,8 +7,9 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
-import { INTEREST_OPTIONS, LANGUAGE_OPTIONS, RESIDENCE_OPTIONS } from '@/lib/constants';
+import { INTEREST_OPTIONS, LANGUAGE_OPTIONS } from '@/lib/constants';
+import { ChipSelector } from '@/components/ui/chip-selector';
+import { ResidencePicker } from '@/components/ui/residence-picker';
 import type { Database } from '@/integrations/supabase/types';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
@@ -177,67 +178,28 @@ export function EditProfileSheet({ profile, onClose }: Props) {
         {/* Residence */}
         <div className="space-y-3">
           <Label>{t('onboarding.residenceTitle')}</Label>
-          <div className="space-y-2" role="group" aria-label={t('onboarding.residenceTitle')}>
-            {RESIDENCE_OPTIONS.map((opt) => (
-              <button
-                key={opt.key}
-                onClick={() => setResidence(opt.key)}
-                aria-pressed={residence === opt.key}
-                className={cn(
-                  'w-full p-4 rounded-xl text-left font-semibold transition-all border-2',
-                  residence === opt.key
-                    ? 'border-primary bg-primary/5 text-foreground'
-                    : 'border-border bg-card text-muted-foreground'
-                )}
-              >
-                {t('residence.' + opt.key)}
-              </button>
-            ))}
-          </div>
+          <ResidencePicker value={residence} onChange={setResidence} />
         </div>
 
         {/* Interests */}
         <div className="space-y-3">
           <Label>{t('onboarding.interestsTitle')}</Label>
-          <div className="flex flex-wrap gap-2" role="group" aria-label={t('onboarding.interestsTitle')}>
-            {INTEREST_OPTIONS.map((interest) => (
-              <button
-                key={interest}
-                onClick={() => toggle(interests, interest, setInterests)}
-                aria-pressed={interests.includes(interest)}
-                className={cn(
-                  'px-4 py-2 rounded-full text-sm font-semibold transition-all',
-                  interests.includes(interest)
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-muted-foreground'
-                )}
-              >
-                {t('interests.' + interest)}
-              </button>
-            ))}
-          </div>
+          <ChipSelector
+            options={INTEREST_OPTIONS}
+            selected={interests}
+            onToggle={(item) => toggle(interests, item, setInterests)}
+            renderLabel={(item) => t('interests.' + item)}
+          />
         </div>
 
         {/* Languages */}
         <div className="space-y-3">
           <Label>{t('onboarding.languagesTitle')}</Label>
-          <div className="flex flex-wrap gap-2" role="group" aria-label={t('onboarding.languagesTitle')}>
-            {LANGUAGE_OPTIONS.map((lang) => (
-              <button
-                key={lang}
-                onClick={() => toggle(languages, lang, setLanguages)}
-                aria-pressed={languages.includes(lang)}
-                className={cn(
-                  'px-4 py-2 rounded-full text-sm font-semibold transition-all',
-                  languages.includes(lang)
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-muted-foreground'
-                )}
-              >
-                {lang}
-              </button>
-            ))}
-          </div>
+          <ChipSelector
+            options={LANGUAGE_OPTIONS}
+            selected={languages}
+            onToggle={(item) => toggle(languages, item, setLanguages)}
+          />
         </div>
       </div>
 
