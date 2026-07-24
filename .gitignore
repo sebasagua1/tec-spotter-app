@@ -20,6 +20,18 @@ dist-ssr
 # Supabase CLI temp files (machine-local, not project state)
 supabase/.temp/
 
+# Vite/Vitest temp config bundles
+*.timestamp-*.mjs
+
+# Archives / backups (no van al repo)
+*.zip
+
+# Este proyecto usa npm. No commitear lockfiles de otros gestores.
+bun.lock
+bun.lockb
+yarn.lock
+pnpm-lock.yaml
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
