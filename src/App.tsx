@@ -1,18 +1,30 @@
-import { useEffect, useState } from 'react';
-import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
+import { useEffect, lazy, Suspense } from 'react';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 import { AppShell } from '@/components/layout/AppShell';
 import Auth from '@/pages/Auth';
-import Onboarding from '@/pages/Onboarding';
-import MapHome from '@/pages/MapHome';
-import MyEvents from '@/pages/MyEvents';
-import Friends from '@/pages/Friends';
-import Profile from '@/pages/Profile';
-import GroupChat from '@/pages/GroupChat';
-import NotFound from '@/pages/NotFound';
+
+// Rutas cargadas bajo demanda: mantienen el bundle inicial pequeño
+// (importante en móvil). Auth se queda eager porque es el primer
+// paint para usuarios sin sesión.
+const Onboarding = lazy(() => import('@/pages/Onboarding'));
+const MapHome = lazy(() => import('@/pages/MapHome'));
+const MyEvents = lazy(() => import('@/pages/MyEvents'));
+const Friends = lazy(() => import('@/pages/Friends'));
+const Profile = lazy(() => import('@/pages/Profile'));
+const GroupChat = lazy(() => import('@/pages/GroupChat'));
+const NotFound = lazy(() => import('@/pages/NotFound'));
+
+function PageSpinner() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
 
 function AuthGate() {
   const { user, session, profile, loading, setSession, setLoading, fetchProfile } = useAuthStore();
@@ -38,13 +50,7 @@ function AuthGate() {
     if (user) fetchProfile();
   }, [user, fetchProfile]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+  if (loading) return <PageSpinner />;
 
   if (!session) return <Auth />;
 
@@ -59,16 +65,18 @@ const App = () => (
   <TooltipProvider>
     <Toaster />
     <BrowserRouter>
-      <Routes>
-        <Route path="/*" element={<AuthGate />}>
-          <Route index element={<MapHome />} />
-          <Route path="events" element={<MyEvents />} />
-          <Route path="friends" element={<Friends />} />
-          <Route path="groups/:id" element={<GroupChat />} />
-          <Route path="profile" element={<Profile />} />
-        </Route>
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      <Suspense fallback={<PageSpinner />}>
+        <Routes>
+          <Route path="/*" element={<AuthGate />}>
+            <Route index element={<MapHome />} />
+            <Route path="events" element={<MyEvents />} />
+            <Route path="friends" element={<Friends />} />
+            <Route path="groups/:id" element={<GroupChat />} />
+            <Route path="profile" element={<Profile />} />
+          </Route>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   </TooltipProvider>
 );

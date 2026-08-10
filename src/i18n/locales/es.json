@@ -33,7 +33,9 @@
     "hasAccount": "¿Ya tienes cuenta?",
     "noAccount": "¿No tienes cuenta?",
     "checkEmail": "Revisa tu correo",
-    "verifyLink": "Te enviamos un enlace de verificación."
+    "verifyLink": "Te enviamos un enlace de verificación.",
+    "emailHint": "Usa tu correo institucional (@tec.mx o @exatec.mx).",
+    "tecEmailOnly": "Solo se permiten correos del Tec (@tec.mx o @exatec.mx)."
   },
   "onboarding": {
     "campusTitle": "Tu campus 🏫",

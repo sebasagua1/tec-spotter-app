@@ -8,6 +8,14 @@ import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { useToast } from '@/hooks/use-toast';
 import { MapPin } from 'lucide-react';
 
+// Dominios institucionales aceptados. Debe reflejar el trigger
+// enforce_tec_email() de la migración; el servidor es la fuente
+// de verdad y esto es solo para una mejor UX previa.
+const ALLOWED_EMAIL_DOMAINS = ['tec.mx', 'exatec.mx', 'itesm.mx'];
+
+const isTecEmail = (value: string) =>
+  ALLOWED_EMAIL_DOMAINS.includes(value.split('@')[1]?.toLowerCase() ?? '');
+
 export default function Auth() {
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
@@ -19,6 +27,10 @@ export default function Auth() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSignUp && !isTecEmail(email)) {
+      toast({ title: t('common.error'), description: t('auth.tecEmailOnly'), variant: 'destructive' });
+      return;
+    }
     setLoading(true);
     try {
       if (isSignUp) {
@@ -110,6 +122,9 @@ export default function Auth() {
               autoComplete="email"
               className="h-12 rounded-xl bg-card border-border text-base"
             />
+            {isSignUp && (
+              <p className="text-xs text-muted-foreground">{t('auth.emailHint')}</p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="auth-password">{t('auth.password')}</Label>
