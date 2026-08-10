@@ -78,7 +78,7 @@ export default function Friends() {
 
   const loadFriends = useCallback(async (page: number) => {
     if (!user) return;
-    page === 0 ? setLoading(true) : setLoadingMoreFriends(true);
+    if (page === 0) setLoading(true); else setLoadingMoreFriends(true);
     try {
       const { data: accepted } = await supabase
         .from('friendships')
@@ -96,7 +96,7 @@ export default function Friends() {
           .in('id', friendIds)
           .range(page * FRIENDS_PAGE_SIZE, (page + 1) * FRIENDS_PAGE_SIZE - 1);
         if (profiles) {
-          page === 0 ? setFriends(profiles) : setFriends((prev) => [...prev, ...profiles]);
+          if (page === 0) setFriends(profiles); else setFriends((prev) => [...prev, ...profiles]);
           setFriendsHasMore(profiles.length === FRIENDS_PAGE_SIZE);
         }
       } else {
@@ -133,7 +133,7 @@ export default function Friends() {
         }
       }
     } finally {
-      page === 0 ? setLoading(false) : setLoadingMoreFriends(false);
+      if (page === 0) setLoading(false); else setLoadingMoreFriends(false);
     }
   }, [user]);
 
@@ -171,7 +171,8 @@ export default function Friends() {
         .order('reputation', { ascending: false })
         .range(offset, offset + LEADER_PAGE_SIZE - 1);
       if (data) {
-        offset === 0 ? setLeaderboard(data as LeaderEntry[]) : setLeaderboard((prev) => [...prev, ...(data as LeaderEntry[])]);
+        if (offset === 0) setLeaderboard(data as LeaderEntry[]);
+        else setLeaderboard((prev) => [...prev, ...(data as LeaderEntry[])]);
         setLeaderHasMore(data.length === LEADER_PAGE_SIZE);
         setLeaderOffset(offset + data.length);
       }

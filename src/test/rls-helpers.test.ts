@@ -209,9 +209,8 @@ beforeAll(async () => {
       .from("group_members")
       .insert({ group_id: ctx.groupId, user_id: ctx.aId });
     if (gmErr) throw gmErr;
-  } catch (e: any) {
-    // eslint-disable-next-line no-console
-    console.warn("[rls-helpers] Skipping suite:", e?.message ?? e);
+  } catch (e: unknown) {
+    console.warn("[rls-helpers] Skipping suite:", e instanceof Error ? e.message : e);
     skip = true;
   }
 }, 30_000);
@@ -240,7 +239,9 @@ afterAll(async () => {
         .eq("requester_id", ctx.aId)
         .eq("addressee_id", ctx.bId);
     }
-  } catch {}
+  } catch {
+    // best-effort cleanup; ignore teardown errors
+  }
   await ctx.a?.auth.signOut();
   await ctx.b?.auth.signOut();
   await ctx.c?.auth.signOut();

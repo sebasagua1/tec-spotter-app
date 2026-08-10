@@ -13,13 +13,14 @@ import { LocationPickerOverlay } from '@/components/map/LocationPickerOverlay';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { toast } from '@/hooks/use-toast';
+import type { Map as MapboxMap, Marker as MapboxMarker } from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 export default function MapHome() {
   const { t } = useTranslation();
   const mapContainer = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<any>(null);
-  const markersRef = useRef<any[]>([]);
+  const mapRef = useRef<MapboxMap | null>(null);
+  const markersRef = useRef<MapboxMarker[]>([]);
   const { events, setEvents, selectedEvent, setSelectedEvent, filterCategory, setFilterCategory } = useEventStore();
   const [showCreate, setShowCreate] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
@@ -31,8 +32,8 @@ export default function MapHome() {
   const [pickReturnsToForm, setPickReturnsToForm] = useState(false);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   const [searchQuery, setSearchQuery] = useState('');
-  const pickMarkerRef = useRef<any>(null);
-  const userMarkerRef = useRef<any>(null);
+  const pickMarkerRef = useRef<MapboxMarker | null>(null);
+  const userMarkerRef = useRef<MapboxMarker | null>(null);
   const hasAutoCenteredRef = useRef(false);
   const deniedToastShownRef = useRef(false);
 
