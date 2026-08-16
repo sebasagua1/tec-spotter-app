@@ -9,9 +9,13 @@ import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { useToast } from '@/hooks/use-toast';
 import { MapPin } from 'lucide-react';
 
-// Dominios institucionales aceptados. Debe reflejar el trigger
-// enforce_tec_email() de la migración; el servidor es la fuente
-// de verdad y esto es solo para una mejor UX previa.
+// Restricción de registro a correos institucionales del Tec.
+// APAGADA por defecto: durante pruebas/lanzamiento cualquier correo
+// puede registrarse. Para limitar el registro al campus, pon
+// VITE_RESTRICT_TEC_EMAIL=true en el entorno Y aplica la migración
+// enforce_tec_email en Supabase (el servidor es la fuente de verdad;
+// este chequeo de cliente es solo para mejor UX).
+const RESTRICT_TEC_EMAIL = import.meta.env.VITE_RESTRICT_TEC_EMAIL === 'true';
 const ALLOWED_EMAIL_DOMAINS = ['tec.mx', 'exatec.mx', 'itesm.mx'];
 
 const isTecEmail = (value: string) =>
@@ -34,7 +38,7 @@ export default function Auth() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSignUp && !isTecEmail(email)) {
+    if (isSignUp && RESTRICT_TEC_EMAIL && !isTecEmail(email)) {
       toast({ title: t('common.error'), description: t('auth.tecEmailOnly'), variant: 'destructive' });
       return;
     }
@@ -133,7 +137,7 @@ export default function Auth() {
               autoComplete="email"
               className="h-12 rounded-xl bg-card border-border text-base"
             />
-            {isSignUp && (
+            {isSignUp && RESTRICT_TEC_EMAIL && (
               <p className="text-xs text-muted-foreground">{t('auth.emailHint')}</p>
             )}
           </div>
