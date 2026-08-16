@@ -21,6 +21,7 @@
   "auth": {
     "tagline": "Conecta a través de la acción, no del estatus.",
     "continueGoogle": "Continuar con Google",
+    "continueApple": "Continuar con Apple",
     "signingIn": "Iniciando sesión…",
     "or": "o",
     "email": "Correo",

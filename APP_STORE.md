@@ -65,19 +65,50 @@ Sin esta clave, iOS mata la app al pedir ubicación **y** Apple rechaza el enví
 
 ---
 
-## 4. ⚠️ Gotcha importante: login con Google en el webview
+## 4. Social login (Apple + Google) — setup
 
-En web, el OAuth usa `redirectTo: window.location.origin`. Dentro de la app nativa el
-origin es `capacitor://localhost`, así que el redirect de Google **no volverá solo** a la
-app. Tienes dos caminos:
+El código ya está implementado: en iOS nativo se usa el plugin
+`@capgo/capacitor-social-login` (sign-in nativo → `signInWithIdToken` de Supabase,
+sin el redirect que se rompe en el webview). Falta la config de cuentas/proveedores.
 
-- **Recomendado:** usa `@capacitor/browser` + un **deep link** (URL scheme propio) y
-  registra ese redirect en Supabase (Auth → URL Configuration) y en Google Cloud.
-- **Alternativa rápida para el primer envío:** oculta el botón de Google en nativo y deja
-  solo email+contraseña (que sí funciona tal cual). Detecta la plataforma con
-  `Capacitor.isNativePlatform()`.
+### 4.1 Sign in with Apple (obligatorio si ofreces Google — guideline 4.8)
+1. **Xcode** (`npm run ios:open`) → target **App → Signing & Capabilities** →
+   **+ Capability → "Sign in with Apple"**. Esto añade el entitlement y registra la
+   capability en tu App ID del portal de Apple Developer.
+2. **Supabase** → Authentication → Providers → **Apple** → activar. En *Authorized Client IDs*
+   agrega tu Bundle ID: `mx.tec.connecttec`. (Para el flujo nativo por idToken basta el
+   Bundle ID; el Services ID/secret solo hace falta para Apple en web.)
 
-El login por **email/contraseña funciona sin cambios** en nativo.
+### 4.2 Google Sign-In nativo
+1. **Google Cloud** → Credentials → crea **dos** OAuth Client IDs:
+   - Tipo **iOS** → Bundle ID `mx.tec.connecttec`. Copia el *iOS client ID*.
+   - Tipo **Web** → copia el *Web client ID* (y su secret, para Supabase).
+2. **Env vars** (se hornean en el build; ponlas ANTES de `npm run ios:sync`):
+   ```
+   VITE_GOOGLE_IOS_CLIENT_ID=xxxx.apps.googleusercontent.com
+   VITE_GOOGLE_WEB_CLIENT_ID=yyyy.apps.googleusercontent.com
+   ```
+   Sin ambas, el botón de Google en iOS no se muestra (Apple sí aparece igual).
+3. **Info.plist** → agrega el URL scheme del *iOS client ID invertido* (para el callback):
+   ```xml
+   <key>CFBundleURLTypes</key>
+   <array><dict><key>CFBundleURLSchemes</key>
+     <array><string>com.googleusercontent.apps.xxxx</string></array>
+   </dict></array>
+   ```
+4. **Supabase** → Providers → **Google** → activar, y en *Authorized Client IDs* agrega
+   **ambos** (iOS y Web) para que `signInWithIdToken` acepte el token del dispositivo.
+
+### 4.3 Google en web
+Client ID/Secret **Web** en Supabase (Providers → Google) + redirect
+`https://<proyecto>.supabase.co/auth/v1/callback` en Google Cloud. La Redirect URL de la
+app ya está configurada.
+
+> **Nota (nonce):** si el sign-in de Apple falla con error de *nonce*, es un mismatch entre
+> el token del plugin y Supabase; se resuelve pasando el mismo nonce a ambos. Para
+> email/contraseña y Google no aplica.
+
+El login por **email/contraseña funciona sin nada de lo anterior**.
 
 ---
 
