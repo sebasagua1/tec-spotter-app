@@ -2,6 +2,11 @@
 -- ConnectTec — esquema completo (consolidado de migrations/)
 -- Pegar en el SQL Editor de un proyecto Supabase NUEVO y ejecutar.
 -- Generado: 2026-08-16
+--
+-- NOTA: se omite el bloque de RLS sobre realtime.messages (tabla
+-- interna de Supabase) porque el SQL Editor no es su dueño. El
+-- realtime por postgres_changes funciona igual vía la RLS de las
+-- tablas public.* y la publicación supabase_realtime. Ver README.
 -- ============================================================
 
 
@@ -509,56 +514,7 @@ TO anon, authenticated
 USING (bucket_id = 'avatars');
 
 -- =========================
--- Realtime: lock down channel subscriptions
--- =========================
-ALTER TABLE IF EXISTS realtime.messages ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Authenticated can use scoped realtime topics" ON realtime.messages;
-
-CREATE POLICY "Authenticated can use scoped realtime topics"
-ON realtime.messages
-FOR SELECT
-TO authenticated
-USING (
-  -- Allow general postgres_changes channels (no topic-scoped private data)
-  realtime.topic() IN ('messages', 'events')
-  OR (
-    realtime.topic() LIKE 'event:%'
-    AND public.is_event_participant(
-      NULLIF(split_part(realtime.topic(), ':', 2), '')::uuid,
-      auth.uid()
-    )
-  )
-  OR (
-    realtime.topic() LIKE 'group:%'
-    AND public.is_group_member(
-      NULLIF(split_part(realtime.topic(), ':', 2), '')::uuid,
-      auth.uid()
-    )
-  )
-);
-
-CREATE POLICY "Authenticated can broadcast on scoped topics"
-ON realtime.messages
-FOR INSERT
-TO authenticated
-WITH CHECK (
-  realtime.topic() IN ('messages', 'events')
-  OR (
-    realtime.topic() LIKE 'event:%'
-    AND public.is_event_participant(
-      NULLIF(split_part(realtime.topic(), ':', 2), '')::uuid,
-      auth.uid()
-    )
-  )
-  OR (
-    realtime.topic() LIKE 'group:%'
-    AND public.is_group_member(
-      NULLIF(split_part(realtime.topic(), ':', 2), '')::uuid,
-      auth.uid()
-    )
-  )
-);
+-- [bloque realtime.messages omitido en el consolidado — aplicar aparte si se requiere]
 
 
 -- >>> 20260518070800_04b55336-8271-468a-aad9-e3fdb320f4e9.sql <<<
