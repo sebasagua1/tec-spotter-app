@@ -68,5 +68,15 @@
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>ConnectTec usa tu ubicación para mostrarte eventos cercanos en el campus y validar tu asistencia (check-in).</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<!-- iOS client ID de Google, invertido (callback de Google Sign-In) -->
+				<string>com.googleusercontent.apps.419887173763-s4l2ed276ffiqv19effm57b42tpud3in</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>
