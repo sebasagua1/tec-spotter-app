@@ -111,9 +111,15 @@ export default function MapHome() {
 
       map.on('load', () => {
         setMapLoaded(true);
+        // El contenedor puede medir 0 en el primer frame (lazy-load + async);
+        // reajusta el tamaño para que mapbox pida y pinte los tiles.
+        map.resize();
       });
 
       mapRef.current = map;
+      // Reajuste extra tras el layout inicial (por si el load ya disparó
+      // antes de que el contenedor tuviera su tamaño final).
+      requestAnimationFrame(() => map.resize());
     };
 
     initMap();
@@ -358,8 +364,10 @@ export default function MapHome() {
         <meta property="og:url" content="/" />
       </Helmet>
       <h1 className="sr-only">{t('map.title')}</h1>
-      {/* Map container */}
-      <div ref={mapContainer} className="absolute inset-0" />
+      {/* Map container — altura explícita (h-full/w-full) porque mapbox añade
+          .mapboxgl-map { position: relative }, que pisa el `absolute` y, sin
+          altura propia, el contenedor colapsa a 0 → mapa en blanco. */}
+      <div ref={mapContainer} className="absolute inset-0 h-full w-full" />
 
       {/* Fallback if no mapbox token */}
       {!mapboxToken && (
