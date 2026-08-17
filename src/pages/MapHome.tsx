@@ -13,7 +13,7 @@ import { LocationPickerOverlay } from '@/components/map/LocationPickerOverlay';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { toast } from '@/hooks/use-toast';
-import type { Map as MapboxMap, Marker as MapboxMarker } from 'mapbox-gl';
+import mapboxgl, { type Map as MapboxMap, type Marker as MapboxMarker } from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 export default function MapHome() {
@@ -78,7 +78,6 @@ export default function MapHome() {
     if (!mapContainer.current || mapRef.current) return;
 
     const initMap = async () => {
-      const mapboxgl = (await import('mapbox-gl')).default;
 
       // Prefer the env-var token (zero round-trip); fall back to the edge function
       let token = (import.meta.env.VITE_MAPBOX_TOKEN as string) ?? '';
@@ -135,7 +134,6 @@ export default function MapHome() {
     if (!mapRef.current || !mapLoaded) return;
 
     const updateMarkers = async () => {
-      const mapboxgl = (await import('mapbox-gl')).default;
 
       // Clear existing markers
       markersRef.current.forEach(m => m.remove());
@@ -199,7 +197,6 @@ export default function MapHome() {
       setPickedLocation({ lng, lat });
 
       // Update or create the pick marker
-      const mapboxgl = (await import('mapbox-gl')).default;
       if (pickMarkerRef.current) pickMarkerRef.current.remove();
 
       const el = document.createElement('div');
@@ -268,7 +265,6 @@ export default function MapHome() {
     let cancelled = false;
 
     (async () => {
-      const mapboxgl = (await import('mapbox-gl')).default;
       if (cancelled) return;
       const lngLat: [number, number] = [userLocation.lng, userLocation.lat];
 
