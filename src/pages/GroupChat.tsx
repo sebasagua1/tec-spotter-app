@@ -24,6 +24,8 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
+import { rpcMessage } from '@/lib/rpcErrors';
+import { ModerationMenu } from '@/components/moderation/ModerationMenu';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 
@@ -118,7 +120,8 @@ export default function GroupChat() {
         async (payload) => {
           const raw = payload.new as { id: string; content: string; created_at: string; sender_id: string };
           const [enriched] = await enrichMessages([raw]);
-          setMessages((prev) => [...prev, enriched]);
+          // Puede llegar un mensaje que ya pintamos como eco local al enviarlo.
+          setMessages((prev) => (prev.some((m) => m.id === raw.id) ? prev : [...prev, enriched]));
         }
       )
       .subscribe();
@@ -169,11 +172,14 @@ export default function GroupChat() {
   const handleAddMember = async (friendId: string) => {
     if (!groupId) return;
     setAddingMember(friendId);
-    const { error } = await supabase
-      .from('group_members')
-      .insert({ group_id: groupId, user_id: friendId });
+    // add_group_member() valida en el servidor que quien invita ya sea
+    // miembro y que la persona invitada sea su amiga aceptada.
+    const { error } = await supabase.rpc('add_group_member', {
+      _group_id: groupId,
+      _user_id: friendId,
+    });
     if (error) {
-      toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
+      toast({ title: t('common.error'), description: rpcMessage(error.message, t), variant: 'destructive' });
     } else {
       toast({ title: t('groups.memberAdded') });
       setFriends((prev) => prev.filter((f) => f.id !== friendId));
@@ -191,13 +197,26 @@ export default function GroupChat() {
 
   const sendMessage = async () => {
     if (!text.trim() || !user || !groupId || sending) return;
+    const content = text.trim();
     setSending(true);
-    await supabase.from('messages').insert({
-      group_id: groupId,
-      sender_id: user.id,
-      content: text.trim(),
-    });
     setText('');
+
+    const { data, error } = await supabase
+      .from('messages')
+      .insert({ group_id: groupId, sender_id: user.id, content })
+      .select('id, content, created_at, sender_id')
+      .single();
+
+    if (error) {
+      // Devolver el texto al input: perderlo en silencio hacía creer que
+      // el mensaje se había enviado.
+      setText(content);
+      toast({ title: t('groups.sendFailed'), description: error.message, variant: 'destructive' });
+    } else if (data) {
+      // Eco local inmediato; el handler de realtime descarta el duplicado por id.
+      const [enriched] = await enrichMessages([data]);
+      setMessages((prev) => (prev.some((m) => m.id === data.id) ? prev : [...prev, enriched]));
+    }
     setSending(false);
   };
 
@@ -316,15 +335,26 @@ export default function GroupChat() {
               {!isMe && (
                 <span className="text-[10px] text-muted-foreground px-1">{msg.senderName}</span>
               )}
-              <div
-                className={cn(
-                  'max-w-[75%] px-3.5 py-2 rounded-2xl text-sm',
-                  isMe
-                    ? 'bg-primary text-primary-foreground rounded-br-sm'
-                    : 'bg-muted text-foreground rounded-bl-sm'
+              <div className="flex items-center gap-1 max-w-[85%]">
+                <div
+                  className={cn(
+                    'px-3.5 py-2 rounded-2xl text-sm break-words',
+                    isMe
+                      ? 'bg-primary text-primary-foreground rounded-br-sm order-1'
+                      : 'bg-muted text-foreground rounded-bl-sm'
+                  )}
+                >
+                  {msg.content}
+                </div>
+                {!isMe && (
+                  <ModerationMenu
+                    target={{ kind: 'message', id: msg.id }}
+                    label={msg.senderName}
+                    blockUserId={msg.sender_id}
+                    onBlocked={() => setMessages((prev) => prev.filter((m) => m.sender_id !== msg.sender_id))}
+                    className="p-1 shrink-0"
+                  />
                 )}
-              >
-                {msg.content}
               </div>
               <span className="text-[10px] text-muted-foreground px-1">
                 {format(new Date(msg.created_at), 'HH:mm')}

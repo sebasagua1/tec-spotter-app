@@ -112,7 +112,8 @@
     "requestAccepted": "Solicitud de amistad aceptada",
     "requestDeclined": "Solicitud rechazada",
     "alreadySent": "Ya enviaste solicitud a esta persona",
-    "metaDesc": "Encuentra estudiantes del Tec y conecta con tu comunidad en ConnectTec."
+    "metaDesc": "Encuentra estudiantes del Tec y conecta con tu comunidad en ConnectTec.",
+    "messageAria": "Enviar mensaje a {{name}}"
   },
   "groups": {
     "myGroups": "Mis grupos",
@@ -134,7 +135,8 @@
     "memberAdded": "¡Miembro agregado!",
     "leave": "Salir del grupo",
     "leaveConfirmTitle": "¿Salir del grupo?",
-    "leaveConfirmDesc": "Ya no recibirás mensajes de este grupo."
+    "leaveConfirmDesc": "Ya no recibirás mensajes de este grupo.",
+    "sendFailed": "No se pudo enviar el mensaje"
   },
   "leaderboard": {
     "title": "Clasificación",
@@ -285,5 +287,70 @@
     "mapView": "Ver mapa",
     "noEvents": "No hay eventos en esta categoría",
     "searchEvents": "Buscar eventos…"
+  },
+  "rpcErrors": {
+    "notAuthenticated": "Tu sesión expiró. Vuelve a iniciar sesión.",
+    "notFriends": "Solo puedes escribir o invitar a tus amigos.",
+    "notAMember": "No perteneces a este grupo.",
+    "cannotInviteToDm": "Un mensaje directo es solo entre dos personas.",
+    "groupNotFound": "Este grupo ya no existe.",
+    "invalidTarget": "No se puede hacer con esta persona."
+  },
+  "legal": {
+    "privacy": "Aviso de privacidad",
+    "terms": "Términos de uso",
+    "agreePrefix": "Al continuar aceptas los",
+    "and": "y el"
+  },
+  "account": {
+    "title": "Cuenta y privacidad"
+  },
+  "moderation": {
+    "menu": "Más opciones",
+    "report": "Reportar",
+    "block": "Bloquear",
+    "blocked": "Persona bloqueada",
+    "blockedDesc": "Ya no verán su contenido ni podrán contactarte.",
+    "unblock": "Desbloquear",
+    "unblocked": "Persona desbloqueada",
+    "blockConfirmTitle": "¿Bloquear a esta persona?",
+    "blockConfirmTitleNamed": "¿Bloquear a {{label}}?",
+    "blockConfirmDesc": "Dejarán de verse mutuamente: sus eventos, mensajes y perfil desaparecen para ti y los tuyos para ellos. Si eran amigos, la amistad se elimina. Puedes deshacerlo desde Perfil.",
+    "blockedTitle": "Personas bloqueadas",
+    "blockedEmpty": "No has bloqueado a nadie.",
+    "blockedNote": "No ves su contenido ni ellos el tuyo. Desbloquear no restaura la amistad.",
+    "blockedUserFallback": "Usuario {{id}}",
+    "contactNote": "¿Algo va mal? Escríbenos a"
+  },
+  "report": {
+    "submit": "Enviar reporte",
+    "sent": "Reporte enviado",
+    "sentDesc": "Lo revisamos en menos de 24 horas.",
+    "alreadyReported": "Ya habías reportado esto",
+    "about": "Cuéntanos qué pasa. Tu reporte es anónimo para la otra persona.",
+    "aboutLabel": "Reportando «{{label}}». Tu reporte es anónimo para la otra persona.",
+    "detailsPh": "Detalles (opcional)",
+    "reviewNote": "Revisamos todos los reportes en menos de 24 horas y retiramos el contenido que incumpla las normas.",
+    "title": {
+      "user": "Reportar persona",
+      "event": "Reportar evento",
+      "message": "Reportar mensaje"
+    },
+    "reason": {
+      "spam": "Spam",
+      "harassment": "Acoso",
+      "inappropriate": "Contenido inapropiado",
+      "fake": "Perfil o evento falso",
+      "safety": "Riesgo de seguridad",
+      "other": "Otro"
+    }
+  },
+  "deleteAccount": {
+    "action": "Eliminar mi cuenta",
+    "confirmTitle": "¿Eliminar tu cuenta?",
+    "confirmDesc": "Se borran para siempre tu perfil, tus eventos, tus mensajes, tus amistades, tus puntos y tus insignias. No se puede deshacer.",
+    "keyword": "ELIMINAR",
+    "typeToConfirm": "Escribe {{keyword}} para confirmar",
+    "failed": "No se pudo eliminar la cuenta"
   }
 }

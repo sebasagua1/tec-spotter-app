@@ -32,6 +32,41 @@ en `full_schema.sql` (consolidado de `../migrations/`).
 7. *(Opcional)* **Mapbox edge function**: solo si no usas `VITE_MAPBOX_TOKEN`. Con el token
    en las env vars, el mapa funciona sin la función.
 
+## Edge Functions
+
+Hay dos funciones en `../functions/`. La de borrado de cuenta **es obligatoria**:
+sin ella el botón de "Eliminar mi cuenta" falla, y Apple rechaza la app por la
+guideline 5.1.1(v).
+
+```bash
+supabase functions deploy delete-account
+```
+
+`SUPABASE_URL`, `SUPABASE_ANON_KEY` y `SUPABASE_SERVICE_ROLE_KEY` ya vienen
+inyectadas por Supabase; no hay que configurarlas. Opcionalmente, para acotar el
+CORS a tu dominio en vez de `*`:
+
+```bash
+supabase secrets set APP_ORIGIN=https://tec-spotter-app.vercel.app
+```
+
+`get-mapbox-token` solo hace falta si NO usas `VITE_MAPBOX_TOKEN`.
+
+## Moderación (revisar a diario)
+
+Apple exige actuar sobre el contenido reportado en menos de 24 h. La cola está en
+la tabla `reports`; se tría desde el SQL Editor o el Table Editor:
+
+```sql
+select r.*, p.name as reported_name
+from public.reports r
+left join public.profiles p on p.id = r.reported_user_id
+where r.status = 'pending'
+order by r.created_at;
+```
+
+Al resolver, pon `status` en `reviewed`, `actioned` o `dismissed`.
+
 ## Nota
 `full_schema.sql` es **generado** a partir de `../migrations/`. Si cambian las migraciones,
 regenéralo. Los datos del proyecto viejo no se recuperan (empiezas limpio).

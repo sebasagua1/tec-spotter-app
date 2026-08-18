@@ -112,7 +112,8 @@
     "requestAccepted": "Friend request accepted",
     "requestDeclined": "Request declined",
     "alreadySent": "You already sent a request to this person",
-    "metaDesc": "Find Tec students and connect with your campus community on ConnectTec."
+    "metaDesc": "Find Tec students and connect with your campus community on ConnectTec.",
+    "messageAria": "Message {{name}}"
   },
   "groups": {
     "myGroups": "My Groups",
@@ -134,7 +135,8 @@
     "memberAdded": "Member added!",
     "leave": "Leave group",
     "leaveConfirmTitle": "Leave group?",
-    "leaveConfirmDesc": "You'll no longer receive messages from this group."
+    "leaveConfirmDesc": "You'll no longer receive messages from this group.",
+    "sendFailed": "Message couldn't be sent"
   },
   "leaderboard": {
     "title": "Leaderboard",
@@ -285,5 +287,70 @@
     "mapView": "Map view",
     "noEvents": "No events in this category",
     "searchEvents": "Search events…"
+  },
+  "rpcErrors": {
+    "notAuthenticated": "Your session expired. Sign in again.",
+    "notFriends": "You can only message or invite your friends.",
+    "notAMember": "You're not in this group.",
+    "cannotInviteToDm": "A direct message is just between two people.",
+    "groupNotFound": "This group no longer exists.",
+    "invalidTarget": "That's not possible with this person."
+  },
+  "legal": {
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Use",
+    "agreePrefix": "By continuing you accept our",
+    "and": "and"
+  },
+  "account": {
+    "title": "Account and privacy"
+  },
+  "moderation": {
+    "menu": "More options",
+    "report": "Report",
+    "block": "Block",
+    "blocked": "Person blocked",
+    "blockedDesc": "They can't see your content or contact you anymore.",
+    "unblock": "Unblock",
+    "unblocked": "Person unblocked",
+    "blockConfirmTitle": "Block this person?",
+    "blockConfirmTitleNamed": "Block {{label}}?",
+    "blockConfirmDesc": "You'll stop seeing each other: their events, messages and profile disappear for you, and yours for them. If you were friends, the friendship is removed. You can undo this from Profile.",
+    "blockedTitle": "Blocked people",
+    "blockedEmpty": "You haven't blocked anyone.",
+    "blockedNote": "You can't see their content and they can't see yours. Unblocking doesn't restore the friendship.",
+    "blockedUserFallback": "User {{id}}",
+    "contactNote": "Something wrong? Write to us at"
+  },
+  "report": {
+    "submit": "Send report",
+    "sent": "Report sent",
+    "sentDesc": "We review it within 24 hours.",
+    "alreadyReported": "You already reported this",
+    "about": "Tell us what happened. Your report is anonymous to the other person.",
+    "aboutLabel": "Reporting \"{{label}}\". Your report is anonymous to the other person.",
+    "detailsPh": "Details (optional)",
+    "reviewNote": "We review every report within 24 hours and remove content that breaks the rules.",
+    "title": {
+      "user": "Report person",
+      "event": "Report event",
+      "message": "Report message"
+    },
+    "reason": {
+      "spam": "Spam",
+      "harassment": "Harassment",
+      "inappropriate": "Inappropriate content",
+      "fake": "Fake profile or event",
+      "safety": "Safety risk",
+      "other": "Other"
+    }
+  },
+  "deleteAccount": {
+    "action": "Delete my account",
+    "confirmTitle": "Delete your account?",
+    "confirmDesc": "Your profile, events, messages, friendships, points and badges are erased for good. This cannot be undone.",
+    "keyword": "DELETE",
+    "typeToConfirm": "Type {{keyword}} to confirm",
+    "failed": "Couldn't delete the account"
   }
 }

@@ -35,6 +35,27 @@ export type Database = {
         }
         Relationships: []
       }
+      blocks: {
+        Row: {
+          blocked_id: string
+          blocked_name: string | null
+          blocker_id: string
+          created_at: string
+        }
+        Insert: {
+          blocked_id: string
+          blocked_name?: string | null
+          blocker_id: string
+          created_at?: string
+        }
+        Update: {
+          blocked_id?: string
+          blocked_name?: string | null
+          blocker_id?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       campuses: {
         Row: {
           created_at: string
@@ -382,27 +403,36 @@ export type Database = {
       reports: {
         Row: {
           created_at: string
+          details: string | null
           id: string
           reason: string
           reported_event_id: string | null
+          reported_message_id: string | null
           reported_user_id: string | null
-          reporter_id: string
+          reporter_id: string | null
+          status: string
         }
         Insert: {
           created_at?: string
+          details?: string | null
           id?: string
           reason: string
           reported_event_id?: string | null
+          reported_message_id?: string | null
           reported_user_id?: string | null
-          reporter_id: string
+          reporter_id?: string | null
+          status?: string
         }
         Update: {
           created_at?: string
+          details?: string | null
           id?: string
           reason?: string
           reported_event_id?: string | null
+          reported_message_id?: string | null
           reported_user_id?: string | null
-          reporter_id?: string
+          reporter_id?: string | null
+          status?: string
         }
         Relationships: [
           {
@@ -471,13 +501,25 @@ export type Database = {
       }
     }
     Functions: {
+      add_group_member: {
+        Args: { _group_id: string; _user_id: string }
+        Returns: undefined
+      }
       are_friends: {
         Args: { a: string; b: string }
         Returns: boolean
       }
+      create_dm: {
+        Args: { _other_user_id: string }
+        Returns: string
+      }
       check_in_to_event: {
         Args: { _event_id: string; _lat: number; _lng: number }
         Returns: Json
+      }
+      is_blocked: {
+        Args: { a: string; b: string }
+        Returns: boolean
       }
       is_event_creator: {
         Args: { _event_id: string; _user_id: string }

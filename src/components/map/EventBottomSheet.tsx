@@ -20,6 +20,7 @@ import { EditEventSheet } from '@/components/map/EditEventSheet';
 import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { ModerationMenu } from '@/components/moderation/ModerationMenu';
 import { format } from 'date-fns';
 import { es as esLocale, enUS } from 'date-fns/locale';
 
@@ -254,9 +255,20 @@ export function EventBottomSheet({ event, onClose }: Props) {
       <div className="mx-3 bg-card rounded-3xl shadow-lifted p-5 relative">
         <div className="drag-handle" />
 
-        <button onClick={onClose} className="absolute top-4 right-4 p-1 text-muted-foreground">
-          <X className="w-5 h-5" />
-        </button>
+        <div className="absolute top-3 right-3 flex items-center">
+          {/* Reportar/bloquear vive junto al contenido, no en ajustes */}
+          {!isCreator && (
+            <ModerationMenu
+              target={{ kind: 'event', id: event.id }}
+              label={event.title}
+              blockUserId={event.creator_id}
+              onBlocked={onClose}
+            />
+          )}
+          <button onClick={onClose} aria-label={t('common.close')} className="p-1 text-muted-foreground">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
 
         {/* Category badge */}
         <div

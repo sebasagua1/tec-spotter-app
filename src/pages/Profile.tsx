@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
-import { LogOut, Award, TrendingUp, Calendar, Star, Pencil, Zap } from 'lucide-react';
+import { LogOut, Award, TrendingUp, Calendar, Star, Pencil, Zap, Ban, Trash2, FileText, Shield, Loader2, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { BADGE_ICONS } from '@/lib/categoryIcons';
 import { EditProfileSheet } from '@/components/profile/EditProfileSheet';
@@ -21,6 +21,10 @@ import {
 import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/integrations/supabase/client';
 import { BADGE_DEFINITIONS } from '@/lib/constants';
+import { PRIVACY_URL, TERMS_URL, SUPPORT_EMAIL } from '@/lib/legal';
+import { BlockedUsersSheet } from '@/components/moderation/BlockedUsersSheet';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
 export default function Profile() {
@@ -31,6 +35,11 @@ export default function Profile() {
   const [pointsHistory, setPointsHistory] = useState<{ id: string; points: number; reason: string; created_at: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
+  const [blockedOpen, setBlockedOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchProfile();
@@ -73,6 +82,24 @@ export default function Profile() {
     };
     fetchStats();
   }, [profile]);
+
+  // Borrado de cuenta (App Store 5.1.1 v). La Edge Function saca la
+  // identidad del JWT, así que solo puede borrar al que la llama.
+  const handleDeleteAccount = async () => {
+    if (deleting) return;
+    setDeleting(true);
+    const { error } = await supabase.functions.invoke('delete-account', { method: 'POST' });
+    if (error) {
+      toast({ title: t('deleteAccount.failed'), description: error.message, variant: 'destructive' });
+      setDeleting(false);
+      return;
+    }
+    // La sesión apunta a un usuario que ya no existe: cerrarla deja la app
+    // en la pantalla de login.
+    await signOut();
+  };
+
+  const DELETE_KEYWORD = t('deleteAccount.keyword');
 
   if (!profile) {
     return (
@@ -274,6 +301,90 @@ export default function Profile() {
           </div>
         )}
       </div>
+
+      {/* Cuenta, privacidad y seguridad */}
+      <div className="bg-card rounded-2xl shadow-soft mt-5 overflow-hidden">
+        <h3 className="text-sm font-bold text-foreground px-5 pt-5 pb-2">{t('account.title')}</h3>
+
+        <button
+          onClick={() => setBlockedOpen(true)}
+          className="w-full flex items-center gap-3 px-5 py-3.5 border-t border-border text-left hover:bg-muted/40 transition-colors"
+        >
+          <Ban className="w-4 h-4 text-muted-foreground shrink-0" />
+          <span className="flex-1 text-sm font-medium text-foreground">{t('moderation.blockedTitle')}</span>
+          <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+        </button>
+
+        <a
+          href={PRIVACY_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full flex items-center gap-3 px-5 py-3.5 border-t border-border hover:bg-muted/40 transition-colors"
+        >
+          <Shield className="w-4 h-4 text-muted-foreground shrink-0" />
+          <span className="flex-1 text-sm font-medium text-foreground">{t('legal.privacy')}</span>
+          <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+        </a>
+
+        <a
+          href={TERMS_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full flex items-center gap-3 px-5 py-3.5 border-t border-border hover:bg-muted/40 transition-colors"
+        >
+          <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
+          <span className="flex-1 text-sm font-medium text-foreground">{t('legal.terms')}</span>
+          <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+        </a>
+
+        <button
+          onClick={() => { setDeleteConfirm(''); setDeleteOpen(true); }}
+          className="w-full flex items-center gap-3 px-5 py-3.5 border-t border-border text-left hover:bg-destructive/5 transition-colors"
+        >
+          <Trash2 className="w-4 h-4 text-destructive shrink-0" />
+          <span className="flex-1 text-sm font-medium text-destructive">{t('deleteAccount.action')}</span>
+        </button>
+      </div>
+
+      <p className="text-[11px] text-muted-foreground text-center mt-4 px-4">
+        {t('moderation.contactNote')}{' '}
+        <a href={`mailto:${SUPPORT_EMAIL}`} className="text-primary font-semibold">{SUPPORT_EMAIL}</a>
+      </p>
+
+      {/* Confirmación de borrado: escribir la palabra, porque no hay vuelta atrás */}
+      <AlertDialog open={deleteOpen} onOpenChange={(open) => !deleting && setDeleteOpen(open)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteAccount.confirmTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('deleteAccount.confirmDesc')}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2">
+            <label htmlFor="delete-confirm" className="text-xs font-semibold text-muted-foreground">
+              {t('deleteAccount.typeToConfirm', { keyword: DELETE_KEYWORD })}
+            </label>
+            <Input
+              id="delete-confirm"
+              value={deleteConfirm}
+              onChange={(e) => setDeleteConfirm(e.target.value)}
+              autoComplete="off"
+              autoCapitalize="characters"
+              className="h-11 rounded-xl"
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleteConfirm.trim().toUpperCase() !== DELETE_KEYWORD || deleting}
+              onClick={(e) => { e.preventDefault(); handleDeleteAccount(); }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : t('deleteAccount.action')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {blockedOpen && <BlockedUsersSheet onClose={() => setBlockedOpen(false)} />}
 
       {editOpen && (
         <EditProfileSheet profile={profile} onClose={() => setEditOpen(false)} />

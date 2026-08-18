@@ -15,6 +15,8 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
+import { rpcMessage } from '@/lib/rpcErrors';
+import { ModerationMenu } from '@/components/moderation/ModerationMenu';
 import { cn } from '@/lib/utils';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -186,42 +188,26 @@ export default function Friends() {
     if (activeTab === 'leaderboard') { setLeaderOffset(0); fetchLeaderboard(0); }
   }, [activeTab, fetchGroups, fetchLeaderboard]);
 
-  // Find or create a 1-on-1 DM group using a deterministic name so no duplicates are created.
+  // El DM lo crea create_dm() en el servidor: atómico (grupo + las dos
+  // membresías) e idempotente, así que ambas partes acaban en el mismo grupo.
+  // Desde el cliente no se puede insertar la membresía de otra persona.
   const handleMessageFriend = useCallback(async (friend: FriendData) => {
     if (!user || !friend.id) return;
-    const [a, b] = [user.id, friend.id].sort();
-    const dmName = `__dm_${a}_${b}`;
 
-    // Look for an existing DM group by its deterministic name
-    const { data: existing } = await supabase
-      .from('groups')
-      .select('id')
-      .eq('name', dmName)
-      .maybeSingle();
+    const { data: groupId, error } = await supabase.rpc('create_dm', {
+      _other_user_id: friend.id,
+    });
 
-    if (existing) {
-      navigate(`/groups/${existing.id}`);
+    if (error || !groupId) {
+      toast({
+        title: t('common.error'),
+        description: rpcMessage(error?.message, t),
+        variant: 'destructive',
+      });
       return;
     }
 
-    // Create the group and add both members
-    const { data: group, error } = await supabase
-      .from('groups')
-      .insert({ name: dmName, created_by: user.id })
-      .select('id')
-      .single();
-
-    if (error || !group) {
-      toast({ title: t('common.error'), description: error?.message, variant: 'destructive' });
-      return;
-    }
-
-    await supabase.from('group_members').insert([
-      { group_id: group.id, user_id: user.id },
-      { group_id: group.id, user_id: friend.id },
-    ]);
-
-    navigate(`/groups/${group.id}`);
+    navigate(`/groups/${groupId}`);
   }, [user, navigate, toast, t]);
 
   const acceptRequest = async (req: PendingRequest) => {
@@ -294,7 +280,8 @@ export default function Friends() {
         toast({ title: t('common.error'), description: error?.message, variant: 'destructive' });
         return;
       }
-      await supabase.from('group_members').insert({ group_id: group.id, user_id: user.id });
+      // La membresía del creador la añade el trigger trg_group_created_add_creator;
+      // el cliente ya no puede escribir en group_members.
       setGroups((prev) => [...prev, group]);
       setNewGroupName('');
       setShowCreateGroup(false);
@@ -379,13 +366,21 @@ export default function Friends() {
                       <p className="text-xs text-muted-foreground">{s.major}</p>
                     </div>
                   </div>
-                  <button
-                    onClick={() => sendFriendRequest(s.id ?? '')}
-                    aria-label={`${t('friends.tabFriends')}: ${s.name}`}
-                    className="p-2 text-primary"
-                  >
-                    <UserPlus className="w-5 h-5" />
-                  </button>
+                  <div className="flex items-center">
+                    <button
+                      onClick={() => sendFriendRequest(s.id ?? '')}
+                      aria-label={`${t('friends.tabFriends')}: ${s.name}`}
+                      className="p-2 text-primary"
+                    >
+                      <UserPlus className="w-5 h-5" />
+                    </button>
+                    <ModerationMenu
+                      target={{ kind: 'user', id: s.id ?? '' }}
+                      label={s.name}
+                      blockUserId={s.id}
+                      onBlocked={() => setSearchResults((prev) => prev.filter((r) => r.id !== s.id))}
+                    />
+                  </div>
                 </div>
               ))}
             </div>
@@ -460,13 +455,21 @@ export default function Friends() {
                       <p className="text-xs text-muted-foreground">{f.major}</p>
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleMessageFriend(f)}
-                    aria-label={`Message ${f.name}`}
-                    className="p-2 text-primary"
-                  >
-                    <MessageCircle className="w-5 h-5" />
-                  </button>
+                  <div className="flex items-center">
+                    <button
+                      onClick={() => handleMessageFriend(f)}
+                      aria-label={t('friends.messageAria', { name: f.name ?? '' })}
+                      className="p-2 text-primary"
+                    >
+                      <MessageCircle className="w-5 h-5" />
+                    </button>
+                    <ModerationMenu
+                      target={{ kind: 'user', id: f.id ?? '' }}
+                      label={f.name}
+                      blockUserId={f.id}
+                      onBlocked={() => { setFriends((prev) => prev.filter((x) => x.id !== f.id)); }}
+                    />
+                  </div>
                 </div>
               ))}
             {!loading && friendsHasMore && (

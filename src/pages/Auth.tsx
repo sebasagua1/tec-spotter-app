@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { useToast } from '@/hooks/use-toast';
 import { MapPin } from 'lucide-react';
+import { PRIVACY_URL, TERMS_URL } from '@/lib/legal';
 import {
   isNative,
   googleNativeConfigured,
@@ -237,6 +238,19 @@ export default function Auth() {
             {loading ? t('common.loading') : isSignUp ? t('auth.createAccount') : t('auth.signIn')}
           </Button>
         </form>
+
+        {/* Apple pide que privacidad y términos sean accesibles desde donde
+            se crea la cuenta, no solo desde la ficha de la App Store. */}
+        <p className="text-center text-xs text-muted-foreground leading-relaxed">
+          {t('legal.agreePrefix')}{' '}
+          <a href={TERMS_URL} target="_blank" rel="noopener noreferrer" className="text-primary font-semibold hover:underline">
+            {t('legal.terms')}
+          </a>{' '}
+          {t('legal.and')}{' '}
+          <a href={PRIVACY_URL} target="_blank" rel="noopener noreferrer" className="text-primary font-semibold hover:underline">
+            {t('legal.privacy')}
+          </a>.
+        </p>
 
         <p className="text-center text-sm text-muted-foreground">
           {isSignUp ? t('auth.hasAccount') : t('auth.noAccount')}{' '}
