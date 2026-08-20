@@ -185,7 +185,18 @@
     "rateEvent": "How was it? Rate this event",
     "yourRating": "Your rating",
     "ratingSubmitted": "Thanks for rating! +5 pts",
-    "whoIsGoing": "Who's going"
+    "whoIsGoing": "Who's going",
+    "askToJoin": "Ask to join",
+    "cancelRequest": "Cancel request",
+    "requestSent": "Request sent",
+    "requestSentDesc": "The organizer has to approve it.",
+    "requestCancelled": "Request cancelled",
+    "pendingNotice": "Waiting for the organizer to approve your request.",
+    "requests": "Requests ({{count}})",
+    "approve": "Approve",
+    "decline": "Decline",
+    "requestApproved": "Request approved",
+    "requestDeclined": "Request declined"
   },
   "create": {
     "title": "New Event",
@@ -204,7 +215,7 @@
     "showAdvanced": "Advanced options",
     "hideAdvanced": "Hide advanced",
     "privacy": "Privacy",
-    "privacyOpen": "Open",
+    "privacyOpen": "Public",
     "privacyFriends": "Friends",
     "privacyPrivate": "Private",
     "publish": "Publish Event",
@@ -221,7 +232,10 @@
     "duration180": "3 hours",
     "duration240": "4 hours",
     "created": "🎊 Event created!",
-    "createdDesc": "Your event is now live on the map."
+    "createdDesc": "Your event is now live on the map.",
+    "privacyHintOpen": "Everyone sees it and anyone can join.",
+    "privacyHintFriends": "Only your friends see it, and they join directly.",
+    "privacyHintPrivate": "Everyone sees it, but you approve who gets in."
   },
   "edit": {
     "title": "Edit event",

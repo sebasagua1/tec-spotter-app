@@ -21,6 +21,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ModerationMenu } from '@/components/moderation/ModerationMenu';
+import { rpcMessage } from '@/lib/rpcErrors';
 import { format } from 'date-fns';
 import { es as esLocale, enUS } from 'date-fns/locale';
 
@@ -37,7 +38,12 @@ export function EventBottomSheet({ event, onClose }: Props) {
   const dateLocale = i18n.language?.startsWith('en') ? enUS : esLocale;
   const [localCurrentSpots, setLocalCurrentSpots] = useState(event.current_spots);
   const spotsLeft = event.max_spots - localCurrentSpots;
-  const [hasJoined, setHasJoined] = useState(false);
+  // null = fuera · 'pending' = solicitud enviada · 'joined' = dentro
+  const [myStatus, setMyStatus] = useState<'pending' | 'joined' | null>(null);
+  const hasJoined = myStatus === 'joined';
+  const isPending = myStatus === 'pending';
+  // Los eventos privados requieren que el organizador apruebe.
+  const needsApproval = event.privacy === 'private';
   const [checkedIn, setCheckedIn] = useState(false);
   const [checking, setChecking] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -46,6 +52,9 @@ export function EventBottomSheet({ event, onClose }: Props) {
   const [loadingAttendees, setLoadingAttendees] = useState(false);
   // Se incrementa tras apuntarse o salirse para releer la lista de quién va.
   const [attendeesVersion, setAttendeesVersion] = useState(0);
+  const [requests, setRequests] = useState<Array<{ id: string; name: string | null }>>([]);
+  const [loadingRequests, setLoadingRequests] = useState(false);
+  const [respondingTo, setRespondingTo] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [userRating, setUserRating] = useState<number | null>(null);
   const [hoverRating, setHoverRating] = useState<number | null>(null);
@@ -106,6 +115,36 @@ export function EventBottomSheet({ event, onClose }: Props) {
     return () => { cancelled = true; };
   }, [canSeeAttendees, event.id, attendeesVersion]);
 
+  // Solicitudes pendientes — solo las ve y resuelve el organizador.
+  useEffect(() => {
+    if (!isCreator) return;
+    let cancelled = false;
+    (async () => {
+      setLoadingRequests(true);
+      const { data: rows } = await supabase
+        .from('event_participants')
+        .select('user_id')
+        .eq('event_id', event.id)
+        .eq('status', 'pending');
+      if (cancelled) return;
+
+      const ids = rows?.map(r => r.user_id) ?? [];
+      if (ids.length === 0) {
+        setRequests([]);
+        setLoadingRequests(false);
+        return;
+      }
+      const { data: profiles } = await supabase
+        .from('public_profiles')
+        .select('id, name')
+        .in('id', ids);
+      if (cancelled) return;
+      setRequests((profiles ?? []).map(pr => ({ id: pr.id ?? '', name: pr.name })));
+      setLoadingRequests(false);
+    })();
+    return () => { cancelled = true; };
+  }, [isCreator, event.id, attendeesVersion]);
+
   useEffect(() => {
     let cancelled = false;
     const check = async () => {
@@ -113,13 +152,12 @@ export function EventBottomSheet({ event, onClose }: Props) {
       setChecking(true);
       const { data } = await supabase
         .from('event_participants')
-        .select('id, checked_in, rating')
+        .select('id, checked_in, rating, status')
         .eq('event_id', event.id)
         .eq('user_id', user.id)
-        .eq('status', 'joined')
         .maybeSingle();
       if (!cancelled) {
-        setHasJoined(!!data);
+        setMyStatus((data?.status as 'pending' | 'joined' | undefined) ?? null);
         setCheckedIn(data?.checked_in ?? false);
         setUserRating((data as { rating?: number | null } | null)?.rating ?? null);
         setChecking(false);
@@ -132,61 +170,94 @@ export function EventBottomSheet({ event, onClose }: Props) {
   const handleJoin = async () => {
     if (!user || submitting) return;
     setSubmitting(true);
-    // Optimistic UI: mark joined and decrement available spots immediately
-    setHasJoined(true);
+    // Optimista: en un evento privado la fila entra como 'pending' (lo fija
+    // un trigger del servidor), así que no se descuenta plaza todavía.
+    const prevStatus = myStatus;
     const prevSpots = localCurrentSpots;
-    setLocalCurrentSpots(s => s + 1);
+    setMyStatus(needsApproval ? 'pending' : 'joined');
+    if (!needsApproval) setLocalCurrentSpots(s => s + 1);
+
     const { error } = await supabase
       .from('event_participants')
       .insert({ event_id: event.id, user_id: user.id, status: 'joined' });
+
     if (error) {
       setLocalCurrentSpots(prevSpots);
       if (error.code === '23505') {
         toast({ title: t('event.alreadyJoined') });
-        setHasJoined(true);
       } else if (error.message?.includes('EVENT_FULL')) {
-        setHasJoined(false);
+        setMyStatus(prevStatus);
         toast({ title: t('event.eventFull'), variant: 'destructive' });
       } else {
-        // Unknown error — sync UI back to actual DB state
-        setHasJoined(false);
+        // Error desconocido: releer el estado real en vez de adivinarlo
         const { data: recheck } = await supabase
           .from('event_participants')
-          .select('id')
+          .select('status')
           .eq('event_id', event.id)
           .eq('user_id', user.id)
-          .eq('status', 'joined')
           .maybeSingle();
-        setHasJoined(!!recheck);
+        setMyStatus((recheck?.status as 'pending' | 'joined' | undefined) ?? null);
         toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
       }
     } else {
       setAttendeesVersion(v => v + 1);
-      toast({ title: t('event.joinedToast'), description: t('event.joinedDesc', { title: event.title }) });
+      if (needsApproval) {
+        toast({ title: t('event.requestSent'), description: t('event.requestSentDesc') });
+      } else {
+        toast({ title: t('event.joinedToast'), description: t('event.joinedDesc', { title: event.title }) });
+      }
     }
     setSubmitting(false);
   };
 
   const handleLeave = async () => {
     if (!user || submitting) return;
+    const wasPending = isPending;
     setSubmitting(true);
-    setHasJoined(false);
+    setMyStatus(null);
     const prevSpots = localCurrentSpots;
-    setLocalCurrentSpots(s => s - 1);
+    if (!wasPending) setLocalCurrentSpots(s => s - 1);
     const { error } = await supabase
       .from('event_participants')
       .delete()
       .eq('event_id', event.id)
       .eq('user_id', user.id);
     if (error) {
-      setHasJoined(true);
+      setMyStatus(wasPending ? 'pending' : 'joined');
       setLocalCurrentSpots(prevSpots);
       toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
     } else {
       setAttendeesVersion(v => v + 1);
-      toast({ title: t('event.leftToast'), description: t('event.leftDesc', { title: event.title }) });
+      toast({
+        title: wasPending ? t('event.requestCancelled') : t('event.leftToast'),
+        description: wasPending ? undefined : t('event.leftDesc', { title: event.title }),
+      });
     }
     setSubmitting(false);
+  };
+
+  const handleRespond = async (userId: string, approve: boolean) => {
+    if (respondingTo) return;
+    setRespondingTo(userId);
+    const { error } = await supabase.rpc('respond_to_join_request', {
+      _event_id: event.id,
+      _user_id: userId,
+      _approve: approve,
+    });
+    if (error) {
+      const msg = error.message ?? '';
+      toast({
+        title: msg.includes('EVENT_FULL') ? t('event.eventFull') : t('common.error'),
+        description: msg.includes('EVENT_FULL') ? undefined : rpcMessage(msg, t),
+        variant: 'destructive',
+      });
+    } else {
+      setRequests(prev => prev.filter(r => r.id !== userId));
+      if (approve) setLocalCurrentSpots(sp => sp + 1);
+      setAttendeesVersion(v => v + 1);
+      toast({ title: approve ? t('event.requestApproved') : t('event.requestDeclined') });
+    }
+    setRespondingTo(null);
   };
 
   const handleCancelEvent = async () => {
@@ -326,6 +397,44 @@ export function EventBottomSheet({ event, onClose }: Props) {
           </div>
         )}
 
+        {/* Solicitudes pendientes — solo el organizador */}
+        {!checking && isCreator && (loadingRequests || requests.length > 0) && (
+          <div className="mb-4 border border-primary/30 bg-primary/5 rounded-xl p-3 space-y-2">
+            <p className="text-xs font-semibold text-primary uppercase tracking-wide">
+              {t('event.requests', { count: requests.length })}
+            </p>
+            {loadingRequests ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />
+            ) : (
+              requests.map(r => (
+                <div key={r.id} className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-medium text-foreground truncate">
+                    {r.name ?? t('profile.student')}
+                  </span>
+                  <div className="flex gap-1.5 shrink-0">
+                    <button
+                      onClick={() => handleRespond(r.id, true)}
+                      disabled={respondingTo === r.id}
+                      aria-label={t('event.approve')}
+                      className="px-2.5 py-1 rounded-full bg-primary text-primary-foreground text-[11px] font-bold disabled:opacity-50"
+                    >
+                      {t('event.approve')}
+                    </button>
+                    <button
+                      onClick={() => handleRespond(r.id, false)}
+                      disabled={respondingTo === r.id}
+                      aria-label={t('event.decline')}
+                      className="px-2.5 py-1 rounded-full bg-muted text-muted-foreground text-[11px] font-bold disabled:opacity-50"
+                    >
+                      {t('event.decline')}
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
         {/* Quién va — visible para el organizador y para quien esté apuntado */}
         {!checking && canSeeAttendees && (
           <div className="mb-4 border border-border rounded-xl p-3 space-y-2">
@@ -426,13 +535,24 @@ export function EventBottomSheet({ event, onClose }: Props) {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+          ) : isPending ? (
+            <Button
+              onClick={handleLeave}
+              disabled={submitting}
+              variant="outline"
+              className="flex-1 h-12 rounded-xl font-bold"
+            >
+              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : t('event.cancelRequest')}
+            </Button>
           ) : (
             <Button
               onClick={handleJoin}
-              disabled={spotsLeft <= 0 || submitting}
+              disabled={(spotsLeft <= 0 && !needsApproval) || submitting}
               className="flex-1 h-12 rounded-xl font-bold"
             >
-              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : t('event.join')}
+              {submitting
+                ? <Loader2 className="w-4 h-4 animate-spin" />
+                : needsApproval ? t('event.askToJoin') : t('event.join')}
             </Button>
           )}
           <Button
@@ -443,6 +563,12 @@ export function EventBottomSheet({ event, onClose }: Props) {
             {t('common.close')}
           </Button>
         </div>
+
+        {isPending && (
+          <p className="mt-2 text-xs text-muted-foreground text-center">
+            {t('event.pendingNotice')}
+          </p>
+        )}
 
         {/* Check-in button — shown only when joined, not the creator, and event is live */}
         {!checking && !isCreator && hasJoined && isOngoing && (

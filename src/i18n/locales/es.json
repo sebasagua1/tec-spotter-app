@@ -185,7 +185,18 @@
     "rateEvent": "¿Cómo estuvo? Califica este evento",
     "yourRating": "Tu calificación",
     "ratingSubmitted": "¡Gracias por calificar! +5 pts",
-    "whoIsGoing": "Quién va"
+    "whoIsGoing": "Quién va",
+    "askToJoin": "Pedir unirme",
+    "cancelRequest": "Cancelar solicitud",
+    "requestSent": "Solicitud enviada",
+    "requestSentDesc": "El organizador tiene que aprobarla.",
+    "requestCancelled": "Solicitud cancelada",
+    "pendingNotice": "Esperando a que el organizador apruebe tu solicitud.",
+    "requests": "Solicitudes ({{count}})",
+    "approve": "Aprobar",
+    "decline": "Rechazar",
+    "requestApproved": "Solicitud aprobada",
+    "requestDeclined": "Solicitud rechazada"
   },
   "create": {
     "title": "Nuevo evento",
@@ -204,7 +215,7 @@
     "showAdvanced": "Opciones avanzadas",
     "hideAdvanced": "Ocultar opciones",
     "privacy": "Privacidad",
-    "privacyOpen": "Abierto",
+    "privacyOpen": "Público",
     "privacyFriends": "Amigos",
     "privacyPrivate": "Privado",
     "publish": "Publicar evento",
@@ -221,7 +232,10 @@
     "duration180": "3 horas",
     "duration240": "4 horas",
     "created": "🎊 ¡Evento creado!",
-    "createdDesc": "Tu evento ya está en el mapa."
+    "createdDesc": "Tu evento ya está en el mapa.",
+    "privacyHintOpen": "Lo ve todo el mundo y cualquiera puede unirse.",
+    "privacyHintFriends": "Solo lo ven tus amigos, y entran directo.",
+    "privacyHintPrivate": "Lo ve todo el mundo, pero tú apruebas quién entra."
   },
   "edit": {
     "title": "Editar evento",

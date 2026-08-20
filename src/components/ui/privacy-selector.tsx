@@ -9,10 +9,14 @@ interface Props {
 export function PrivacySelector({ value, onChange }: Props) {
   const { t } = useTranslation();
   const options = [
-    { key: 'open', label: t('create.privacyOpen') },
-    { key: 'friends', label: t('create.privacyFriends') },
-    { key: 'private', label: t('create.privacyPrivate') },
+    { key: 'open', label: t('create.privacyOpen'), hint: t('create.privacyHintOpen') },
+    { key: 'friends', label: t('create.privacyFriends'), hint: t('create.privacyHintFriends') },
+    { key: 'private', label: t('create.privacyPrivate'), hint: t('create.privacyHintPrivate') },
   ] as const;
+
+  // Las tres opciones no se explican solas — sobre todo "Privado", que ahora
+  // significa "visible pero con aprobación", no "oculto".
+  const hint = options.find(o => o.key === value)?.hint;
 
   return (
     <div>
@@ -33,6 +37,7 @@ export function PrivacySelector({ value, onChange }: Props) {
           </button>
         ))}
       </div>
+      {hint && <p className="text-xs text-muted-foreground mt-2">{hint}</p>}
     </div>
   );
 }

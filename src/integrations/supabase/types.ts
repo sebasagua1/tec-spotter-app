@@ -529,6 +529,10 @@ export type Database = {
         Args: { _event_id: string; _user_id: string }
         Returns: boolean
       }
+      respond_to_join_request: {
+        Args: { _approve: boolean; _event_id: string; _user_id: string }
+        Returns: undefined
+      }
       is_group_member: {
         Args: { _group_id: string; _user_id: string }
         Returns: boolean
