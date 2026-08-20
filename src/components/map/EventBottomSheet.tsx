@@ -44,11 +44,17 @@ export function EventBottomSheet({ event, onClose }: Props) {
   const [checkingIn, setCheckingIn] = useState(false);
   const [attendees, setAttendees] = useState<Array<{ id: string | null; name: string | null }>>([]);
   const [loadingAttendees, setLoadingAttendees] = useState(false);
+  // Se incrementa tras apuntarse o salirse para releer la lista de quién va.
+  const [attendeesVersion, setAttendeesVersion] = useState(0);
   const [editOpen, setEditOpen] = useState(false);
   const [userRating, setUserRating] = useState<number | null>(null);
   const [hoverRating, setHoverRating] = useState<number | null>(null);
   const [submittingRating, setSubmittingRating] = useState(false);
   const isCreator = user?.id === event.creator_id;
+
+  // Quien está apuntado también ve quién va: es la mitad de la razón por la
+  // que alguien se apunta. Antes solo lo veía el organizador.
+  const canSeeAttendees = isCreator || hasJoined;
 
   const [isOngoing, setIsOngoing] = useState(() => {
     const now = Date.now();
@@ -72,7 +78,9 @@ export function EventBottomSheet({ event, onClose }: Props) {
   }, [event.current_spots]);
 
   useEffect(() => {
-    if (!isCreator) return;
+    // La RLS deja leer la lista a quien creó el evento y a quien está
+    // apuntado; para el resto devolvería 0 filas, así que ni se pide.
+    if (!canSeeAttendees) return;
     let cancelled = false;
     const fetchAttendees = async () => {
       setLoadingAttendees(true);
@@ -96,7 +104,7 @@ export function EventBottomSheet({ event, onClose }: Props) {
     };
     fetchAttendees();
     return () => { cancelled = true; };
-  }, [isCreator, event.id]);
+  }, [canSeeAttendees, event.id, attendeesVersion]);
 
   useEffect(() => {
     let cancelled = false;
@@ -153,6 +161,7 @@ export function EventBottomSheet({ event, onClose }: Props) {
         toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
       }
     } else {
+      setAttendeesVersion(v => v + 1);
       toast({ title: t('event.joinedToast'), description: t('event.joinedDesc', { title: event.title }) });
     }
     setSubmitting(false);
@@ -174,6 +183,7 @@ export function EventBottomSheet({ event, onClose }: Props) {
       setLocalCurrentSpots(prevSpots);
       toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
     } else {
+      setAttendeesVersion(v => v + 1);
       toast({ title: t('event.leftToast'), description: t('event.leftDesc', { title: event.title }) });
     }
     setSubmitting(false);
@@ -316,21 +326,23 @@ export function EventBottomSheet({ event, onClose }: Props) {
           </div>
         )}
 
-        {/* Organizer panel */}
-        {!checking && isCreator && (
+        {/* Quién va — visible para el organizador y para quien esté apuntado */}
+        {!checking && canSeeAttendees && (
           <div className="mb-4 border border-border rounded-xl p-3 space-y-2">
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                {t('event.organizedByYou')}
+                {isCreator ? t('event.organizedByYou') : t('event.whoIsGoing')}
               </p>
-              <button
-                onClick={() => setEditOpen(true)}
-                aria-label={t('edit.title')}
-                className="flex items-center gap-1 text-xs text-primary font-semibold"
-              >
-                <Pencil className="w-3 h-3" />
-                {t('edit.title')}
-              </button>
+              {isCreator && (
+                <button
+                  onClick={() => setEditOpen(true)}
+                  aria-label={t('edit.title')}
+                  className="flex items-center gap-1 text-xs text-primary font-semibold"
+                >
+                  <Pencil className="w-3 h-3" />
+                  {t('edit.title')}
+                </button>
+              )}
             </div>
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Users className="w-3.5 h-3.5" />

@@ -184,7 +184,8 @@
     "cancelEventConfirmDesc": "This will hide the event for everyone on the map.",
     "rateEvent": "How was it? Rate this event",
     "yourRating": "Your rating",
-    "ratingSubmitted": "Thanks for rating! +5 pts"
+    "ratingSubmitted": "Thanks for rating! +5 pts",
+    "whoIsGoing": "Who's going"
   },
   "create": {
     "title": "New Event",

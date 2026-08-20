@@ -184,7 +184,8 @@
     "cancelEventConfirmDesc": "Esto ocultará el evento para todos en el mapa.",
     "rateEvent": "¿Cómo estuvo? Califica este evento",
     "yourRating": "Tu calificación",
-    "ratingSubmitted": "¡Gracias por calificar! +5 pts"
+    "ratingSubmitted": "¡Gracias por calificar! +5 pts",
+    "whoIsGoing": "Quién va"
   },
   "create": {
     "title": "Nuevo evento",
