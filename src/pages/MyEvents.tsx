@@ -1,25 +1,22 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
-import { CalendarDays, Clock } from 'lucide-react';
+import { CalendarDays, ChevronRight, Clock, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 import { EVENT_CATEGORIES } from '@/lib/constants';
 import { CATEGORY_ICONS } from '@/lib/categoryIcons';
 import { cn } from '@/lib/utils';
+import { EventBottomSheet } from '@/components/map/EventBottomSheet';
+import type { MapEvent } from '@/stores/eventStore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format, isPast, formatDistanceToNow } from 'date-fns';
 import { es as esLocale, enUS } from 'date-fns/locale';
 
-interface EventWithParticipation {
-  id: string;
-  title: string;
-  category: string;
-  starts_at: string;
-  ends_at: string;
-  address: string | null;
-  current_spots: number;
-  max_spots: number;
+// Extiende MapEvent porque la tarjeta abre el mismo EventBottomSheet que el
+// mapa, y ese componente necesita el evento completo (creator_id, privacy...),
+// no solo los cuatro campos que se pintan en la tarjeta.
+interface EventWithParticipation extends MapEvent {
   role: 'organizer' | 'joined';
 }
 
@@ -31,11 +28,12 @@ export default function MyEvents() {
   const [events, setEvents] = useState<EventWithParticipation[]>([]);
   const [loading, setLoading] = useState(true);
   const [visibleCount, setVisibleCount] = useState(10);
+  const [selected, setSelected] = useState<EventWithParticipation | null>(null);
   const PAGE_SIZE = 10;
 
-  useEffect(() => {
+  const fetchMyEvents = useCallback(async () => {
     if (!user) return;
-    const fetchMyEvents = async () => {
+    {
       setLoading(true);
       try {
         // Events I created — los cancelados (is_active = false) no se listan:
@@ -54,25 +52,44 @@ export default function MyEvents() {
 
         const seen = new Set<string>();
         const all: EventWithParticipation[] = [];
+        // `location` se compone aquí igual que en MapHome: en la tabla lng y lat
+        // son columnas sueltas y MapEvent las espera juntas.
         created?.forEach((e) => {
           seen.add(e.id);
-          all.push({ ...e, role: 'organizer' });
+          all.push({
+            ...e,
+            location: e.lng != null && e.lat != null ? { lng: e.lng, lat: e.lat } : null,
+            role: 'organizer',
+          });
         });
         participated?.forEach((p) => {
           // El filtro va aquí y no en la query porque PostgREST necesitaría un
           // !inner join para filtrar sobre la tabla embebida.
           if (p.events && p.events.is_active && !seen.has(p.events.id)) {
-            seen.add(p.events.id);
-            all.push({ ...p.events, role: 'joined' });
+            const ev = p.events;
+            seen.add(ev.id);
+            all.push({
+              ...ev,
+              location: ev.lng != null && ev.lat != null ? { lng: ev.lng, lat: ev.lat } : null,
+              role: 'joined',
+            });
           }
         });
         setEvents(all);
       } finally {
         setLoading(false);
       }
-    };
-    fetchMyEvents();
+    }
   }, [user]);
+
+  useEffect(() => { fetchMyEvents(); }, [fetchMyEvents]);
+
+  // Al cerrar se relee: dentro del sheet se puede cancelar el evento, aprobar
+  // solicitudes o darse de baja, y la lista se quedaría desfasada.
+  const handleCloseSheet = useCallback(() => {
+    setSelected(null);
+    fetchMyEvents();
+  }, [fetchMyEvents]);
 
   const allFiltered = events.filter(e =>
     activeTab === 'upcoming' ? !isPast(new Date(e.ends_at)) : isPast(new Date(e.ends_at))
@@ -126,7 +143,11 @@ export default function MyEvents() {
         {!loading && filtered.map(event => {
           const cat = EVENT_CATEGORIES.find(c => c.key === event.category);
           return (
-            <div key={event.id} className="bg-card rounded-2xl p-4 shadow-soft">
+            <button
+              key={event.id}
+              onClick={() => setSelected(event)}
+              className="w-full text-left bg-card rounded-2xl p-4 shadow-soft active:scale-[0.98] transition-transform"
+            >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div
@@ -156,7 +177,19 @@ export default function MyEvents() {
                   )}
                 </div>
               </div>
-            </div>
+
+              {/* Pie: aforo + pista de que la tarjeta se puede tocar */}
+              <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
+                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Users className="w-3.5 h-3.5" />
+                  {event.current_spots}/{event.max_spots}
+                </span>
+                <span className="flex items-center gap-0.5 text-xs font-semibold text-primary">
+                  {t('myEvents.viewDetails')}
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </span>
+              </div>
+            </button>
           );
         })}
         {!loading && visibleCount < allFiltered.length && (
@@ -168,6 +201,20 @@ export default function MyEvents() {
           </button>
         )}
       </div>
+
+      {/* Mismo detalle que en el mapa: asistentes y, si eres organizador, el
+          panel de solicitudes. Va dentro de un contenedor fixed porque el sheet
+          se posiciona con `absolute bottom-20` y esta página hace scroll. */}
+      {selected && (
+        <div className="fixed inset-0 z-30">
+          <button
+            aria-label={t('common.close')}
+            onClick={handleCloseSheet}
+            className="absolute inset-0 bg-black/30"
+          />
+          <EventBottomSheet event={selected} onClose={handleCloseSheet} />
+        </div>
+      )}
     </div>
   );
 }
