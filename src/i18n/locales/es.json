@@ -199,7 +199,8 @@
     "approve": "Aprobar",
     "decline": "Rechazar",
     "requestApproved": "Solicitud aprobada",
-    "requestDeclined": "Solicitud rechazada"
+    "requestDeclined": "Solicitud rechazada",
+    "organizer": "organiza"
   },
   "create": {
     "title": "Nuevo evento",

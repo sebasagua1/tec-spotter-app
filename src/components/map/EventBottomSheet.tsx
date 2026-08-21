@@ -22,6 +22,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ModerationMenu } from '@/components/moderation/ModerationMenu';
 import { rpcMessage } from '@/lib/rpcErrors';
+import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es as esLocale, enUS } from 'date-fns/locale';
 
@@ -100,17 +101,22 @@ export function EventBottomSheet({ event, onClose }: Props) {
         .eq('event_id', event.id)
         .eq('status', 'joined');
       if (cancelled) return;
-      if (participants && participants.length > 0) {
-        const ids = participants.map(p => p.user_id);
-        const { data: profiles } = await supabase
-          .from('public_profiles')
-          .select('id, name')
-          .in('id', ids);
-        if (!cancelled) setAttendees(profiles ?? []);
-      } else {
-        setAttendees([]);
+
+      // Quien organiza no tiene fila en event_participants —  nada la crea al
+      // montar el evento— así que salía una lista de asistentes sin la persona
+      // que convoca. Se añade a mano y va primera.
+      const ids = [...new Set([event.creator_id, ...(participants?.map(p => p.user_id) ?? [])])];
+      const { data: profiles } = await supabase
+        .from('public_profiles')
+        .select('id, name')
+        .in('id', ids);
+      if (!cancelled) {
+        const sorted = [...(profiles ?? [])].sort((a, b) =>
+          a.id === event.creator_id ? -1 : b.id === event.creator_id ? 1 : 0
+        );
+        setAttendees(sorted);
+        setLoadingAttendees(false);
       }
-      if (!cancelled) setLoadingAttendees(false);
     };
     fetchAttendees();
     return () => { cancelled = true; };
@@ -481,9 +487,15 @@ export function EventBottomSheet({ event, onClose }: Props) {
                 {attendees.map(a => (
                   <span
                     key={a.id ?? ''}
-                    className="text-[10px] bg-muted rounded-full px-2 py-0.5 text-muted-foreground font-medium"
+                    className={cn(
+                      'text-[10px] rounded-full px-2 py-0.5 font-medium',
+                      a.id === event.creator_id
+                        ? 'bg-primary/10 text-primary'
+                        : 'bg-muted text-muted-foreground'
+                    )}
                   >
                     {a.name ?? '?'}
+                    {a.id === event.creator_id && ` · ${t('event.organizer')}`}
                   </span>
                 ))}
               </div>

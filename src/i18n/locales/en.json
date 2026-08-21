@@ -199,7 +199,8 @@
     "approve": "Approve",
     "decline": "Decline",
     "requestApproved": "Request approved",
-    "requestDeclined": "Request declined"
+    "requestDeclined": "Request declined",
+    "organizer": "host"
   },
   "create": {
     "title": "New Event",

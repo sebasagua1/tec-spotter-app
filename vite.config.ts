@@ -14,13 +14,20 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: "prompt",
+      // "prompt" deja el service worker nuevo esperando a que alguien pulse un
+      // aviso de "hay una actualización"... que no existe en ninguna pantalla.
+      // El resultado era que un deploy no llegaba nunca: el navegador seguía
+      // sirviendo la copia cacheada de la versión anterior.
+      registerType: "autoUpdate",
       // Reuse the existing public/manifest.json — don't generate a new one
       manifest: false,
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,webp}"],
         navigateFallback: "/index.html",
         navigateFallbackDenylist: [/^\/api/, /^\/supabase/],
+        // Tomar el control sin esperar a que se cierren todas las pestañas.
+        clientsClaim: true,
+        skipWaiting: true,
       },
     }),
   ],
