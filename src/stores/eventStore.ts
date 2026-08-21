@@ -25,6 +25,7 @@ interface EventState {
   filterCategory: string | null;
   setEvents: (events: MapEvent[]) => void;
   addEvent: (event: MapEvent) => void;
+  removeEvent: (id: string) => void;
   setSelectedEvent: (event: MapEvent | null) => void;
   setFilterCategory: (cat: string | null) => void;
 }
@@ -35,6 +36,13 @@ export const useEventStore = create<EventState>((set) => ({
   filterCategory: null,
   setEvents: (events) => set({ events }),
   addEvent: (event) => set((s) => ({ events: [event, ...s.events] })),
+  // Al cancelar un evento hay que sacarlo del store a mano: los marcadores del
+  // mapa son DOM imperativo que solo se reconstruye cuando cambia `events`, y
+  // esperar al refetch por realtime deja el pin visible mientras tanto.
+  removeEvent: (id) => set((s) => ({
+    events: s.events.filter((e) => e.id !== id),
+    selectedEvent: s.selectedEvent?.id === id ? null : s.selectedEvent,
+  })),
   setSelectedEvent: (selectedEvent) => set({ selectedEvent }),
   setFilterCategory: (filterCategory) => set({ filterCategory }),
 }));

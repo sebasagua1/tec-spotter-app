@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MapEvent } from '@/stores/eventStore';
+import { MapEvent, useEventStore } from '@/stores/eventStore';
 import { EVENT_CATEGORIES } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
 import {
@@ -34,6 +34,7 @@ export function EventBottomSheet({ event, onClose }: Props) {
   const cat = EVENT_CATEGORIES.find(c => c.key === event.category);
   const { user } = useAuthStore();
   const { toast } = useToast();
+  const removeEvent = useEventStore((s) => s.removeEvent);
   const { t, i18n } = useTranslation();
   const dateLocale = i18n.language?.startsWith('en') ? enUS : esLocale;
   const [localCurrentSpots, setLocalCurrentSpots] = useState(event.current_spots);
@@ -265,13 +266,24 @@ export function EventBottomSheet({ event, onClose }: Props) {
 
   const handleCancelEvent = async () => {
     setSubmitting(true);
-    const { error } = await supabase
+    // .update() sin .select() no dice cuántas filas tocó, y si la RLS filtrara
+    // la fila devolvería 0 sin error. Se pide la fila de vuelta para no dar por
+    // cancelado algo que sigue activo en la base de datos.
+    const { data, error } = await supabase
       .from('events')
       .update({ is_active: false })
-      .eq('id', event.id);
+      .eq('id', event.id)
+      .select('id')
+      .maybeSingle();
     if (error) {
       toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
+    } else if (!data) {
+      toast({ title: t('common.error'), description: t('event.cancelEventFailed'), variant: 'destructive' });
     } else {
+      // Sacarlo del store aquí y no esperar al refetch por realtime: el
+      // marcador del mapa es DOM imperativo y solo se rehace cuando cambia
+      // `events`, así que si no se quita a mano el pin se queda ahí.
+      removeEvent(event.id);
       onClose();
     }
     setSubmitting(false);

@@ -38,11 +38,13 @@ export default function MyEvents() {
     const fetchMyEvents = async () => {
       setLoading(true);
       try {
-        // Events I created
+        // Events I created — los cancelados (is_active = false) no se listan:
+        // el organizador ya los dio por muertos y no deben salir en "Próximos".
         const { data: created } = await supabase
           .from('events')
           .select('*')
-          .eq('creator_id', user.id);
+          .eq('creator_id', user.id)
+          .eq('is_active', true);
 
         // Events I joined
         const { data: participated } = await supabase
@@ -57,7 +59,9 @@ export default function MyEvents() {
           all.push({ ...e, role: 'organizer' });
         });
         participated?.forEach((p) => {
-          if (p.events && !seen.has(p.events.id)) {
+          // El filtro va aquí y no en la query porque PostgREST necesitaría un
+          // !inner join para filtrar sobre la tabla embebida.
+          if (p.events && p.events.is_active && !seen.has(p.events.id)) {
             seen.add(p.events.id);
             all.push({ ...p.events, role: 'joined' });
           }

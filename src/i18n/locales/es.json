@@ -182,6 +182,7 @@
     "cancelEvent": "Cancelar evento",
     "cancelEventConfirm": "¿Cancelar este evento?",
     "cancelEventConfirmDesc": "Esto ocultará el evento para todos en el mapa.",
+    "cancelEventFailed": "No se pudo cancelar el evento. Recarga e inténtalo de nuevo.",
     "rateEvent": "¿Cómo estuvo? Califica este evento",
     "yourRating": "Tu calificación",
     "ratingSubmitted": "¡Gracias por calificar! +5 pts",
