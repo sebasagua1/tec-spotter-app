@@ -129,7 +129,9 @@ export function EditProfileSheet({ profile, onClose }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-background animate-slide-up">
+    // z-[60] como los demás sheets: en z-50 empataba con BottomNav, que se
+    // pinta después y se comía la mitad inferior de Cancelar y Guardar.
+    <div className="fixed inset-0 z-[60] flex flex-col bg-background animate-slide-up">
       {/* Header */}
       <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-border">
         <h2 className="text-lg font-extrabold text-foreground">{t('profile.edit')}</h2>

@@ -128,7 +128,10 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
 
 
   return (
-    <div className="fixed inset-0 z-30 bg-foreground/40 animate-fade-in" onClick={onClose}>
+    // Mismo z que el sheet de editar, por encima de BottomNav (z-50): en z-30
+    // el fondo oscuro quedaba por debajo y la barra se veía iluminada sobre la
+    // pantalla atenuada, además de seguir siendo pulsable con el modal abierto.
+    <div className="fixed inset-0 z-[60] bg-foreground/40 animate-fade-in" onClick={onClose}>
       <div
         className="absolute bottom-0 left-0 right-0 bg-card rounded-t-3xl shadow-lifted animate-slide-up max-h-[85vh] overflow-y-auto mx-auto max-w-[430px]"
         onClick={e => e.stopPropagation()}
