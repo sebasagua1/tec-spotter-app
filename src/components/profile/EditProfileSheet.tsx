@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { INTEREST_OPTIONS, LANGUAGE_OPTIONS } from '@/lib/constants';
 import { ChipSelector } from '@/components/ui/chip-selector';
 import { ResidencePicker } from '@/components/ui/residence-picker';
+import { AvatarCropper } from '@/components/profile/AvatarCropper';
 import type { Database } from '@/integrations/supabase/types';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
@@ -35,12 +36,34 @@ export function EditProfileSheet({ profile, onClose }: Props) {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pendingPhoto, setPendingPhoto] = useState<File | null>(null);
+
+  const MAX_PHOTO_BYTES = 15 * 1024 * 1024;
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    // Se limpia el input o elegir la misma foto dos veces no dispara onChange.
+    e.target.value = '';
     if (!file) return;
-    setAvatarFile(file);
-    setAvatarPreview(URL.createObjectURL(file));
+
+    if (!file.type.startsWith('image/')) {
+      toast({ title: t('profile.photoNotImage'), variant: 'destructive' });
+      return;
+    }
+    // Tope solo sobre el original: lo que se sube es siempre el recorte de
+    // 512px reencodado, que pesa unos pocos kB venga de donde venga.
+    if (file.size > MAX_PHOTO_BYTES) {
+      toast({ title: t('profile.photoTooLarge'), variant: 'destructive' });
+      return;
+    }
+
+    setPendingPhoto(file);
+  };
+
+  const handleCropped = (cropped: File) => {
+    setPendingPhoto(null);
+    setAvatarFile(cropped);
+    setAvatarPreview(URL.createObjectURL(cropped));
   };
 
   const toggle = (list: string[], item: string, setter: (v: string[]) => void) =>
@@ -53,11 +76,13 @@ export function EditProfileSheet({ profile, onClose }: Props) {
     let avatarUrl = profile.avatar_url ?? null;
     if (avatarFile) {
       setUploadingAvatar(true);
-      const ext = avatarFile.name.split('.').pop() ?? 'jpg';
-      const path = `${profile.id}/avatar.${ext}`;
+      // Extensión fija: el recorte sale siempre en JPEG, y así no se acumulan
+      // avatar.png, avatar.heic... que nadie puede borrar (no hay política de
+      // DELETE en el bucket).
+      const path = `${profile.id}/avatar.jpg`;
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(path, avatarFile, { upsert: true, contentType: avatarFile.type });
+        .upload(path, avatarFile, { upsert: true, contentType: 'image/jpeg' });
       setUploadingAvatar(false);
       if (uploadError) {
         toast({ title: t('common.error'), description: uploadError.message, variant: 'destructive' });
@@ -65,7 +90,9 @@ export function EditProfileSheet({ profile, onClose }: Props) {
         return;
       }
       const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path);
-      avatarUrl = urlData.publicUrl;
+      // La ruta no cambia entre subidas, así que sin este parámetro el
+      // navegador seguiría enseñando la foto anterior desde caché.
+      avatarUrl = `${urlData.publicUrl}?v=${Date.now()}`;
     }
 
     const { error } = await supabase
@@ -90,6 +117,16 @@ export function EditProfileSheet({ profile, onClose }: Props) {
     }
     setSaving(false);
   };
+
+  if (pendingPhoto) {
+    return (
+      <AvatarCropper
+        file={pendingPhoto}
+        onCancel={() => setPendingPhoto(null)}
+        onCropped={handleCropped}
+      />
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-background animate-slide-up">

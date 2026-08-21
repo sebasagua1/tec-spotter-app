@@ -84,7 +84,14 @@
     "save": "Save changes",
     "saved": "Profile updated",
     "changePhoto": "Change photo",
-    "metaDesc": "Your ConnectTec profile: reputation, points, badges and stats."
+    "metaDesc": "Your ConnectTec profile: reputation, points, badges and stats.",
+    "adjustPhoto": "Adjust your photo",
+    "adjustPhotoHint": "Drag to move, pinch or use the slider to zoom",
+    "usePhoto": "Use this photo",
+    "zoom": "Zoom",
+    "photoError": "Couldn't process the image. Try another one.",
+    "photoNotImage": "That file is not an image",
+    "photoTooLarge": "Image is too large (max 15 MB)"
   },
   "myEvents": {
     "title": "My Events",
