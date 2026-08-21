@@ -96,7 +96,8 @@
     "viewDetails": "View details",
     "emptyPast": "No past events",
     "metaDesc": "Review the events you've created or joined on your Tec campus.",
-    "requests": "{{count}} to approve"
+    "requests": "{{count}} to approve",
+    "approved": "You're in!"
   },
   "friends": {
     "title": "Friends & Groups",

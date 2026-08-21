@@ -27,6 +27,7 @@ export function useNotificationSync() {
       joinRequests: Number(row.join_requests ?? 0),
       friendRequests: Number(row.friend_requests ?? 0),
       unreadMessages: Number(row.unread_messages ?? 0),
+      approvals: Number(row.approvals ?? 0),
     });
   }, [user, setCounts]);
 

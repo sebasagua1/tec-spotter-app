@@ -9,6 +9,7 @@ import { CATEGORY_ICONS } from '@/lib/categoryIcons';
 import { cn } from '@/lib/utils';
 import { EventBottomSheet } from '@/components/map/EventBottomSheet';
 import type { MapEvent } from '@/stores/eventStore';
+import { useNotificationStore } from '@/stores/notificationStore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format, isPast, formatDistanceToNow } from 'date-fns';
 import { es as esLocale, enUS } from 'date-fns/locale';
@@ -18,6 +19,8 @@ import { es as esLocale, enUS } from 'date-fns/locale';
 // no solo los cuatro campos que se pintan en la tarjeta.
 interface EventWithParticipation extends MapEvent {
   role: 'organizer' | 'joined';
+  /** Aprobado en un evento privado y todavía sin ver. */
+  justApproved?: boolean;
 }
 
 export default function MyEvents() {
@@ -51,6 +54,20 @@ export default function MyEvents() {
           .select('event_id, events(*)')
           .eq('user_id', user.id);
 
+        // Aparte y no en el select de arriba: si estas dos columnas todavía no
+        // existen en la base, PostgREST rechazaría la consulta entera y la
+        // lista se quedaría sin los eventos a los que te apuntaste. Así lo
+        // único que se pierde es el aviso.
+        const { data: approvals } = await supabase
+          .from('event_participants')
+          .select('event_id, approval_seen, approved_at')
+          .eq('user_id', user.id);
+        const justApprovedIds = new Set(
+          (approvals ?? [])
+            .filter((a) => a.approved_at != null && a.approval_seen === false)
+            .map((a) => a.event_id)
+        );
+
         const seen = new Set<string>();
         const all: EventWithParticipation[] = [];
         // `location` se compone aquí igual que en MapHome: en la tabla lng y lat
@@ -73,6 +90,7 @@ export default function MyEvents() {
               ...ev,
               location: ev.lng != null && ev.lat != null ? { lng: ev.lng, lat: ev.lat } : null,
               role: 'joined',
+              justApproved: justApprovedIds.has(ev.id),
             });
           }
         });
@@ -85,6 +103,14 @@ export default function MyEvents() {
         setPendingByEvent(
           Object.fromEntries((pending ?? []).map((r) => [r.event_id, Number(r.pending)]))
         );
+
+        // Se marcan vistos aquí, ya con la lista pintada: el aviso se enseña
+        // esta vez y no vuelve a salir. Después hay que pedir el recuento a
+        // mano, porque este UPDATE no dispara realtime para el globo.
+        if (justApprovedIds.size > 0) {
+          await supabase.rpc('mark_approvals_seen');
+          useNotificationStore.getState().refresh();
+        }
       } finally {
         setLoading(false);
       }
@@ -197,6 +223,11 @@ export default function MyEvents() {
                   {pendingByEvent[event.id] > 0 && (
                     <span className="px-2 py-0.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold">
                       {t('myEvents.requests', { count: pendingByEvent[event.id] })}
+                    </span>
+                  )}
+                  {event.justApproved && (
+                    <span className="px-2 py-0.5 rounded-full bg-success/15 text-success text-[10px] font-bold">
+                      {t('myEvents.approved')}
                     </span>
                   )}
                 </span>

@@ -4,6 +4,8 @@ export interface NotificationCounts {
   joinRequests: number;
   friendRequests: number;
   unreadMessages: number;
+  /** Eventos a los que me han dejado entrar y todavía no he visto. */
+  approvals: number;
 }
 
 interface NotificationState extends NotificationCounts {
@@ -19,7 +21,7 @@ interface NotificationState extends NotificationCounts {
   setRefresh: (fn: () => void | Promise<void>) => void;
 }
 
-const EMPTY: NotificationCounts = { joinRequests: 0, friendRequests: 0, unreadMessages: 0 };
+const EMPTY: NotificationCounts = { joinRequests: 0, friendRequests: 0, unreadMessages: 0, approvals: 0 };
 
 export const useNotificationStore = create<NotificationState>((set) => ({
   ...EMPTY,

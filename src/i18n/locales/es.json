@@ -96,7 +96,8 @@
     "viewDetails": "Ver detalles",
     "emptyPast": "Sin eventos pasados",
     "metaDesc": "Revisa los eventos que has creado o a los que te has unido en tu campus del Tec.",
-    "requests": "{{count}} por aprobar"
+    "requests": "{{count}} por aprobar",
+    "approved": "¡Te aprobaron!"
   },
   "friends": {
     "title": "Amigos y grupos",

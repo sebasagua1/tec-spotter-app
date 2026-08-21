@@ -85,6 +85,8 @@ export type Database = {
       }
       event_participants: {
         Row: {
+          approval_seen: boolean
+          approved_at: string | null
           checked_in: boolean
           event_id: string
           id: string
@@ -93,6 +95,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          approval_seen?: boolean
+          approved_at?: string | null
           checked_in?: boolean
           event_id: string
           id?: string
@@ -101,6 +105,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          approval_seen?: boolean
+          approved_at?: string | null
           checked_in?: boolean
           event_id?: string
           id?: string
@@ -544,12 +550,17 @@ export type Database = {
         Args: { _group_id: string }
         Returns: undefined
       }
+      mark_approvals_seen: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       notification_counts: {
         Args: Record<PropertyKey, never>
         Returns: {
           join_requests: number
           friend_requests: number
           unread_messages: number
+          approvals: number
         }[]
       }
       pending_requests_by_event: {
