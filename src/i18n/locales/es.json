@@ -95,7 +95,8 @@
     "emptyUpcoming": "Sin eventos próximos",
     "viewDetails": "Ver detalles",
     "emptyPast": "Sin eventos pasados",
-    "metaDesc": "Revisa los eventos que has creado o a los que te has unido en tu campus del Tec."
+    "metaDesc": "Revisa los eventos que has creado o a los que te has unido en tu campus del Tec.",
+    "requests": "{{count}} por aprobar"
   },
   "friends": {
     "title": "Amigos y grupos",
@@ -369,5 +370,8 @@
     "keyword": "ELIMINAR",
     "typeToConfirm": "Escribe {{keyword}} para confirmar",
     "failed": "No se pudo eliminar la cuenta"
+  },
+  "notifications": {
+    "pending": "{{count}} sin ver"
   }
 }

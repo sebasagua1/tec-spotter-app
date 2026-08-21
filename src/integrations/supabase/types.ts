@@ -207,18 +207,21 @@ export type Database = {
           group_id: string
           id: string
           joined_at: string
+          last_read_at: string
           user_id: string
         }
         Insert: {
           group_id: string
           id?: string
           joined_at?: string
+          last_read_at?: string
           user_id: string
         }
         Update: {
           group_id?: string
           id?: string
           joined_at?: string
+          last_read_at?: string
           user_id?: string
         }
         Relationships: [
@@ -536,6 +539,26 @@ export type Database = {
       is_group_member: {
         Args: { _group_id: string; _user_id: string }
         Returns: boolean
+      }
+      mark_group_read: {
+        Args: { _group_id: string }
+        Returns: undefined
+      }
+      notification_counts: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          join_requests: number
+          friend_requests: number
+          unread_messages: number
+        }[]
+      }
+      pending_requests_by_event: {
+        Args: Record<PropertyKey, never>
+        Returns: { event_id: string; pending: number }[]
+      }
+      unread_by_group: {
+        Args: Record<PropertyKey, never>
+        Returns: { group_id: string; group_name: string; unread: number }[]
       }
     }
     Enums: {

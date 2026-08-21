@@ -95,7 +95,8 @@
     "emptyUpcoming": "No upcoming events",
     "viewDetails": "View details",
     "emptyPast": "No past events",
-    "metaDesc": "Review the events you've created or joined on your Tec campus."
+    "metaDesc": "Review the events you've created or joined on your Tec campus.",
+    "requests": "{{count}} to approve"
   },
   "friends": {
     "title": "Friends & Groups",
@@ -369,5 +370,8 @@
     "keyword": "DELETE",
     "typeToConfirm": "Type {{keyword}} to confirm",
     "failed": "Couldn't delete the account"
+  },
+  "notifications": {
+    "pending": "{{count}} unseen"
   }
 }

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useNotificationStore } from '@/stores/notificationStore';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Send, Users, UserPlus, LogOut } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -109,6 +110,19 @@ export default function GroupChat() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Estar en el chat cuenta como haberlo leído, también si llega algo mientras
+  // lo tienes abierto. Marcar leído es un UPDATE sobre group_members, que no
+  // emite realtime, así que hay que pedir el recuento a mano después.
+  useEffect(() => {
+    if (!groupId || messages.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      await supabase.rpc('mark_group_read', { _group_id: groupId });
+      if (!cancelled) useNotificationStore.getState().refresh();
+    })();
+    return () => { cancelled = true; };
+  }, [groupId, messages.length]);
 
   useEffect(() => {
     if (!groupId) return;

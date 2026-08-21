@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
+import { useNotificationStore } from '@/stores/notificationStore';
 import { useToast } from '@/hooks/use-toast';
 import { rpcMessage } from '@/lib/rpcErrors';
 import { ModerationMenu } from '@/components/moderation/ModerationMenu';
@@ -52,6 +53,7 @@ export default function Friends() {
 
   const initialTab: ActiveTab = (location.state as { tab?: ActiveTab } | null)?.tab ?? 'friends';
   const [activeTab, setActiveTab] = useState<ActiveTab>(initialTab);
+  const unreadMessages = useNotificationStore((n) => n.unreadMessages);
   const [searchQuery, setSearchQuery] = useState('');
   const [friends, setFriends] = useState<FriendData[]>([]);
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
@@ -61,6 +63,8 @@ export default function Friends() {
   // Groups state
   const [groups, setGroups] = useState<Group[]>([]);
   const [groupsLoading, setGroupsLoading] = useState(false);
+  const [unreadByGroup, setUnreadByGroup] = useState<Record<string, number>>({});
+  const [unreadByDmName, setUnreadByDmName] = useState<Record<string, number>>({});
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   const [creatingGroup, setCreatingGroup] = useState(false);
@@ -164,6 +168,32 @@ export default function Friends() {
     }
   }, [user]);
 
+  // Mensajes sin leer, por chat. Los DM no salen en la lista de grupos, así
+  // que se indexan también por nombre para poder pintarlos sobre el amigo que
+  // escribió (create_dm nombra el grupo con los dos uuid ordenados).
+  const fetchUnread = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase.rpc('unread_by_group');
+    const byId: Record<string, number> = {};
+    const byName: Record<string, number> = {};
+    (data ?? []).forEach((row) => {
+      byId[row.group_id] = Number(row.unread);
+      byName[row.group_name] = Number(row.unread);
+    });
+    setUnreadByGroup(byId);
+    setUnreadByDmName(byName);
+  }, [user]);
+
+  // El nombre que create_dm le da al chat con esta persona.
+  const dmNameWith = useCallback(
+    (friendId: string) => {
+      if (!user) return '';
+      const [a, b] = [user.id, friendId].sort();
+      return `__dm_${a}_${b}`;
+    },
+    [user]
+  );
+
   const fetchLeaderboard = useCallback(async (offset = 0) => {
     setLeaderLoading(true);
     try {
@@ -187,6 +217,10 @@ export default function Friends() {
     if (activeTab === 'groups') fetchGroups();
     if (activeTab === 'leaderboard') { setLeaderOffset(0); fetchLeaderboard(0); }
   }, [activeTab, fetchGroups, fetchLeaderboard]);
+
+  // Se re-pide cuando cambia el contador global: la suscripción vive en
+  // AppShell, así que ese número subiendo es la señal de que hay algo nuevo.
+  useEffect(() => { fetchUnread(); }, [fetchUnread, unreadMessages]);
 
   // El DM lo crea create_dm() en el servidor: atómico (grupo + las dos
   // membresías) e idempotente, así que ambas partes acaban en el mismo grupo.
@@ -459,9 +493,14 @@ export default function Friends() {
                     <button
                       onClick={() => handleMessageFriend(f)}
                       aria-label={t('friends.messageAria', { name: f.name ?? '' })}
-                      className="p-2 text-primary"
+                      className="relative p-2 text-primary"
                     >
                       <MessageCircle className="w-5 h-5" />
+                      {unreadByDmName[dmNameWith(f.id ?? '')] > 0 && (
+                        <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold flex items-center justify-center">
+                          {unreadByDmName[dmNameWith(f.id ?? '')]}
+                        </span>
+                      )}
                     </button>
                     <ModerationMenu
                       target={{ kind: 'user', id: f.id ?? '' }}
@@ -520,7 +559,12 @@ export default function Friends() {
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
                     {g.name[0]}
                   </div>
-                  <span className="font-semibold text-sm text-foreground">{g.name}</span>
+                  <span className="font-semibold text-sm text-foreground flex-1">{g.name}</span>
+                  {unreadByGroup[g.id] > 0 && (
+                    <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">
+                      {unreadByGroup[g.id]}
+                    </span>
+                  )}
                 </button>
               ))
             )}

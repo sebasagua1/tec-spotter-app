@@ -29,6 +29,7 @@ export default function MyEvents() {
   const [loading, setLoading] = useState(true);
   const [visibleCount, setVisibleCount] = useState(10);
   const [selected, setSelected] = useState<EventWithParticipation | null>(null);
+  const [pendingByEvent, setPendingByEvent] = useState<Record<string, number>>({});
   const PAGE_SIZE = 10;
 
   const fetchMyEvents = useCallback(async () => {
@@ -76,6 +77,14 @@ export default function MyEvents() {
           }
         });
         setEvents(all);
+
+        // Cuánta gente espera aprobación en cada evento que organizo, para el
+        // aviso de la tarjeta. Va por RPC porque contar desde el cliente
+        // exigiría leer filas de event_participants que la RLS no deja ver.
+        const { data: pending } = await supabase.rpc('pending_requests_by_event');
+        setPendingByEvent(
+          Object.fromEntries((pending ?? []).map((r) => [r.event_id, Number(r.pending)]))
+        );
       } finally {
         setLoading(false);
       }
@@ -178,11 +187,18 @@ export default function MyEvents() {
                 </div>
               </div>
 
-              {/* Pie: aforo + pista de que la tarjeta se puede tocar */}
+              {/* Pie: aforo, solicitudes por aprobar y pista de que se toca */}
               <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
-                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Users className="w-3.5 h-3.5" />
-                  {event.current_spots}/{event.max_spots}
+                <span className="flex items-center gap-2">
+                  <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Users className="w-3.5 h-3.5" />
+                    {event.current_spots}/{event.max_spots}
+                  </span>
+                  {pendingByEvent[event.id] > 0 && (
+                    <span className="px-2 py-0.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold">
+                      {t('myEvents.requests', { count: pendingByEvent[event.id] })}
+                    </span>
+                  )}
                 </span>
                 <span className="flex items-center gap-0.5 text-xs font-semibold text-primary">
                   {t('myEvents.viewDetails')}
