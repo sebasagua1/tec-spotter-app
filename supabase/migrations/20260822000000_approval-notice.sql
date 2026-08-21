@@ -122,7 +122,13 @@ GRANT  EXECUTE ON FUNCTION public.mark_approvals_seen() TO authenticated;
 
 -- ============================================================
 -- 4. El contador gana una cuarta cifra.
+--
+-- Hay que borrarla antes: CREATE OR REPLACE no puede cambiar el tipo de
+-- retorno de una función que ya existe, y añadir una columna al RETURNS
+-- TABLE es justo eso (42P13).
 -- ============================================================
+DROP FUNCTION IF EXISTS public.notification_counts();
+
 CREATE OR REPLACE FUNCTION public.notification_counts()
 RETURNS TABLE (
   join_requests   bigint,
