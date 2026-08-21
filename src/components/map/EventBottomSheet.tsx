@@ -179,7 +179,10 @@ export function EventBottomSheet({ event, onClose }: Props) {
 
     const { error } = await supabase
       .from('event_participants')
-      .insert({ event_id: event.id, user_id: user.id, status: 'joined' });
+      // Sin status: lo fija el trigger set_participant_initial_status según
+      // la privacidad del evento ('pending' en los privados). Mandarlo desde
+      // aquí no serviría de nada porque el servidor lo sobrescribe.
+      .insert({ event_id: event.id, user_id: user.id });
 
     if (error) {
       setLocalCurrentSpots(prevSpots);
