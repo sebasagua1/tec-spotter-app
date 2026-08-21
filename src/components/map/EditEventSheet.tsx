@@ -88,13 +88,16 @@ export function EditEventSheet({ event, onClose, onSaved }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-foreground/40 animate-fade-in" onClick={onClose}>
+    // z por encima de BottomNav (z-50): el pie de este sheet es sticky y se
+    // queda justo en la franja de la barra, que al pintarse después ganaba el
+    // empate de z-index y tapaba el botón de guardar.
+    <div className="fixed inset-0 z-[60] bg-foreground/40 animate-fade-in" onClick={onClose}>
       <div
         className="absolute bottom-0 left-0 right-0 bg-card rounded-t-3xl shadow-lifted animate-slide-up max-h-[88vh] overflow-y-auto mx-auto max-w-[430px]"
         onClick={e => e.stopPropagation()}
       >
         <div className="drag-handle" />
-        <div className="px-5 pb-24">
+        <div className="px-5 pb-4">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-xl font-extrabold text-foreground">{t('edit.title')}</h2>
             <button onClick={onClose} aria-label={t('common.close')} className="p-1 text-muted-foreground">
@@ -201,7 +204,7 @@ export function EditEventSheet({ event, onClose, onSaved }: Props) {
         </div>
 
         {/* Sticky footer */}
-        <div className="sticky bottom-0 bg-card border-t border-border px-5 py-4 flex gap-3">
+        <div className="sticky bottom-0 bg-card border-t border-border px-5 py-4 flex gap-3 safe-bottom">
           <Button variant="outline" onClick={onClose} className="h-12 rounded-xl px-6">
             {t('common.cancel')}
           </Button>

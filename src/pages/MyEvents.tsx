@@ -253,7 +253,7 @@ export default function MyEvents() {
           panel de solicitudes. Va dentro de un contenedor fixed porque el sheet
           se posiciona con `absolute bottom-20` y esta página hace scroll. */}
       {selected && (
-        <div className="fixed inset-0 z-30">
+        <div className="fixed inset-0 z-[60]">
           <button
             aria-label={t('common.close')}
             onClick={handleCloseSheet}
