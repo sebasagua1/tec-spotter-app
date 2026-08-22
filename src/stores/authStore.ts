@@ -10,6 +10,9 @@ interface AuthState {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
+  /** false hasta que el primer fetchProfile termina, haya perfil o no. Sin
+   *  esto no se puede distinguir "todavía no se ha pedido" de "no hay". */
+  profileLoaded: boolean;
   setSession: (session: Session | null) => void;
   setProfile: (profile: Profile | null) => void;
   setLoading: (loading: boolean) => void;
@@ -22,12 +25,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   session: null,
   profile: null,
   loading: true,
+  profileLoaded: false,
   setSession: (session) => set({ session, user: session?.user ?? null }),
   setProfile: (profile) => set({ profile }),
   setLoading: (loading) => set({ loading }),
   signOut: async () => {
     await supabase.auth.signOut();
-    set({ user: null, session: null, profile: null });
+    set({ user: null, session: null, profile: null, profileLoaded: false });
   },
   fetchProfile: async () => {
     const { user } = get();
@@ -37,6 +41,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       .select('*')
       .eq('id', user.id)
       .single();
-    if (data) set({ profile: data });
+    // profileLoaded se marca pase lo que pase: si el perfil no existe (por
+    // ejemplo si falló el trigger que lo crea), quedarse esperando dejaría la
+    // app colgada en el spinner para siempre.
+    set(data ? { profile: data, profileLoaded: true } : { profileLoaded: true });
   },
 }));

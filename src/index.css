@@ -96,6 +96,14 @@
 }
 
 @layer utilities {
+  /* Alto del chat descontando BottomNav. La barra mide h-16 (64px) MÁS el
+     safe-area-inset, que en un iPhone con indicador de inicio son otros ~34px:
+     descontando solo 64px el campo de escribir queda debajo de la barra.
+     La línea con 100vh es el respaldo para navegadores sin dvh. */
+  .h-below-nav {
+    height: calc(100vh - 4rem - env(safe-area-inset-bottom, 0px));
+    height: calc(100dvh - 4rem - env(safe-area-inset-bottom, 0px));
+  }
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }

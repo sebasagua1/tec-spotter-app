@@ -120,7 +120,7 @@ export function EventBottomSheet({ event, onClose }: Props) {
     };
     fetchAttendees();
     return () => { cancelled = true; };
-  }, [canSeeAttendees, event.id, attendeesVersion]);
+  }, [canSeeAttendees, event.id, event.creator_id, attendeesVersion]);
 
   // Solicitudes pendientes — solo las ve y resuelve el organizador.
   useEffect(() => {

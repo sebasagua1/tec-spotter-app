@@ -27,7 +27,7 @@ function PageSpinner() {
 }
 
 function AuthGate() {
-  const { user, session, profile, loading, setSession, setLoading, fetchProfile } = useAuthStore();
+  const { user, session, profile, profileLoaded, loading, setSession, setLoading, fetchProfile } = useAuthStore();
 
   useEffect(() => {
     // Set up auth listener first
@@ -54,6 +54,11 @@ function AuthGate() {
 
   if (!session) return <Auth />;
 
+  // Esperar al perfil antes de decidir. Sin esto, con el perfil todavía sin
+  // cargar se entraba a la app —montando el mapa entero, mapbox incluido— y un
+  // instante después saltaba a onboarding.
+  if (!profileLoaded) return <PageSpinner />;
+
   if (profile && !profile.onboarding_completed) return <Onboarding />;
 
   return (
@@ -73,8 +78,12 @@ const App = () => (
             <Route path="friends" element={<Friends />} />
             <Route path="groups/:id" element={<GroupChat />} />
             <Route path="profile" element={<Profile />} />
+            {/* Dentro de AuthGate a propósito: la ruta padre es "/*" y captura
+                todo, así que un "*" hermano nunca llegaba a evaluarse y una URL
+                desconocida dejaba el Outlet vacío — pantalla en blanco con la
+                barra de abajo. */}
+            <Route path="*" element={<NotFound />} />
           </Route>
-          <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
     </BrowserRouter>

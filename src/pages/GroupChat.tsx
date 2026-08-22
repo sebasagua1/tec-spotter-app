@@ -235,7 +235,7 @@ export default function GroupChat() {
   };
 
   return (
-    <div className="flex flex-col" style={{ height: 'calc(100vh - 64px)' }}>
+    <div className="flex flex-col h-below-nav">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-4 pb-3 bg-card border-b border-border shrink-0">
         <button

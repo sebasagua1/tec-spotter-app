@@ -382,5 +382,9 @@
   },
   "notifications": {
     "pending": "{{count}} unseen"
+  },
+  "notFound": {
+    "message": "This page doesn't exist.",
+    "back": "Back to the map"
   }
 }
