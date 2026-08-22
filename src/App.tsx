@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 import { AppShell } from '@/components/layout/AppShell';
 import Auth from '@/pages/Auth';
+import { registerPush } from '@/lib/push';
 
 // Rutas cargadas bajo demanda: mantienen el bundle inicial pequeño
 // (importante en móvil). Auth se queda eager porque es el primer
@@ -53,6 +54,12 @@ function AuthGate() {
   useEffect(() => {
     if (user) fetchProfile();
   }, [user, fetchProfile]);
+
+  // Registro para push. En web no hace nada; en iOS pide permiso la primera
+  // vez y renueva el token en cada arranque, que APNs los rota por su cuenta.
+  useEffect(() => {
+    if (user) registerPush();
+  }, [user]);
 
   if (loading) return <PageSpinner />;
 

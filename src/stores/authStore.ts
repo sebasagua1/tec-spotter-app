@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
 import type { Database } from '@/integrations/supabase/types';
+import { unregisterPush } from '@/lib/push';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
 
@@ -40,6 +41,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   setProfile: (profile) => set({ profile }),
   setLoading: (loading) => set({ loading }),
   signOut: async () => {
+    // Antes del signOut: dar de baja el token necesita la sesión todavía viva.
+    await unregisterPush();
     await supabase.auth.signOut();
     set({ user: null, session: null, profile: null, profileLoaded: false, passwordRecovery: false });
   },

@@ -558,6 +558,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      register_device_token: {
+        Args: { _token: string; _platform?: string }
+        Returns: undefined
+      }
+      unregister_device_token: {
+        Args: { _token: string }
+        Returns: undefined
+      }
       notification_counts: {
         Args: Record<PropertyKey, never>
         Returns: {
