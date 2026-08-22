@@ -33,6 +33,31 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
     }
 
+    // MARK: - Notificaciones remotas (APNs)
+    //
+    // iOS entrega el token del dispositivo aquí, al AppDelegate. Capacitor no
+    // puede interceptarlo por su cuenta: hay que reenviárselo por
+    // NotificationCenter o el listener 'registration' del plugin no se dispara
+    // NUNCA. Y falla en silencio, porque 'registrationError' tampoco salta.
+    // Es un requisito documentado de @capacitor/push-notifications que la
+    // plantilla de Capacitor no incluye.
+
+    func application(_ application: UIApplication,
+                     didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        NotificationCenter.default.post(
+            name: .capacitorDidRegisterForRemoteNotifications,
+            object: deviceToken
+        )
+    }
+
+    func application(_ application: UIApplication,
+                     didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        NotificationCenter.default.post(
+            name: .capacitorDidFailToRegisterForRemoteNotifications,
+            object: error
+        )
+    }
+
     func application(_ application: UIApplication,
                      configurationForConnecting connectingSceneSession: UISceneSession,
                      options: UIScene.ConnectionOptions) -> UISceneConfiguration {
