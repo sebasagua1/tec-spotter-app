@@ -476,7 +476,15 @@ export function EventBottomSheet({ event, onClose }: Props) {
             </div>
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Users className="w-3.5 h-3.5" />
-              <span>{t('event.attendees', { count: attendees.length })}</span>
+              {/* Sin contar a quien organiza: si no, esta cifra contradice al
+                  aforo ("1/6") y al "1 persona unida" de arriba, que cuentan
+                  solo a quien se apuntó. En la lista sigue saliendo, con su
+                  etiqueta. */}
+              <span>
+                {t('event.attendees', {
+                  count: attendees.filter(a => a.id !== event.creator_id).length,
+                })}
+              </span>
             </div>
             {loadingAttendees ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />

@@ -259,7 +259,14 @@ export default function MyEvents() {
             onClick={handleCloseSheet}
             className="absolute inset-0 bg-black/30"
           />
-          <EventBottomSheet event={selected} onClose={handleCloseSheet} />
+          {/* El sheet se coloca con `absolute left-0 right-0`, así que ocupa el
+              ancho de su contenedor. Sin esta columna se estiraba a todo el
+              navegador, porque el `fixed inset-0` mide la ventana entera y no
+              los 430px del móvil. En el mapa no pasaba: allí su contenedor ya
+              es la columna de AppShell. */}
+          <div className="relative mx-auto h-full w-full max-w-[430px]">
+            <EventBottomSheet event={selected} onClose={handleCloseSheet} />
+          </div>
         </div>
       )}
     </div>
