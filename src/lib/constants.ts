@@ -9,10 +9,20 @@ export const EVENT_CATEGORIES = [
 
 export type EventCategory = typeof EVENT_CATEGORIES[number]['key'];
 
-export const INTEREST_OPTIONS = [
-  'Music', 'Sports', 'Tech', 'Art', 'Food', 'Gaming', 'Travel', 'Volunteering',
-  'Photography', 'Reading', 'Movies', 'Fitness', 'Cooking', 'Dance',
+// Agrupados para que la pantalla de intereses se pueda ojear: 54 opciones
+// sueltas serían un muro de chips. Los nombres originales se conservan tal
+// cual: son los que ya están guardados en los perfiles existentes.
+export const INTEREST_GROUPS = [
+  { key: 'sports', items: ['Sports', 'Soccer', 'Basketball', 'Fitness', 'Running', 'Swimming', 'Tennis', 'Volleyball', 'Yoga', 'Climbing', 'Cycling', 'MartialArts'] },
+  { key: 'arts', items: ['Music', 'Art', 'Photography', 'Dance', 'Theater', 'Writing', 'Design', 'Singing'] },
+  { key: 'tech', items: ['Tech', 'Gaming', 'Robotics', 'AI', 'Startups', 'Coding'] },
+  { key: 'social', items: ['Food', 'Cooking', 'Coffee', 'Travel', 'Volunteering', 'Parties', 'BoardGames', 'Karaoke', 'Pets'] },
+  { key: 'culture', items: ['Reading', 'Movies', 'Series', 'Anime', 'Podcasts', 'History'] },
+  { key: 'academic', items: ['StudyGroups', 'Debate', 'Languages', 'Science', 'Finance', 'Sustainability', 'Entrepreneurship'] },
+  { key: 'outdoors', items: ['Hiking', 'Camping', 'Beach', 'Skating', 'Fishing', 'Astronomy'] },
 ] as const;
+
+export const INTEREST_OPTIONS = INTEREST_GROUPS.flatMap(g => g.items as readonly string[]);
 
 export const LANGUAGE_OPTIONS = [
   'Español', 'English', 'Français', 'Deutsch', 'Português', '中文', '日本語', 'Korean',

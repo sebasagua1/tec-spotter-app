@@ -1,12 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { INTEREST_OPTIONS, LANGUAGE_OPTIONS } from '@/lib/constants';
+import { LANGUAGE_OPTIONS } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { ChipSelector } from '@/components/ui/chip-selector';
+import { InterestPicker } from '@/components/ui/interest-picker';
+import { OriginPicker } from '@/components/ui/origin-picker';
 import { ResidencePicker } from '@/components/ui/residence-picker';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
@@ -29,6 +31,7 @@ export default function Onboarding() {
   const [major, setMajor] = useState('');
   const [semester, setSemester] = useState('');
   const [residence, setResidence] = useState('');
+  const [origin, setOrigin] = useState<string | null>(null);
   const [interests, setInterests] = useState<string[]>([]);
   const [languages, setLanguages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -59,7 +62,35 @@ export default function Onboarding() {
     }
   }, [user]);
 
-  const totalSteps = needsCampusSelection ? 5 : 4;
+  // Lista explícita de pasos. Antes se hacía con aritmética sobre el índice
+  // (`adjustedStep = step + 1`), que ya era difícil de seguir con un paso
+  // opcional y se vuelve inmanejable con dos.
+  const steps = useMemo(() => {
+    const list: string[] = [];
+    if (needsCampusSelection) list.push('campus');
+    list.push('basics', 'residence');
+    if (residence === 'foraneo' || residence === 'international') list.push('origin');
+    list.push('interests', 'languages');
+    return list;
+  }, [needsCampusSelection, residence]);
+
+  const totalSteps = steps.length;
+  const current = steps[Math.min(step, totalSteps - 1)];
+
+  // Cambiar de "foráneo" a "local" acorta la lista; sin esto el índice podría
+  // quedar apuntando fuera.
+  useEffect(() => {
+    if (step > totalSteps - 1) setStep(totalSteps - 1);
+  }, [step, totalSteps]);
+
+  // Dirección de la animación: hacia dónde va la transición.
+  const [direction, setDirection] = useState<'fwd' | 'back'>('fwd');
+  const goNext = () => { setDirection('fwd'); setStep((v) => v + 1); };
+  const goBack = () => { setDirection('back'); setStep((v) => v - 1); };
+
+  // Al cambiar de paso el contenido puede quedar desplazado del anterior.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => { scrollRef.current?.scrollTo({ top: 0 }); }, [step]);
 
   const toggleItem = (list: string[], item: string, setter: (v: string[]) => void) => {
     setter(list.includes(item) ? list.filter(i => i !== item) : [...list, item]);
@@ -73,6 +104,8 @@ export default function Onboarding() {
       major,
       semester: parseInt(semester) || null,
       residence_type: residence,
+      // Solo tiene sentido para quien no es local.
+      origin: residence === 'local' ? null : origin,
       interests,
       languages,
       campus_id: selectedCampusId,
@@ -89,10 +122,7 @@ export default function Onboarding() {
 
   // Steps: campus selection (if needed) → basics → residence → interests → languages
   const getStepContent = () => {
-    const campusStep = needsCampusSelection ? 0 : -1;
-    const adjustedStep = needsCampusSelection ? step : step + 1;
-
-    if (adjustedStep === 0 && needsCampusSelection) {
+    if (current === 'campus') {
       const filtered = campuses.filter(c =>
         c.name.toLowerCase().includes(campusSearch.toLowerCase())
       );
@@ -134,7 +164,7 @@ export default function Onboarding() {
       );
     }
 
-    if (adjustedStep === 1) {
+    if (current === 'basics') {
       return (
         <div className="space-y-6 flex-1">
           <div>
@@ -157,7 +187,7 @@ export default function Onboarding() {
       );
     }
 
-    if (adjustedStep === 2) {
+    if (current === 'residence') {
       return (
         <div className="space-y-6 flex-1">
           <div>
@@ -169,24 +199,37 @@ export default function Onboarding() {
       );
     }
 
-    if (adjustedStep === 3) {
+    if (current === 'origin') {
+      const mode = residence === 'international' ? 'international' : 'foraneo';
+      return (
+        <div className="space-y-6 flex-1">
+          <div>
+            <h2 className="text-2xl font-extrabold text-foreground mb-1">
+              {t(mode === 'international' ? 'origin.countryTitle' : 'origin.stateTitle')}
+            </h2>
+            <p className="text-muted-foreground text-sm">{t('origin.subtitle')}</p>
+          </div>
+          <OriginPicker mode={mode} value={origin} onChange={setOrigin} />
+        </div>
+      );
+    }
+
+    if (current === 'interests') {
       return (
         <div className="space-y-6 flex-1">
           <div>
             <h2 className="text-2xl font-extrabold text-foreground mb-1">{t('onboarding.interestsTitle')}</h2>
             <p className="text-muted-foreground text-sm">{t('onboarding.interestsSubtitle')}</p>
           </div>
-          <ChipSelector
-            options={INTEREST_OPTIONS}
+          <InterestPicker
             selected={interests}
             onToggle={(item) => toggleItem(interests, item, setInterests)}
-            renderLabel={(item) => t('interests.' + item)}
           />
         </div>
       );
     }
 
-    if (adjustedStep === 4) {
+    if (current === 'languages') {
       return (
         <div className="space-y-6 flex-1">
           <div>
@@ -206,9 +249,10 @@ export default function Onboarding() {
   };
 
   const canProceed = () => {
-    const adjustedStep = needsCampusSelection ? step : step + 1;
-    if (adjustedStep === 0) return !!selectedCampusId;
-    if (adjustedStep === 1) return !!name;
+    if (current === 'campus') return !!selectedCampusId;
+    if (current === 'basics') return !!name;
+    if (current === 'residence') return !!residence;
+    if (current === 'origin') return !!origin;
     return true;
   };
 
@@ -237,20 +281,24 @@ export default function Onboarding() {
         ))}
       </div>
 
-      <div className="flex-1 flex flex-col">
-        {getStepContent()}
+      <div ref={scrollRef} className="flex-1 flex flex-col overflow-y-auto">
+        {/* key={step} fuerza el remontaje para que la animación se dispare en
+            cada paso; la dirección decide desde qué lado entra. */}
+        <div key={step} className={direction === 'fwd' ? 'animate-step-in-right' : 'animate-step-in-left'}>
+          {getStepContent()}
+        </div>
       </div>
 
       {/* Navigation */}
       <div className="flex gap-3 mt-8">
         {step > 0 && (
-          <Button variant="outline" onClick={() => setStep(step - 1)} className="h-12 rounded-xl px-6">
+          <Button variant="outline" onClick={goBack} className="h-12 rounded-xl px-6">
             <ChevronLeft className="w-4 h-4 mr-1" /> {t('common.back')}
           </Button>
         )}
         {step < totalSteps - 1 ? (
           <Button
-            onClick={() => setStep(step + 1)}
+            onClick={goNext}
             className="flex-1 h-12 rounded-xl font-bold"
             disabled={!canProceed()}
           >

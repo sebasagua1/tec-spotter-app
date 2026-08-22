@@ -7,9 +7,11 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
-import { INTEREST_OPTIONS, LANGUAGE_OPTIONS } from '@/lib/constants';
+import { LANGUAGE_OPTIONS } from '@/lib/constants';
 import { ChipSelector } from '@/components/ui/chip-selector';
 import { ResidencePicker } from '@/components/ui/residence-picker';
+import { InterestPicker } from '@/components/ui/interest-picker';
+import { OriginPicker } from '@/components/ui/origin-picker';
 import { AvatarCropper } from '@/components/profile/AvatarCropper';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -29,6 +31,7 @@ export function EditProfileSheet({ profile, onClose }: Props) {
   const [major, setMajor] = useState(profile.major ?? '');
   const [semester, setSemester] = useState(profile.semester?.toString() ?? '');
   const [residence, setResidence] = useState(profile.residence_type ?? '');
+  const [origin, setOrigin] = useState<string | null>(profile.origin ?? null);
   const [interests, setInterests] = useState<string[]>(profile.interests ?? []);
   const [languages, setLanguages] = useState<string[]>(profile.languages ?? []);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(profile.avatar_url ?? null);
@@ -102,6 +105,7 @@ export function EditProfileSheet({ profile, onClose }: Props) {
         major: major.trim() || null,
         semester: parseInt(semester) || null,
         residence_type: residence || null,
+        origin: residence === 'local' ? null : origin,
         interests,
         languages,
         avatar_url: avatarUrl,
@@ -220,14 +224,26 @@ export function EditProfileSheet({ profile, onClose }: Props) {
           <ResidencePicker value={residence} onChange={setResidence} />
         </div>
 
+        {/* De dónde eres — solo si no vives aquí */}
+        {(residence === 'foraneo' || residence === 'international') && (
+          <div className="space-y-3">
+            <Label>
+              {t(residence === 'international' ? 'origin.countryTitle' : 'origin.stateTitle')}
+            </Label>
+            <OriginPicker
+              mode={residence === 'international' ? 'international' : 'foraneo'}
+              value={origin}
+              onChange={setOrigin}
+            />
+          </div>
+        )}
+
         {/* Interests */}
         <div className="space-y-3">
           <Label>{t('onboarding.interestsTitle')}</Label>
-          <ChipSelector
-            options={INTEREST_OPTIONS}
+          <InterestPicker
             selected={interests}
             onToggle={(item) => toggle(interests, item, setInterests)}
-            renderLabel={(item) => t('interests.' + item)}
           />
         </div>
 

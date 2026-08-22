@@ -26,10 +26,11 @@ import { BlockedUsersSheet } from '@/components/moderation/BlockedUsersSheet';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { formatOrigin } from '@/lib/origin';
 
 export default function Profile() {
   const { profile, signOut, fetchProfile } = useAuthStore();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [stats, setStats] = useState({ attended: 0, created: 0 });
   const [badges, setBadges] = useState<string[]>([]);
   const [pointsHistory, setPointsHistory] = useState<{ id: string; points: number; reason: string; created_at: string }[]>([]);
@@ -40,6 +41,7 @@ export default function Profile() {
   const [deleteConfirm, setDeleteConfirm] = useState('');
   const [deleting, setDeleting] = useState(false);
   const { toast } = useToast();
+  const originLabel = formatOrigin(profile?.origin, i18n.language || 'es');
 
   useEffect(() => {
     fetchProfile();
@@ -171,8 +173,10 @@ export default function Profile() {
           <div className="flex-1">
             <h2 className="text-lg font-extrabold text-foreground">{profile.name ?? t('profile.student')}</h2>
             <p className="text-sm text-muted-foreground">{profile.major ?? t('profile.noMajor')}</p>
-            <p className="text-xs text-muted-foreground capitalize">
-              {profile.residence_type ?? ''} · {t('profile.semester')} {profile.semester ?? '—'}
+            <p className="text-xs text-muted-foreground">
+              {profile.residence_type ? t('residence.' + profile.residence_type) : ''}
+              {originLabel && ` · ${originLabel}`}
+              {' · '}{t('profile.semester')} {profile.semester ?? '—'}
             </p>
           </div>
           <button

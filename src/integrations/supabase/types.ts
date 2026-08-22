@@ -346,6 +346,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          origin: string | null
           availability: Json | null
           avatar_url: string | null
           campus_id: string | null
@@ -364,6 +365,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          origin?: string | null
           availability?: Json | null
           avatar_url?: string | null
           campus_id?: string | null
@@ -382,6 +384,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          origin?: string | null
           availability?: Json | null
           avatar_url?: string | null
           campus_id?: string | null
@@ -457,6 +460,7 @@ export type Database = {
     Views: {
       public_profiles: {
         Row: {
+          origin: string | null
           avatar_url: string | null
           campus_id: string | null
           created_at: string | null
