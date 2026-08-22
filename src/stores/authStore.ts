@@ -46,11 +46,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   fetchProfile: async () => {
     const { user } = get();
     if (!user) return;
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', user.id)
       .single();
+    // Aquí no hay toast (esto es un store, no un componente). Se registra
+    // porque un fallo deja al usuario sin perfil y el síntoma —volver al
+    // onboarding— no apunta a la causa.
+    if (error) console.error('fetchProfile falló:', error.message);
     // profileLoaded se marca pase lo que pase: si el perfil no existe (por
     // ejemplo si falló el trigger que lo crea), quedarse esperando dejaría la
     // app colgada en el spinner para siempre.

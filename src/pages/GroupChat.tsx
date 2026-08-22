@@ -25,6 +25,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
+import i18n from '@/i18n';
 import { rpcMessage } from '@/lib/rpcErrors';
 import { ModerationMenu } from '@/components/moderation/ModerationMenu';
 import { cn } from '@/lib/utils';
@@ -98,14 +99,19 @@ export default function GroupChat() {
   useEffect(() => {
     if (!groupId) return;
     (async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('messages')
         .select('id, content, created_at, sender_id')
         .eq('group_id', groupId)
         .order('created_at', { ascending: true });
+      // Un chat vacío por error de red es indistinguible de uno sin mensajes.
+      if (error) {
+        toast({ title: i18n.t('errors.messagesLoad'), variant: 'destructive' });
+        return;
+      }
       setMessages(await enrichMessages(data ?? []));
     })();
-  }, [groupId]);
+  }, [groupId, toast]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });

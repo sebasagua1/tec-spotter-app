@@ -471,5 +471,12 @@
     "cancel": "Cancel and sign out",
     "done": "Password updated",
     "doneDesc": "You can use it next time you sign in."
+  },
+  "errors": {
+    "eventsLoad": "Couldn't load events",
+    "messagesLoad": "Couldn't load messages",
+    "groupsLoad": "Couldn't load your groups",
+    "leaderboardLoad": "Couldn't load the leaderboard",
+    "searchFailed": "Search failed. Try again."
   }
 }

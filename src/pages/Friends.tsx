@@ -16,6 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 import { useNotificationStore } from '@/stores/notificationStore';
 import { useToast } from '@/hooks/use-toast';
+import i18n from '@/i18n';
 import { rpcMessage } from '@/lib/rpcErrors';
 import { ModerationMenu } from '@/components/moderation/ModerationMenu';
 import { cn } from '@/lib/utils';
@@ -152,10 +153,14 @@ export default function Friends() {
     if (!user) return;
     setGroupsLoading(true);
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('group_members')
         .select('groups(id, name)')
         .eq('user_id', user.id);
+      if (error) {
+        toast({ title: i18n.t('errors.groupsLoad'), variant: 'destructive' });
+        return;
+      }
       if (data) {
         setGroups(
           data
@@ -166,14 +171,17 @@ export default function Friends() {
     } finally {
       setGroupsLoading(false);
     }
-  }, [user]);
+  }, [user, toast]);
 
   // Mensajes sin leer, por chat. Los DM no salen en la lista de grupos, así
   // que se indexan también por nombre para poder pintarlos sobre el amigo que
   // escribió (create_dm nombra el grupo con los dos uuid ordenados).
   const fetchUnread = useCallback(async () => {
     if (!user) return;
-    const { data } = await supabase.rpc('unread_by_group');
+    const { data, error } = await supabase.rpc('unread_by_group');
+    // Sin toast: si falla solo se quedan sin pintar los globos, y avisar de
+    // eso interrumpiría por algo que no impide usar nada.
+    if (error) console.error('unread_by_group:', error.message);
     const byId: Record<string, number> = {};
     const byName: Record<string, number> = {};
     (data ?? []).forEach((row) => {
@@ -197,11 +205,15 @@ export default function Friends() {
   const fetchLeaderboard = useCallback(async (offset = 0) => {
     setLeaderLoading(true);
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('public_profiles')
         .select('id, name, reputation')
         .order('reputation', { ascending: false })
         .range(offset, offset + LEADER_PAGE_SIZE - 1);
+      if (error) {
+        toast({ title: i18n.t('errors.leaderboardLoad'), variant: 'destructive' });
+        return;
+      }
       if (data) {
         if (offset === 0) setLeaderboard(data as LeaderEntry[]);
         else setLeaderboard((prev) => [...prev, ...(data as LeaderEntry[])]);
@@ -211,7 +223,7 @@ export default function Friends() {
     } finally {
       setLeaderLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     if (activeTab === 'groups') fetchGroups();
@@ -274,12 +286,18 @@ export default function Friends() {
   const handleSearch = async () => {
     if (!user || !searchQuery.trim()) return;
     const safeQuery = searchQuery.replace(/[%_\\]/g, '\\$&');
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('public_profiles')
       .select('id, name, avatar_url, major')
       .ilike('name', `%${safeQuery}%`)
       .neq('id', user?.id ?? '')
       .limit(10);
+    // El más engañoso de todos: una búsqueda fallida se veía igual que una
+    // sin resultados, o sea "esa persona no está en ConnectTec".
+    if (error) {
+      toast({ title: t('errors.searchFailed'), variant: 'destructive' });
+      return;
+    }
     if (data) setSearchResults(data);
   };
 

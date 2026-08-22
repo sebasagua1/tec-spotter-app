@@ -34,8 +34,32 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-const URL = import.meta.env.VITE_SUPABASE_URL as string;
-const ANON = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+// Proyecto DEDICADO a pruebas. Antes esta suite usaba VITE_SUPABASE_URL, o sea
+// la base de PRODUCCIÓN: creaba usuarios, eventos y grupos reales, y su
+// limpieza dependía de que el afterAll llegara a ejecutarse.
+const URL = import.meta.env.VITE_TEST_SUPABASE_URL as string;
+const ANON = import.meta.env.VITE_TEST_SUPABASE_ANON_KEY as string;
+
+// Cinturón por si alguien apunta el proyecto de pruebas al de producción.
+if (URL && URL === (import.meta.env.VITE_SUPABASE_URL as string)) {
+  throw new Error(
+    'VITE_TEST_SUPABASE_URL apunta al proyecto de producción. ' +
+    'Esta suite crea y borra datos: usa un proyecto Supabase aparte.'
+  );
+}
+
+// describe.skip y no una bandera que hace `return`: con el return, vitest
+// contaba 30 tests PASADOS sin haber comprobado nada. Así salen como
+// omitidos, que es la verdad.
+const CONFIGURED = Boolean(URL && ANON);
+const suite = CONFIGURED ? describe : describe.skip;
+
+if (!CONFIGURED) {
+  console.warn(
+    '[rls-helpers] Omitida: define VITE_TEST_SUPABASE_URL y ' +
+    'VITE_TEST_SUPABASE_ANON_KEY apuntando a un proyecto de pruebas.'
+  );
+}
 
 const newClient = () =>
   createClient(URL, ANON, { auth: { persistSession: false, autoRefreshToken: false } });
@@ -59,7 +83,6 @@ type Ctx = {
 };
 
 const ctx: Partial<Ctx> = {};
-let skip = false;
 
 async function signUp(client: SupabaseClient) {
   const email = `rls_${rand()}@example.test`;
@@ -74,12 +97,8 @@ async function signUp(client: SupabaseClient) {
 }
 
 beforeAll(async () => {
-  if (!URL || !ANON) {
-    skip = true;
-    return;
-  }
-  try {
-    ctx.anon = newClient();
+  if (!CONFIGURED) return;
+  ctx.anon = newClient();
     ctx.a = newClient();
     ctx.b = newClient();
     ctx.c = newClient();
@@ -209,14 +228,10 @@ beforeAll(async () => {
       .from("group_members")
       .insert({ group_id: ctx.groupId, user_id: ctx.aId });
     if (gmErr) throw gmErr;
-  } catch (e: unknown) {
-    console.warn("[rls-helpers] Skipping suite:", e instanceof Error ? e.message : e);
-    skip = true;
-  }
 }, 30_000);
 
 afterAll(async () => {
-  if (skip) return;
+  if (!CONFIGURED) return;
   try {
     // Delete private event participants then event
     if (ctx.eventId) await ctx.a!.from("event_participants").delete().eq("event_id", ctx.eventId);
@@ -251,9 +266,8 @@ afterAll(async () => {
 // Original suite — must continue to pass
 // ============================================================
 
-describe("SECURITY DEFINER helpers — anonymous access denied", () => {
+suite("SECURITY DEFINER helpers — anonymous access denied", () => {
   it("anon cannot RPC is_event_participant", async () => {
-    if (skip) return;
     const { error } = await ctx.anon!.rpc("is_event_participant", {
       _event_id: ctx.eventId!,
       _user_id: ctx.aId!,
@@ -262,7 +276,6 @@ describe("SECURITY DEFINER helpers — anonymous access denied", () => {
   });
 
   it("anon cannot RPC is_event_creator", async () => {
-    if (skip) return;
     const { error } = await ctx.anon!.rpc("is_event_creator", {
       _event_id: ctx.eventId!,
       _user_id: ctx.aId!,
@@ -271,7 +284,6 @@ describe("SECURITY DEFINER helpers — anonymous access denied", () => {
   });
 
   it("anon cannot RPC is_group_member", async () => {
-    if (skip) return;
     const { error } = await ctx.anon!.rpc("is_group_member", {
       _group_id: ctx.groupId!,
       _user_id: ctx.aId!,
@@ -280,7 +292,6 @@ describe("SECURITY DEFINER helpers — anonymous access denied", () => {
   });
 
   it("anon SELECT on protected tables returns no rows", async () => {
-    if (skip) return;
     for (const table of ["events", "event_participants", "groups", "group_members", "profiles"] as const) {
       const { data, error } = await ctx.anon!.from(table).select("*").limit(1);
       // anon role has no policies → either error or empty
@@ -289,9 +300,8 @@ describe("SECURITY DEFINER helpers — anonymous access denied", () => {
   });
 });
 
-describe("SECURITY DEFINER helpers — owner sees truth", () => {
+suite("SECURITY DEFINER helpers — owner sees truth", () => {
   it("A is event creator and participant of their event", async () => {
-    if (skip) return;
     const { data: creator, error: e1 } = await ctx.a!.rpc("is_event_creator", {
       _event_id: ctx.eventId!,
       _user_id: ctx.aId!,
@@ -308,7 +318,6 @@ describe("SECURITY DEFINER helpers — owner sees truth", () => {
   });
 
   it("A is member of their group", async () => {
-    if (skip) return;
     const { data, error } = await ctx.a!.rpc("is_group_member", {
       _group_id: ctx.groupId!,
       _user_id: ctx.aId!,
@@ -318,9 +327,8 @@ describe("SECURITY DEFINER helpers — owner sees truth", () => {
   });
 });
 
-describe("SECURITY DEFINER helpers — cross-user isolation", () => {
+suite("SECURITY DEFINER helpers — cross-user isolation", () => {
   it("B is NOT creator/participant of A's event", async () => {
-    if (skip) return;
     const { data: creator } = await ctx.b!.rpc("is_event_creator", {
       _event_id: ctx.eventId!,
       _user_id: ctx.bId!,
@@ -334,7 +342,6 @@ describe("SECURITY DEFINER helpers — cross-user isolation", () => {
   });
 
   it("B is NOT a member of A's group", async () => {
-    if (skip) return;
     const { data } = await ctx.b!.rpc("is_group_member", {
       _group_id: ctx.groupId!,
       _user_id: ctx.bId!,
@@ -343,7 +350,6 @@ describe("SECURITY DEFINER helpers — cross-user isolation", () => {
   });
 
   it("B cannot SELECT A's private event_participants rows", async () => {
-    if (skip) return;
     const { data, error } = await ctx.b!
       .from("event_participants")
       .select("*")
@@ -353,7 +359,6 @@ describe("SECURITY DEFINER helpers — cross-user isolation", () => {
   });
 
   it("B cannot SELECT A's group or its members", async () => {
-    if (skip) return;
     const { data: groups } = await ctx.b!.from("groups").select("*").eq("id", ctx.groupId!);
     expect(groups ?? []).toHaveLength(0);
     const { data: members } = await ctx.b!
@@ -364,13 +369,11 @@ describe("SECURITY DEFINER helpers — cross-user isolation", () => {
   });
 
   it("B cannot read A's email from profiles", async () => {
-    if (skip) return;
     const { data } = await ctx.b!.from("profiles").select("email").eq("id", ctx.aId!);
     expect(data ?? []).toHaveLength(0);
   });
 
   it("B cannot SELECT A's private event row", async () => {
-    if (skip) return;
     const { data } = await ctx.b!.from("events").select("*").eq("id", ctx.eventId!);
     expect(data ?? []).toHaveLength(0);
   });
@@ -380,9 +383,8 @@ describe("SECURITY DEFINER helpers — cross-user isolation", () => {
 // Issue 1 acceptance tests — public_profiles cross-user visibility
 // ============================================================
 
-describe("Issue 1 — public_profiles cross-user visibility", () => {
+suite("Issue 1 — public_profiles cross-user visibility", () => {
   it("B can read A's row from public_profiles (cross-user SELECT works)", async () => {
-    if (skip) return;
     const { data, error } = await ctx.b!
       .from("public_profiles")
       .select("id, name, major")
@@ -393,7 +395,6 @@ describe("Issue 1 — public_profiles cross-user visibility", () => {
   });
 
   it("email is not a column in public_profiles (selecting it returns an error)", async () => {
-    if (skip) return;
     // PostgREST returns an error when you request a column that does not exist in the view
     const { error } = await ctx.b!
       .from("public_profiles")
@@ -404,7 +405,6 @@ describe("Issue 1 — public_profiles cross-user visibility", () => {
   });
 
   it("direct SELECT on profiles for another user returns 0 rows (own-row RLS policy)", async () => {
-    if (skip) return;
     const { data } = await ctx.b!.from("profiles").select("id").eq("id", ctx.aId!);
     expect(data ?? []).toHaveLength(0);
   });
@@ -414,9 +414,8 @@ describe("Issue 1 — public_profiles cross-user visibility", () => {
 // Issue 2 acceptance tests — score / badge / check-in integrity
 // ============================================================
 
-describe("Issue 2 — score / badge / check-in integrity", () => {
+suite("Issue 2 — score / badge / check-in integrity", () => {
   it("authenticated user cannot UPDATE own points directly", async () => {
-    if (skip) return;
     const { error } = await ctx.a!
       .from("profiles")
       .update({ points: 999999 })
@@ -425,7 +424,6 @@ describe("Issue 2 — score / badge / check-in integrity", () => {
   });
 
   it("authenticated user cannot UPDATE own reputation directly", async () => {
-    if (skip) return;
     const { error } = await ctx.a!
       .from("profiles")
       .update({ reputation: 9999 })
@@ -434,7 +432,6 @@ describe("Issue 2 — score / badge / check-in integrity", () => {
   });
 
   it("authenticated user cannot self-insert a badge", async () => {
-    if (skip) return;
     const { error } = await ctx.b!
       .from("badges")
       .insert({ user_id: ctx.bId!, badge_type: "test_self_award" });
@@ -442,7 +439,6 @@ describe("Issue 2 — score / badge / check-in integrity", () => {
   });
 
   it("participant cannot flip their own checked_in to true", async () => {
-    if (skip) return;
     // B joined ctx.openEventId in beforeAll; now B tries to self-check-in
     const { error } = await ctx.b!
       .from("event_participants")
@@ -457,15 +453,13 @@ describe("Issue 2 — score / badge / check-in integrity", () => {
 // Issue 3 acceptance tests — friends event privacy
 // ============================================================
 
-describe("Issue 3 — friends event privacy", () => {
+suite("Issue 3 — friends event privacy", () => {
   it("anon cannot call are_friends", async () => {
-    if (skip) return;
     const { error } = await ctx.anon!.rpc("are_friends", { a: ctx.aId!, b: ctx.bId! });
     expect(error).toBeTruthy();
   });
 
   it("accepted friend B can see A's friends-only event", async () => {
-    if (skip) return;
     const { data, error } = await ctx.b!
       .from("events")
       .select("id, privacy")
@@ -476,7 +470,6 @@ describe("Issue 3 — friends event privacy", () => {
   });
 
   it("non-friend C cannot see A's friends-only event", async () => {
-    if (skip) return;
     const { data } = await ctx.c!
       .from("events")
       .select("id")
@@ -485,7 +478,6 @@ describe("Issue 3 — friends event privacy", () => {
   });
 
   it("non-friend C still cannot see A's private event", async () => {
-    if (skip) return;
     const { data } = await ctx.c!
       .from("events")
       .select("id")
@@ -498,9 +490,8 @@ describe("Issue 3 — friends event privacy", () => {
 // Goal A acceptance tests — server-side point awards
 // ============================================================
 
-describe("Goal A — server-side point awards", () => {
+suite("Goal A — server-side point awards", () => {
   it("join → point_events +10 exactly once; leave + rejoin → no second row", async () => {
-    if (skip) return;
     // B joins pointTestEventId for the first time
     const { error: joinErr } = await ctx.b!
       .from("event_participants")
@@ -539,7 +530,6 @@ describe("Goal A — server-side point awards", () => {
   });
 
   it("create event → point_events +25 (organize) for the creator", async () => {
-    if (skip) return;
     // pointTestEvent was created by A in beforeAll; the AFTER INSERT trigger
     // on events should have fired and placed an 'organize' row in the ledger
     const { data, error } = await ctx.a!
@@ -553,7 +543,6 @@ describe("Goal A — server-side point awards", () => {
   });
 
   it("authenticated user cannot call award_points directly (permission denied)", async () => {
-    if (skip) return;
     const { error } = await ctx.a!.rpc("award_points", {
       _user_id: ctx.aId!,
       _event_id: ctx.pointTestEventId!,
@@ -564,7 +553,6 @@ describe("Goal A — server-side point awards", () => {
   });
 
   it("authenticated UPDATE profiles SET points=999999 → still blocked (regression)", async () => {
-    if (skip) return;
     const { error } = await ctx.a!
       .from("profiles")
       .update({ points: 999999 })
@@ -577,9 +565,8 @@ describe("Goal A — server-side point awards", () => {
 // Goal B acceptance tests — location-verified check-in
 // ============================================================
 
-describe("Goal B — location-verified check-in", () => {
+suite("Goal B — location-verified check-in", () => {
   it("check_in within 150 m and inside window → checked_in=true, +15 in ledger", async () => {
-    if (skip) return;
     // B joined checkinEvent in beforeAll; call with exact event coordinates (0 m)
     const { data, error } = await ctx.b!.rpc("check_in_to_event", {
       _event_id: ctx.checkinEventId!,
@@ -601,7 +588,6 @@ describe("Goal B — location-verified check-in", () => {
   });
 
   it("second check_in call is idempotent → no extra point_events row", async () => {
-    if (skip) return;
     // B is already checked in from the previous test
     const { error } = await ctx.b!.rpc("check_in_to_event", {
       _event_id: ctx.checkinEventId!,
@@ -619,7 +605,6 @@ describe("Goal B — location-verified check-in", () => {
   });
 
   it("check_in > 150 m away → TOO_FAR_FROM_EVENT, checked_in stays false, no ledger row", async () => {
-    if (skip) return;
     // C joins checkinEvent so they are a valid participant
     const { error: joinErr } = await ctx.c!
       .from("event_participants")

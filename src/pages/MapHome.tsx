@@ -13,6 +13,7 @@ import { LocationPickerOverlay } from '@/components/map/LocationPickerOverlay';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { toast } from '@/hooks/use-toast';
+import i18n from '@/i18n';
 import mapboxgl, { type Map as MapboxMap, type Marker as MapboxMarker } from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
@@ -50,11 +51,20 @@ export default function MapHome() {
   // Fetch events
   useEffect(() => {
     const fetchEvents = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('events')
         .select('*')
         .eq('is_active', true)
         .gt('ends_at', new Date().toISOString());
+      // Sin esto, un fallo de red dejaba el mapa sin pines y sin forma de
+      // distinguirlo de "no hay eventos".
+      // i18n.t y no el `t` del hook: este mensaje se lee en el momento del fallo y
+      // no necesita reaccionar al idioma. Con el del hook habría que meterlo en las
+      // dependencias del efecto, y cambiar de idioma reabriría la suscripción.
+      if (error) {
+        toast({ title: i18n.t('errors.eventsLoad'), variant: 'destructive' });
+        return;
+      }
       if (data) {
         const mapped = data.map(e => ({
           ...e,

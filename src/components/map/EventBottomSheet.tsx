@@ -157,12 +157,15 @@ export function EventBottomSheet({ event, onClose }: Props) {
     const check = async () => {
       if (!user) { setChecking(false); return; }
       setChecking(true);
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('event_participants')
         .select('id, checked_in, rating, status')
         .eq('event_id', event.id)
         .eq('user_id', user.id)
         .maybeSingle();
+      // Sin toast a propósito: es un fallo transitorio que se corrige al
+      // reabrir la hoja, y avisar aquí sería ruido en cada bache de red.
+      if (error) console.error('estado de participación:', error.message);
       if (!cancelled) {
         setMyStatus((data?.status as 'pending' | 'joined' | undefined) ?? null);
         setCheckedIn(data?.checked_in ?? false);

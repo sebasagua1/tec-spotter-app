@@ -471,5 +471,12 @@
     "cancel": "Cancelar y salir",
     "done": "Contraseña actualizada",
     "doneDesc": "Ya puedes usarla la próxima vez que entres."
+  },
+  "errors": {
+    "eventsLoad": "No se pudieron cargar los eventos",
+    "messagesLoad": "No se pudieron cargar los mensajes",
+    "groupsLoad": "No se pudieron cargar tus grupos",
+    "leaderboardLoad": "No se pudo cargar la tabla",
+    "searchFailed": "La búsqueda falló. Inténtalo otra vez."
   }
 }
