@@ -17,12 +17,26 @@ let currentToken: string | null = null;
 let listenersReady = false;
 
 /**
+ * Registro en curso. AuthGate llama a setSession dos veces al arrancar (una
+ * por onAuthStateChange y otra por getSession), así que sin esto registerPush
+ * arrancaba varias veces a la vez: iOS solo enseña un diálogo de permiso y las
+ * llamadas concurrentes se pisan — se veían dos 'denied' y un 'granted' para
+ * un único toque del usuario.
+ */
+let inFlight: Promise<void> | null = null;
+
+/**
  * Pide permiso y registra el dispositivo. Idempotente: APNs rota los tokens
  * por su cuenta, así que esto se llama en cada arranque con sesión abierta.
  */
 export async function registerPush(): Promise<void> {
   if (!isNative) return;
+  if (inFlight) return inFlight;
+  inFlight = doRegister().finally(() => { inFlight = null; });
+  return inFlight;
+}
 
+async function doRegister(): Promise<void> {
   try {
     // checkPermissions primero: si ya se concedió, no se vuelve a preguntar,
     // y si el usuario lo denegó una vez, iOS ya no muestra el diálogo — pedirlo
@@ -37,18 +51,22 @@ export async function registerPush(): Promise<void> {
       listenersReady = true;
 
       await PushNotifications.addListener('registration', async (token) => {
+        // Rastro visible en la consola de Xcode: si esta línea no aparece, el
+        // token no llegó de iOS y el problema está en el lado nativo, no aquí.
+        console.log('[push] token recibido, largo', token.value.length);
         currentToken = token.value;
         const { error } = await supabase.rpc('register_device_token', {
           _token: token.value,
           _platform: 'ios',
         });
-        if (error) console.error('register_device_token:', error.message);
+        if (error) console.error('[push] register_device_token:', error.message);
+        else console.log('[push] token guardado en device_tokens');
       });
 
       await PushNotifications.addListener('registrationError', (err) => {
         // Lo más común aquí es que falte la capacidad Push Notifications en el
         // perfil de aprovisionamiento.
-        console.error('Fallo al registrar en APNs:', JSON.stringify(err));
+        console.error('[push] fallo al registrar en APNs:', JSON.stringify(err));
       });
     }
 

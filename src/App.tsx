@@ -57,9 +57,11 @@ function AuthGate() {
 
   // Registro para push. En web no hace nada; en iOS pide permiso la primera
   // vez y renueva el token en cada arranque, que APNs los rota por su cuenta.
+  // Depende del id y no del objeto: `user` cambia de identidad en cada
+  // setSession y disparaba el registro varias veces seguidas.
   useEffect(() => {
-    if (user) registerPush();
-  }, [user]);
+    if (user?.id) registerPush();
+  }, [user?.id]);
 
   if (loading) return <PageSpinner />;
 
