@@ -21,7 +21,13 @@ export interface MapEvent {
 
 interface EventState {
   events: MapEvent[];
-  selectedEvent: MapEvent | null;
+  /**
+   * Se guarda el id y no el objeto. Guardando el objeto, la hoja abierta
+   * enseñaba una copia congelada: si el aforo cambiaba por tiempo real había
+   * que cerrarla y volver a abrirla para ver la cifra nueva. Quien lo consume
+   * busca el evento en `events`, que sí se refresca.
+   */
+  selectedEventId: string | null;
   filterCategory: string | null;
   setEvents: (events: MapEvent[]) => void;
   addEvent: (event: MapEvent) => void;
@@ -32,7 +38,7 @@ interface EventState {
 
 export const useEventStore = create<EventState>((set) => ({
   events: [],
-  selectedEvent: null,
+  selectedEventId: null,
   filterCategory: null,
   setEvents: (events) => set({ events }),
   addEvent: (event) => set((s) => ({ events: [event, ...s.events] })),
@@ -41,8 +47,19 @@ export const useEventStore = create<EventState>((set) => ({
   // esperar al refetch por realtime deja el pin visible mientras tanto.
   removeEvent: (id) => set((s) => ({
     events: s.events.filter((e) => e.id !== id),
-    selectedEvent: s.selectedEvent?.id === id ? null : s.selectedEvent,
+    selectedEventId: s.selectedEventId === id ? null : s.selectedEventId,
   })),
-  setSelectedEvent: (selectedEvent) => set({ selectedEvent }),
+  // Sigue recibiendo el evento entero por comodidad de quien llama; lo que se
+  // guarda es solo su id.
+  setSelectedEvent: (event) => set({ selectedEventId: event?.id ?? null }),
   setFilterCategory: (filterCategory) => set({ filterCategory }),
 }));
+
+/**
+ * El evento abierto, resuelto contra la lista viva. Es un selector y no un
+ * campo del store precisamente para que no haya nada que se quede congelado:
+ * cada render lo vuelve a buscar. Devuelve null si el evento ya no está —lo
+ * cancelaron mientras lo mirabas—, con lo que la hoja se cierra sola.
+ */
+export const selectSelectedEvent = (s: EventState): MapEvent | null =>
+  s.selectedEventId ? s.events.find((e) => e.id === s.selectedEventId) ?? null : null;

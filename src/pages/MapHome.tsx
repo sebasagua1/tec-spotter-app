@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { Plus, LocateFixed, Layers, List, Map as MapIcon, Search, X as XIcon, type LucideIcon } from 'lucide-react';
-import { useEventStore } from '@/stores/eventStore';
+import { useEventStore, selectSelectedEvent } from '@/stores/eventStore';
 import { EVENT_CATEGORIES, TEC_CENTER } from '@/lib/constants';
 import { CATEGORY_ICONS, getCategoryMarkerSVG } from '@/lib/categoryIcons';
 import { EventListView } from '@/components/map/EventListView';
@@ -21,7 +21,10 @@ export default function MapHome() {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapboxMap | null>(null);
   const markersRef = useRef<MapboxMarker[]>([]);
-  const { events, setEvents, selectedEvent, setSelectedEvent, filterCategory, setFilterCategory } = useEventStore();
+  const { events, setEvents, setSelectedEvent, filterCategory, setFilterCategory } = useEventStore();
+  // Resuelto contra la lista viva en cada render: así la hoja abierta refleja
+  // lo que llegue por tiempo real.
+  const selectedEvent = useEventStore(selectSelectedEvent);
   const [showCreate, setShowCreate] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapboxToken, setMapboxToken] = useState<string | null>(

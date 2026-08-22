@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { useEventStore, type MapEvent } from '@/stores/eventStore';
+import { useEventStore, selectSelectedEvent, type MapEvent } from '@/stores/eventStore';
 
 const mk = (id: string): MapEvent => ({
   id,
@@ -19,7 +19,7 @@ const mk = (id: string): MapEvent => ({
 
 describe('eventStore.removeEvent', () => {
   beforeEach(() => {
-    useEventStore.setState({ events: [], selectedEvent: null, filterCategory: null });
+    useEventStore.setState({ events: [], selectedEventId: null, filterCategory: null });
   });
 
   it('saca el evento de la lista que alimenta los marcadores del mapa', () => {
@@ -30,15 +30,55 @@ describe('eventStore.removeEvent', () => {
 
   it('cierra la hoja si el evento borrado era el seleccionado', () => {
     const a = mk('a');
-    useEventStore.setState({ events: [a], selectedEvent: a });
+    useEventStore.setState({ events: [a], selectedEventId: 'a' });
     useEventStore.getState().removeEvent('a');
-    expect(useEventStore.getState().selectedEvent).toBeNull();
+    expect(useEventStore.getState().selectedEventId).toBeNull();
   });
 
-  it('no toca selectedEvent si es otro evento', () => {
-    const [a, b] = [mk('a'), mk('b')];
-    useEventStore.setState({ events: [a, b], selectedEvent: b });
+  it('no toca la selección si se borra otro evento', () => {
+    useEventStore.setState({ events: [mk('a'), mk('b')], selectedEventId: 'b' });
     useEventStore.getState().removeEvent('a');
-    expect(useEventStore.getState().selectedEvent?.id).toBe('b');
+    expect(useEventStore.getState().selectedEventId).toBe('b');
+  });
+});
+
+describe('eventStore.setSelectedEvent', () => {
+  beforeEach(() => {
+    useEventStore.setState({ events: [], selectedEventId: null, filterCategory: null });
+  });
+
+  it('guarda el id y no el objeto', () => {
+    const a = mk('a');
+    useEventStore.setState({ events: [a] });
+    useEventStore.getState().setSelectedEvent(a);
+    expect(useEventStore.getState().selectedEventId).toBe('a');
+  });
+
+  it('la selección deja de estar congelada: al refrescar la lista, buscar por id da el valor nuevo', () => {
+    const a = mk('a');
+    useEventStore.setState({ events: [a] });
+    useEventStore.getState().setSelectedEvent(a);
+
+    // Lo que hace un refetch por tiempo real: misma fila, aforo distinto.
+    useEventStore.setState({ events: [{ ...a, current_spots: 7 }] });
+
+    const vivo = selectSelectedEvent(useEventStore.getState());
+    expect(vivo?.current_spots).toBe(7);
+    // Con el objeto guardado en el store, aquí seguiría saliendo 0.
+    expect(a.current_spots).toBe(0);
+  });
+
+  it('el selector devuelve null si el evento desaparece de la lista', () => {
+    const a = mk('a');
+    useEventStore.setState({ events: [a] });
+    useEventStore.getState().setSelectedEvent(a);
+    useEventStore.setState({ events: [] });
+    expect(selectSelectedEvent(useEventStore.getState())).toBeNull();
+  });
+
+  it('null limpia la selección', () => {
+    useEventStore.setState({ selectedEventId: 'a' });
+    useEventStore.getState().setSelectedEvent(null);
+    expect(useEventStore.getState().selectedEventId).toBeNull();
   });
 });
