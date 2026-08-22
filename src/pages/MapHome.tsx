@@ -3,7 +3,8 @@ import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { Plus, LocateFixed, Layers, List, Map as MapIcon, Search, X as XIcon, type LucideIcon } from 'lucide-react';
 import { useEventStore, selectSelectedEvent } from '@/stores/eventStore';
-import { EVENT_CATEGORIES, TEC_CENTER } from '@/lib/constants';
+import { EVENT_CATEGORIES, TEC_CENTER, MAPBOX_STYLE_LIGHT, MAPBOX_STYLE_DARK } from '@/lib/constants';
+import { prefersDark, onColorSchemeChange } from '@/lib/theme';
 import { CATEGORY_ICONS, getCategoryMarkerSVG } from '@/lib/categoryIcons';
 import { EventListView } from '@/components/map/EventListView';
 import { cn } from '@/lib/utils';
@@ -107,7 +108,7 @@ export default function MapHome() {
 
       const map = new mapboxgl.Map({
         container: mapContainer.current!,
-        style: 'mapbox://styles/mapbox/light-v11',
+        style: prefersDark() ? MAPBOX_STYLE_DARK : MAPBOX_STYLE_LIGHT,
         center: [TEC_CENTER.lng, TEC_CENTER.lat],
         zoom: 15.5,
         pitch: 0,
@@ -137,6 +138,15 @@ export default function MapHome() {
       mapRef.current = null;
     };
   }, []);
+
+  // El mapa vive fuera del CSS de la app: cuando el sistema cambia de tema
+  // hay que cambiarle el estilo a mano. Los marcadores son elementos del DOM
+  // (mapboxgl.Marker con element propio), así que sobreviven a setStyle;
+  // si algún día se añaden capas o fuentes propias, habría que volver a
+  // pintarlas en el evento 'style.load'.
+  useEffect(() => onColorSchemeChange((dark) => {
+    mapRef.current?.setStyle(dark ? MAPBOX_STYLE_DARK : MAPBOX_STYLE_LIGHT);
+  }), []);
 
   // Update markers
   useEffect(() => {
@@ -420,20 +430,21 @@ export default function MapHome() {
           {/* Search bar */}
           <div className="flex items-center gap-2 mb-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder={t('map.searchEvents')}
-                className="w-full h-9 pl-8 pr-8 rounded-full text-xs font-medium glass border border-border shadow-soft bg-background/80 backdrop-blur focus:outline-none focus:ring-2 focus:ring-primary/40"
+                className="w-full h-11 pl-9 pr-11 rounded-full text-sm font-medium glass border border-border shadow-soft bg-background/80 backdrop-blur focus:outline-none focus:ring-2 focus:ring-primary/40"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  aria-label={t('common.clearSearch')}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-muted-foreground"
                 >
-                  <XIcon className="w-3.5 h-3.5" />
+                  <XIcon className="w-4 h-4" />
                 </button>
               )}
             </div>
@@ -445,7 +456,7 @@ export default function MapHome() {
                   key={cat.key ?? 'all'}
                   onClick={() => setFilterCategory(cat.key)}
                   className={cn(
-                    'flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all shadow-soft',
+                    'flex items-center gap-1.5 min-h-[44px] px-4 rounded-full text-xs font-semibold whitespace-nowrap transition-all shadow-soft',
                     filterCategory === cat.key
                       ? 'bg-primary text-primary-foreground'
                       : 'glass text-foreground border border-border'

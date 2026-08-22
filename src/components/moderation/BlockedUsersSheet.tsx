@@ -65,7 +65,7 @@ export function BlockedUsersSheet({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-0 z-50 flex flex-col bg-background animate-slide-up">
       <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-border safe-top">
         <h2 className="text-lg font-extrabold text-foreground">{t('moderation.blockedTitle')}</h2>
-        <button onClick={onClose} aria-label={t('common.close')} className="p-1 text-muted-foreground">
+        <button onClick={onClose} aria-label={t('common.close')} className="p-3 -m-2 text-muted-foreground">
           <X className="w-5 h-5" />
         </button>
       </div>

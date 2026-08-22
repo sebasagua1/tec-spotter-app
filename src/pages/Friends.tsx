@@ -369,7 +369,7 @@ export default function Friends() {
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={cn(
-              'relative px-5 py-2 rounded-full text-sm font-semibold transition-all',
+              'relative inline-flex items-center justify-center min-h-[44px] px-5 rounded-full text-sm font-semibold transition-all',
               activeTab === tab ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
             )}
           >
@@ -377,7 +377,7 @@ export default function Friends() {
             {tab === 'groups' && t('friends.tabGroups')}
             {tab === 'leaderboard' && t('friends.tabLeaderboard')}
             {tab === 'friends' && pendingRequests.length > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground rounded-full text-[10px] font-bold flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground rounded-full text-xs font-bold flex items-center justify-center">
                 {pendingRequests.length}
               </span>
             )}
@@ -422,7 +422,7 @@ export default function Friends() {
                     <button
                       onClick={() => sendFriendRequest(s.id ?? '')}
                       aria-label={`${t('friends.tabFriends')}: ${s.name}`}
-                      className="p-2 text-primary"
+                      className="w-11 h-11 shrink-0 inline-flex items-center justify-center -m-1 text-primary"
                     >
                       <UserPlus className="w-5 h-5" />
                     </button>
@@ -454,20 +454,22 @@ export default function Friends() {
                       <p className="text-xs text-muted-foreground">{req.profile.major}</p>
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  {/* 44px y separados: son dos acciones opuestas, pegadas y
+                      sin vuelta atrás — rechazar por error borra la solicitud. */}
+                  <div className="flex gap-3">
                     <button
                       onClick={() => acceptRequest(req)}
                       aria-label={t('friends.accept')}
-                      className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground"
+                      className="w-11 h-11 rounded-full bg-primary flex items-center justify-center text-primary-foreground shrink-0"
                     >
-                      <Check className="w-4 h-4" />
+                      <Check className="w-5 h-5" />
                     </button>
                     <button
                       onClick={() => declineRequest(req)}
                       aria-label={t('friends.decline')}
-                      className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground"
+                      className="w-11 h-11 rounded-full bg-muted flex items-center justify-center text-muted-foreground shrink-0"
                     >
-                      <XIcon className="w-4 h-4" />
+                      <XIcon className="w-5 h-5" />
                     </button>
                   </div>
                 </div>
@@ -511,11 +513,11 @@ export default function Friends() {
                     <button
                       onClick={() => handleMessageFriend(f)}
                       aria-label={t('friends.messageAria', { name: f.name ?? '' })}
-                      className="relative p-2 text-primary"
+                      className="relative w-11 h-11 shrink-0 inline-flex items-center justify-center -m-1 text-primary"
                     >
                       <MessageCircle className="w-5 h-5" />
                       {unreadByDmName[dmNameWith(f.id ?? '')] > 0 && (
-                        <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold flex items-center justify-center">
+                        <span className="absolute top-0.5 right-0.5 min-w-[20px] h-5 px-1 rounded-full bg-destructive text-destructive-foreground text-xs font-bold flex items-center justify-center">
                           {unreadByDmName[dmNameWith(f.id ?? '')]}
                         </span>
                       )}
@@ -533,7 +535,7 @@ export default function Friends() {
               <button
                 onClick={() => { const next = friendsPage + 1; setFriendsPage(next); loadFriends(next); }}
                 disabled={loadingMoreFriends}
-                className="w-full py-2 text-sm font-semibold text-primary disabled:opacity-50"
+                className="w-full min-h-[44px] text-sm font-semibold text-primary disabled:opacity-50"
               >
                 {loadingMoreFriends ? t('common.loading') : t('common.loadMore')}
               </button>
@@ -579,7 +581,7 @@ export default function Friends() {
                   </div>
                   <span className="font-semibold text-sm text-foreground flex-1">{g.name}</span>
                   {unreadByGroup[g.id] > 0 && (
-                    <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">
+                    <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-xs font-bold flex items-center justify-center">
                       {unreadByGroup[g.id]}
                     </span>
                   )}
@@ -628,9 +630,9 @@ export default function Friends() {
                 <div
                   className={cn(
                     'w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0',
-                    i === 0 ? 'bg-yellow-100 text-yellow-700' :
-                    i === 1 ? 'bg-slate-100 text-slate-600' :
-                    i === 2 ? 'bg-orange-100 text-orange-700' :
+                    i === 0 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-300' :
+                    i === 1 ? 'bg-slate-100 text-slate-600 dark:bg-slate-400/20 dark:text-slate-200' :
+                    i === 2 ? 'bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-300' :
                     'bg-primary/10 text-primary'
                   )}
                 >
@@ -646,7 +648,7 @@ export default function Friends() {
           {!leaderLoading && leaderHasMore && (
             <button
               onClick={() => fetchLeaderboard(leaderOffset)}
-              className="w-full py-2 text-sm font-semibold text-primary"
+              className="w-full min-h-[44px] text-sm font-semibold text-primary"
             >
               {t('common.loadMore')}
             </button>

@@ -8,6 +8,7 @@
     "next": "Siguiente",
     "error": "Error",
     "search": "Buscar",
+    "clearSearch": "Borrar búsqueda",
     "remove": "Quitar",
     "language": "Idioma",
     "loadMore": "Cargar más"
@@ -170,6 +171,7 @@
     "spotLeftOne": "1 lugar disponible",
     "spotLeftOther": "{{count}} lugares disponibles",
     "full": "Lleno",
+    "almostFull": "Casi lleno",
     "joinedPersonOne": "{{count}} persona unida",
     "joinedPersonOther": "{{count}} personas unidas",
     "joining": "Uniéndote…",

@@ -8,6 +8,7 @@
     "next": "Next",
     "error": "Error",
     "search": "Search",
+    "clearSearch": "Clear search",
     "remove": "Remove",
     "language": "Language",
     "loadMore": "Load more"
@@ -170,6 +171,7 @@
     "spotLeftOne": "1 spot left",
     "spotLeftOther": "{{count}} spots left",
     "full": "Full",
+    "almostFull": "Almost full",
     "joinedPersonOne": "{{count}} person joined",
     "joinedPersonOther": "{{count}} people joined",
     "joining": "Joining…",

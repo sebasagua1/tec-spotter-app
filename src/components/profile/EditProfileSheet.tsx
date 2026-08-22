@@ -139,7 +139,7 @@ export function EditProfileSheet({ profile, onClose }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-border">
         <h2 className="text-lg font-extrabold text-foreground">{t('profile.edit')}</h2>
-        <button onClick={onClose} className="p-1 text-muted-foreground">
+        <button onClick={onClose} className="p-3 -m-2 text-muted-foreground">
           <X className="w-5 h-5" />
         </button>
       </div>
@@ -165,7 +165,7 @@ export function EditProfileSheet({ profile, onClose }: Props) {
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="text-sm font-semibold text-primary"
+            className="inline-flex items-center min-h-[44px] text-sm font-semibold text-primary"
             disabled={uploadingAvatar}
           >
             {uploadingAvatar ? t('common.saving') : t('profile.changePhoto')}

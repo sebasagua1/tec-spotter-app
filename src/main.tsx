@@ -9,8 +9,13 @@ import "@fontsource/plus-jakarta-sans/700.css";
 import "@fontsource/plus-jakarta-sans/800.css";
 import App from "./App.tsx";
 import { ErrorBoundary } from "./components/ErrorBoundary.tsx";
+import { watchColorScheme } from "./lib/theme.ts";
 import "./index.css";
 import "./i18n";
+
+// Mantiene la clase .dark al día si el sistema cambia de tema con la app
+// abierta. El estado inicial ya lo puso el script en línea del index.html.
+watchColorScheme();
 
 createRoot(document.getElementById("root")!).render(
   <ErrorBoundary>

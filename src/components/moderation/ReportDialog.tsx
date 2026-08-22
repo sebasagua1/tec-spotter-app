@@ -89,7 +89,7 @@ export function ReportDialog({ target, label, onClose }: Props) {
                 onClick={() => setReason(r)}
                 aria-pressed={reason === r}
                 className={cn(
-                  'px-3 py-1.5 rounded-full text-xs font-semibold transition-colors',
+                  'inline-flex items-center min-h-[44px] px-4 rounded-full text-xs font-semibold transition-colors',
                   reason === r
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-muted text-muted-foreground'

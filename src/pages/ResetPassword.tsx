@@ -102,7 +102,7 @@ export default function ResetPassword() {
         <p className="text-center text-sm text-muted-foreground">
           <button
             onClick={async () => { setPasswordRecovery(false); await signOut(); }}
-            className="text-primary font-semibold hover:underline"
+            className="inline-flex items-center min-h-[44px] px-1 text-primary font-semibold hover:underline"
           >
             {t('reset.cancel')}
           </button>

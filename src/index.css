@@ -21,18 +21,18 @@
     --secondary-foreground: 0 0% 100%;
 
     --muted: 216 20% 93%;
-    --muted-foreground: 220 9% 46%;
+    --muted-foreground: 220 9% 43%;
 
     --accent: 216 100% 50%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 45%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 160 100% 39%;
+    --success: 160 100% 22%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 36 100% 56%;
+    --warning: 36 100% 30%;
     --warning-foreground: 234 45% 14%;
 
     --border: 220 13% 91%;
@@ -40,6 +40,10 @@
     --ring: 216 100% 32%;
 
     --radius: 1rem;
+
+    /* Que los controles nativos del sistema (barras de scroll, selectores)
+       se pinten en el mismo modo que la app. */
+    color-scheme: light;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -52,13 +56,24 @@
 
     /* Category colors */
     --cat-study: 216 100% 45%;
-    --cat-sports: 160 100% 28%;
+    --cat-sports: 160 100% 24%;
     --cat-social: 263 84% 48%;
-    --cat-shopping: 25 95% 45%;
+    --cat-shopping: 25 95% 38%;
     --cat-volunteering: 0 80% 45%;
     --cat-other: 220 9% 38%;
   }
 
+  /* Modo oscuro. Lo enciende la clase .dark, que pone el script de
+     index.html según la preferencia del sistema (ver src/lib/theme.ts).
+
+     Dos tokens invierten su pareja respecto al modo claro: --primary y
+     --destructive. El motivo es que cada uno se usa de las dos formas —
+     como relleno de botón y como color de texto — y en un fondo oscuro
+     esas dos cosas piden lo contrario: un azul lo bastante oscuro para
+     llevar texto blanco encima es demasiado oscuro para leerse como
+     texto. Así que en oscuro el relleno es claro y la letra que va
+     encima es la azul marina del fondo. Es lo que hace iOS con los
+     botones llenos en oscuro, y sale a 6:1 en vez de a 3.6:1. */
   .dark {
     --background: 234 45% 14%;
     --foreground: 216 33% 97%;
@@ -66,19 +81,28 @@
     --card-foreground: 216 33% 97%;
     --popover: 234 35% 18%;
     --popover-foreground: 216 33% 97%;
-    --primary: 216 100% 50%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 216 100% 66%;
+    --primary-foreground: 234 45% 14%;
     --secondary: 216 100% 32%;
     --secondary-foreground: 0 0% 100%;
     --muted: 234 25% 22%;
     --muted-foreground: 220 9% 60%;
     --accent: 216 100% 50%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 85% 70%;
+    --destructive-foreground: 234 45% 14%;
+    /* Estos dos no estaban en .dark. Sin ellos, el verde y el ámbar del
+       modo claro —que ahora son oscuros para leerse sobre blanco— se
+       quedaban invisibles sobre el fondo oscuro. */
+    --success: 160 60% 55%;
+    --success-foreground: 234 45% 14%;
+    --warning: 36 95% 62%;
+    --warning-foreground: 234 45% 14%;
     --border: 234 25% 22%;
     --input: 234 25% 22%;
-    --ring: 216 100% 50%;
+    --ring: 216 100% 66%;
+
+    color-scheme: dark;
   }
 }
 
@@ -189,5 +213,27 @@
   @media (prefers-reduced-motion: reduce) {
     .animate-step-in-right,
     .animate-step-in-left { animation: none; }
+  }
+}
+
+/* ============================================================
+   Movimiento reducido para los dos latidos permanentes: los
+   marcadores de eventos activos del mapa y el punto del GPS.
+
+   Va FUERA de @layer a propósito. Las dos reglas que anula
+   (.animate-flag-pulse y .user-location-marker__pulse) también están
+   sin capa, y en la cascada lo que no tiene capa gana a lo que sí:
+   metido dentro de @layer utilities, como está el de las
+   transiciones del onboarding, esto no anularía nada.
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .animate-flag-pulse,
+  .user-location-marker__pulse {
+    animation: none;
+  }
+  /* Sin el latido, el halo del GPS se quedaría como un disco fijo
+     encima del punto. */
+  .user-location-marker__pulse {
+    display: none;
   }
 }

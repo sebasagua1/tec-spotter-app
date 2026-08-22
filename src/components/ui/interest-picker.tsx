@@ -18,7 +18,7 @@ export function InterestPicker({ selected, onToggle }: Props) {
     <div className="space-y-5">
       {INTEREST_GROUPS.map((group) => (
         <div key={group.key}>
-          <h3 className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-2">
+          <h3 className="text-[13px] font-bold text-muted-foreground mb-2">
             {t('interestGroups.' + group.key)}
           </h3>
           <div className="flex flex-wrap gap-2">
@@ -29,7 +29,7 @@ export function InterestPicker({ selected, onToggle }: Props) {
                 onClick={() => onToggle(item)}
                 aria-pressed={selected.includes(item)}
                 className={cn(
-                  'px-3.5 py-2 rounded-full text-sm font-semibold transition-all active:scale-95',
+                  'inline-flex items-center justify-center min-h-[44px] px-4 rounded-full text-sm font-semibold transition-all active:scale-95',
                   selected.includes(item)
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-muted text-muted-foreground'

@@ -93,14 +93,14 @@ export function EditEventSheet({ event, onClose, onSaved }: Props) {
     // empate de z-index y tapaba el botón de guardar.
     <div className="fixed inset-0 z-[60] bg-foreground/40 animate-fade-in" onClick={onClose}>
       <div
-        className="absolute bottom-0 left-0 right-0 bg-card rounded-t-3xl shadow-lifted animate-slide-up max-h-[88vh] overflow-y-auto mx-auto max-w-[430px]"
+        className="absolute bottom-0 left-0 right-0 bg-card rounded-t-3xl shadow-lifted animate-slide-up max-h-[88vh] overflow-y-auto mx-auto sm:max-w-[430px]"
         onClick={e => e.stopPropagation()}
       >
         <div className="drag-handle" />
         <div className="px-5 pb-4">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-xl font-extrabold text-foreground">{t('edit.title')}</h2>
-            <button onClick={onClose} aria-label={t('common.close')} className="p-1 text-muted-foreground">
+            <button onClick={onClose} aria-label={t('common.close')} className="p-3 -m-2 text-muted-foreground">
               <X className="w-5 h-5" />
             </button>
           </div>

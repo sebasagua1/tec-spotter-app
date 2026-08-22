@@ -28,7 +28,7 @@ export function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 glass border-t border-border safe-bottom">
-      <div className="mx-auto max-w-[430px] flex items-center justify-around h-16">
+      <div className="mx-auto sm:max-w-[430px] flex items-center justify-around h-16">
         {tabs.map(({ path, icon: Icon, key }) => {
           const active = location.pathname === path;
           const count = badges[path] ?? 0;
@@ -46,13 +46,13 @@ export function BottomNav() {
                 {count > 0 && (
                   <span
                     aria-label={t('notifications.pending', { count })}
-                    className="absolute -top-1.5 -right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center"
+                    className="absolute -top-1.5 -right-2 min-w-[20px] h-5 px-1 rounded-full bg-destructive text-destructive-foreground text-xs font-bold flex items-center justify-center"
                   >
                     {count > 9 ? '9+' : count}
                   </span>
                 )}
               </span>
-              <span className="text-[10px] font-semibold">{t(`bottomNav.${key}`)}</span>
+              <span className="text-xs font-semibold">{t(`bottomNav.${key}`)}</span>
             </button>
           );
         })}

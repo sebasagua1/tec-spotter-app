@@ -8,7 +8,7 @@ export function AppShell() {
   useNotificationSync();
 
   return (
-    <div className="mx-auto max-w-[430px] min-h-screen relative bg-background">
+    <div className="mx-auto sm:max-w-[430px] min-h-screen relative bg-background">
       <Outlet />
       <BottomNav />
     </div>

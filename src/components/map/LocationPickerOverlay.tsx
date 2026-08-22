@@ -11,7 +11,7 @@ export function LocationPickerOverlay({ onConfirm, onCancel, hasPin }: Props) {
   const { t } = useTranslation();
   return (
     <div className="absolute top-4 left-0 right-0 z-20 px-4 safe-top">
-      <div className="flex items-center gap-3 bg-card/95 backdrop-blur-md rounded-2xl shadow-lifted p-3 mx-auto max-w-[430px]">
+      <div className="flex items-center gap-3 bg-card/95 backdrop-blur-md rounded-2xl shadow-lifted p-3 mx-auto sm:max-w-[430px]">
         <button
           onClick={onCancel}
           className="w-10 h-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0"

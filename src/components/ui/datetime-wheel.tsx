@@ -155,7 +155,7 @@ export function DateTimeWheel({ value, minDate, title, onCancel, onConfirm }: Pr
   return (
     <div className="fixed inset-0 z-[80] bg-foreground/40 animate-fade-in" onClick={onCancel}>
       <div
-        className="absolute bottom-0 left-0 right-0 mx-auto max-w-[430px] bg-card rounded-t-3xl shadow-lifted animate-slide-up safe-bottom"
+        className="absolute bottom-0 left-0 right-0 mx-auto sm:max-w-[430px] bg-card rounded-t-3xl shadow-lifted animate-slide-up safe-bottom"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="drag-handle" />

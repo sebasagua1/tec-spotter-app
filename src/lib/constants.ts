@@ -1,10 +1,20 @@
+// Los colores apuntan a las variables de index.css en vez de repetir el
+// valor: antes el mismo color estaba escrito en tres sitios (aquí, en
+// --cat-* y en tailwind.config), y el que mandaba era este, así que
+// corregir el contraste en el CSS no cambiaba nada de lo que se ve.
+// Se usan siempre como `style={{ background }}` sobre elementos del DOM,
+// donde las variables sí resuelven.
+//
+// Se quitaron dos campos que no usaba nadie: `textOnColor` (el texto que
+// va encima es siempre text-primary-foreground) y `twClass` (las clases
+// bg-category-* existen en tailwind.config pero no se usaban).
 export const EVENT_CATEGORIES = [
-  { key: 'study',        label: 'categories.study',        color: 'hsl(216, 100%, 45%)', textOnColor: 'white', twClass: 'bg-category-study' },
-  { key: 'sports',       label: 'categories.sports',       color: 'hsl(160, 100%, 28%)', textOnColor: 'white', twClass: 'bg-category-sports' },
-  { key: 'social',       label: 'categories.social',       color: 'hsl(263, 84%, 48%)',  textOnColor: 'white', twClass: 'bg-category-social' },
-  { key: 'shopping',     label: 'categories.shopping',     color: 'hsl(25, 95%, 45%)',   textOnColor: 'white', twClass: 'bg-category-shopping' },
-  { key: 'volunteering', label: 'categories.volunteering', color: 'hsl(0, 80%, 45%)',    textOnColor: 'white', twClass: 'bg-category-volunteering' },
-  { key: 'other',        label: 'categories.other',        color: 'hsl(220, 9%, 38%)',   textOnColor: 'white', twClass: 'bg-category-other' },
+  { key: 'study',        label: 'categories.study',        color: 'hsl(var(--cat-study))' },
+  { key: 'sports',       label: 'categories.sports',       color: 'hsl(var(--cat-sports))' },
+  { key: 'social',       label: 'categories.social',       color: 'hsl(var(--cat-social))' },
+  { key: 'shopping',     label: 'categories.shopping',     color: 'hsl(var(--cat-shopping))' },
+  { key: 'volunteering', label: 'categories.volunteering', color: 'hsl(var(--cat-volunteering))' },
+  { key: 'other',        label: 'categories.other',        color: 'hsl(var(--cat-other))' },
 ] as const;
 
 export type EventCategory = typeof EVENT_CATEGORIES[number]['key'];
@@ -55,4 +65,7 @@ export const TEC_CENTER = {
   lat: 20.6134,
 } as const;
 
-export const MAPBOX_STYLE = 'mapbox://styles/mapbox/light-v11';
+// El mapa no hereda la clase .dark, así que el tema se le cambia a mano
+// (ver el efecto de MapHome que escucha onColorSchemeChange).
+export const MAPBOX_STYLE_LIGHT = 'mapbox://styles/mapbox/light-v11';
+export const MAPBOX_STYLE_DARK  = 'mapbox://styles/mapbox/dark-v11';

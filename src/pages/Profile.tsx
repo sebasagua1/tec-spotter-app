@@ -137,7 +137,7 @@ export default function Profile() {
           <LanguageSwitcher />
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <button aria-label={t('profile.signOut')} className="p-2 text-muted-foreground">
+              <button aria-label={t('profile.signOut')} className="w-11 h-11 inline-flex items-center justify-center -m-2 text-muted-foreground">
                 <LogOut className="w-5 h-5" />
               </button>
             </AlertDialogTrigger>
@@ -182,7 +182,7 @@ export default function Profile() {
           <button
             onClick={() => setEditOpen(true)}
             aria-label={t('profile.edit')}
-            className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+            className="w-11 h-11 inline-flex items-center justify-center -m-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <Pencil className="w-4 h-4" />
           </button>
@@ -210,7 +210,7 @@ export default function Profile() {
           <div key={stat.key} className="bg-card rounded-2xl p-4 shadow-soft text-center">
             <stat.icon className="w-5 h-5 text-primary mx-auto mb-1" />
             <p className="text-xl font-extrabold text-foreground">{stat.value}</p>
-            <p className="text-[10px] text-muted-foreground font-semibold">{t(`profile.${stat.key}`)}</p>
+            <p className="text-xs text-muted-foreground font-semibold">{t(`profile.${stat.key}`)}</p>
           </div>
         ))}
       </div>
@@ -265,7 +265,7 @@ export default function Profile() {
                 )}
               >
                 {(() => { const Icon = BADGE_ICONS[badge.type]; return <Icon className="w-7 h-7" />; })()}
-                <span className="text-[10px] font-bold text-foreground">{t('badges.' + badge.type)}</span>
+                <span className="text-xs font-bold text-foreground">{t('badges.' + badge.type)}</span>
               </div>
             );
           })}
@@ -295,7 +295,7 @@ export default function Profile() {
               <div key={entry.id} className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-foreground">{t(`pointsHistory.${entry.reason}`)}</p>
-                  <p className="text-[10px] text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     {format(new Date(entry.created_at), 'MMM d, yyyy')}
                   </p>
                 </div>
@@ -350,7 +350,7 @@ export default function Profile() {
         </button>
       </div>
 
-      <p className="text-[11px] text-muted-foreground text-center mt-4 px-4">
+      <p className="text-xs text-muted-foreground text-center mt-4 px-4">
         {t('moderation.contactNote')}{' '}
         <a href={`mailto:${SUPPORT_EMAIL}`} className="text-primary font-semibold">{SUPPORT_EMAIL}</a>
       </p>

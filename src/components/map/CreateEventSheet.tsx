@@ -133,7 +133,7 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
     // pantalla atenuada, además de seguir siendo pulsable con el modal abierto.
     <div className="fixed inset-0 z-[60] bg-foreground/40 animate-fade-in" onClick={onClose}>
       <div
-        className="absolute bottom-0 left-0 right-0 bg-card rounded-t-3xl shadow-lifted animate-slide-up max-h-[85vh] overflow-y-auto mx-auto max-w-[430px]"
+        className="absolute bottom-0 left-0 right-0 bg-card rounded-t-3xl shadow-lifted animate-slide-up max-h-[85vh] overflow-y-auto mx-auto sm:max-w-[430px]"
         onClick={e => e.stopPropagation()}
       >
         <div className="drag-handle" />
@@ -141,7 +141,7 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
         <div className="px-5 pb-24">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-xl font-extrabold text-foreground">{t('create.title')}</h2>
-            <button onClick={onClose} aria-label={t('common.close')} className="p-1 text-muted-foreground">
+            <button onClick={onClose} aria-label={t('common.close')} className="p-3 -m-2 text-muted-foreground">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -166,9 +166,9 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
                     onClick={() => setCategory(cat.key)}
                     aria-pressed={category === cat.key}
                     className={cn(
-                      'flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all',
+                      'flex items-center gap-1.5 min-h-[44px] px-4 rounded-full text-xs font-semibold transition-all',
                       category === cat.key
-                        ? 'text-primary-foreground shadow-soft'
+                        ? 'text-white shadow-soft'
                         : 'bg-muted text-muted-foreground'
                     )}
                     style={category === cat.key ? { background: cat.color } : undefined}
@@ -210,7 +210,7 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
                     onClick={() => setDurationMins(opt.mins)}
                     aria-pressed={durationMins === opt.mins}
                     className={cn(
-                      'px-4 py-2 rounded-full text-xs font-semibold transition-all',
+                      'inline-flex items-center justify-center min-h-[44px] px-4 rounded-full text-xs font-semibold transition-all',
                       durationMins === opt.mins
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-muted text-muted-foreground'
@@ -231,7 +231,7 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
                   <span className="text-sm font-medium text-foreground flex-1">
                     {pickedLocation.lat.toFixed(5)}, {pickedLocation.lng.toFixed(5)}
                   </span>
-                  <button onClick={onClearLocation} className="text-xs text-muted-foreground underline">
+                  <button onClick={onClearLocation} className="inline-flex items-center min-h-[44px] text-xs text-muted-foreground underline">
                     {t('common.remove')}
                   </button>
                 </div>
@@ -287,7 +287,7 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
             {/* Advanced */}
             <button
               onClick={() => setShowAdvanced(!showAdvanced)}
-              className="text-sm font-semibold text-primary"
+              className="inline-flex items-center min-h-[44px] text-sm font-semibold text-primary"
             >
               {showAdvanced ? t('create.hideAdvanced') : t('create.showAdvanced')}
             </button>

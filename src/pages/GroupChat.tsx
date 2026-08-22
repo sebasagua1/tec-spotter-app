@@ -246,7 +246,7 @@ export default function GroupChat() {
       <div className="flex items-center gap-3 px-4 pt-4 pb-3 bg-card border-b border-border shrink-0">
         <button
           onClick={() => navigate('/friends', { state: { tab: 'groups' } })}
-          className="p-1 text-muted-foreground"
+          className="p-3 -m-2 text-muted-foreground"
           aria-label={t('groups.backToGroups')}
         >
           <ArrowLeft className="w-5 h-5" />
@@ -255,7 +255,7 @@ export default function GroupChat() {
         {!isDM && (
           <button
             onClick={() => { loadMembers(); setMembersOpen(true); }}
-            className="p-1 text-muted-foreground"
+            className="p-3 -m-2 text-muted-foreground"
             aria-label={t('groups.membersTitle')}
           >
             <Users className="w-5 h-5" />
@@ -283,7 +283,7 @@ export default function GroupChat() {
                     </div>
                     <span className="text-sm font-medium text-foreground">{m.name}</span>
                     {m.id === user?.id && (
-                      <span className="ml-auto text-[10px] text-muted-foreground">{t('groups.you')}</span>
+                      <span className="ml-auto text-xs text-muted-foreground">{t('groups.you')}</span>
                     )}
                   </div>
                 ))}
@@ -292,7 +292,7 @@ export default function GroupChat() {
               {/* Invite friends */}
               {friends.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  <p className="text-[13px] font-semibold text-muted-foreground">
                     {t('groups.inviteFriends')}
                   </p>
                   {friends.map((f) => (
@@ -304,7 +304,7 @@ export default function GroupChat() {
                       <button
                         onClick={() => handleAddMember(f.id)}
                         disabled={addingMember === f.id}
-                        className="p-1.5 rounded-full bg-primary/10 text-primary disabled:opacity-50"
+                        className="w-11 h-11 shrink-0 flex items-center justify-center rounded-full bg-primary/10 text-primary disabled:opacity-50"
                         aria-label={`${t('groups.invite')} ${f.name}`}
                       >
                         <UserPlus className="w-4 h-4" />
@@ -353,7 +353,7 @@ export default function GroupChat() {
           return (
             <div key={msg.id} className={cn('flex flex-col gap-0.5', isMe ? 'items-end' : 'items-start')}>
               {!isMe && (
-                <span className="text-[10px] text-muted-foreground px-1">{msg.senderName}</span>
+                <span className="text-xs text-muted-foreground px-1">{msg.senderName}</span>
               )}
               <div className="flex items-center gap-1 max-w-[85%]">
                 <div
@@ -376,7 +376,7 @@ export default function GroupChat() {
                   />
                 )}
               </div>
-              <span className="text-[10px] text-muted-foreground px-1">
+              <span className="text-xs text-muted-foreground px-1">
                 {format(new Date(msg.created_at), 'HH:mm')}
               </span>
             </div>

@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Clock, MapPin, Users } from 'lucide-react';
+import { Clock, MapPin, Users, Flame } from 'lucide-react';
 import { format } from 'date-fns';
 import { es as esLocale, enUS } from 'date-fns/locale';
 import { EVENT_CATEGORIES } from '@/lib/constants';
@@ -52,7 +52,7 @@ export function EventListView({ events, filterCategory, searchQuery = '', onSele
             <div className="p-4">
               {/* Category chip */}
               <div
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold text-primary-foreground mb-2"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold text-white mb-2"
                 style={{ background: cat?.color ?? 'hsl(var(--muted))' }}
               >
                 {Icon && <Icon className="w-3 h-3" />}
@@ -80,12 +80,18 @@ export function EventListView({ events, filterCategory, searchQuery = '', onSele
                     <span>
                       {spotsLeft <= 0
                         ? t('event.full')
-                        : t('event.spotLeftOther', { count: spotsLeft })}
+                        : spotsLeft === 1
+                          ? t('event.spotLeftOne')
+                          : t('event.spotLeftOther', { count: spotsLeft })}
                     </span>
                   </div>
+                  {/* "Casi lleno" no puede ser solo el color: quien no
+                      distingue verde de ámbar veía el mismo 3/10 en los dos
+                      casos. La llama lo dice con una forma y el sr-only con
+                      una palabra, para el lector de pantalla. */}
                   <span
                     className={cn(
-                      'text-[10px] font-bold px-2.5 py-1 rounded-full',
+                      'inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full',
                       spotsLeft <= 0
                         ? 'bg-destructive/10 text-destructive'
                         : spotsLeft <= 3
@@ -93,9 +99,19 @@ export function EventListView({ events, filterCategory, searchQuery = '', onSele
                           : 'bg-success/10 text-success'
                     )}
                   >
-                    {spotsLeft <= 0
-                      ? t('event.full')
-                      : `${event.current_spots}/${event.max_spots}`}
+                    {spotsLeft <= 0 ? (
+                      t('event.full')
+                    ) : (
+                      <>
+                        {spotsLeft <= 3 && (
+                          <>
+                            <Flame className="w-3 h-3" aria-hidden="true" />
+                            <span className="sr-only">{t('event.almostFull')}</span>
+                          </>
+                        )}
+                        {`${event.current_spots}/${event.max_spots}`}
+                      </>
+                    )}
                   </span>
                 </div>
               </div>

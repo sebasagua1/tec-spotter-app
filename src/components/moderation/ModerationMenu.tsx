@@ -64,7 +64,7 @@ export function ModerationMenu({ target, label, blockUserId, onBlocked, classNam
         <PopoverTrigger asChild>
           <button
             aria-label={t('moderation.menu')}
-            className={cn('p-2 text-muted-foreground hover:text-foreground transition-colors', className)}
+            className={cn('w-11 h-11 inline-flex items-center justify-center -m-2 text-muted-foreground hover:text-foreground transition-colors', className)}
           >
             <MoreHorizontal className="w-4 h-4" />
           </button>
@@ -72,7 +72,7 @@ export function ModerationMenu({ target, label, blockUserId, onBlocked, classNam
         <PopoverContent align="end" className="w-48 p-1">
           <button
             onClick={() => { setOpen(false); setReporting(true); }}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-colors"
+            className="w-full flex items-center gap-2 min-h-[44px] px-3 rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-colors"
           >
             <Flag className="w-4 h-4" />
             {t('moderation.report')}
@@ -80,7 +80,7 @@ export function ModerationMenu({ target, label, blockUserId, onBlocked, classNam
           {canBlock && (
             <button
               onClick={() => { setOpen(false); setConfirmingBlock(true); }}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
+              className="w-full flex items-center gap-2 min-h-[44px] px-3 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
             >
               <Ban className="w-4 h-4" />
               {t('moderation.block')}

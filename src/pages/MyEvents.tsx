@@ -150,7 +150,7 @@ export default function MyEvents() {
             key={tab}
             onClick={() => { setActiveTab(tab); setVisibleCount(PAGE_SIZE); }}
             className={cn(
-              'px-5 py-2 rounded-full text-sm font-semibold transition-all',
+              'inline-flex items-center justify-center min-h-[44px] px-5 rounded-full text-sm font-semibold transition-all',
               activeTab === tab ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
             )}
           >
@@ -186,7 +186,7 @@ export default function MyEvents() {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold text-primary-foreground mb-2"
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold text-white mb-2"
                     style={{ background: cat?.color }}
                   >
                     {cat && (() => { const Icon = CATEGORY_ICONS[cat.key]; return <Icon className="w-2.5 h-2.5 mr-0.5 inline" />; })()}
@@ -200,13 +200,13 @@ export default function MyEvents() {
                 </div>
                 <div className="flex flex-col items-end gap-1">
                   <span className={cn(
-                    'px-2 py-0.5 rounded-full text-[10px] font-bold',
+                    'px-2 py-0.5 rounded-full text-xs font-bold',
                     event.role === 'organizer' ? 'bg-primary/10 text-primary' : 'bg-success/10 text-success'
                   )}>
                     {event.role === 'organizer' ? t('myEvents.organizer') : t('myEvents.joined')}
                   </span>
                   {!isPast(new Date(event.starts_at)) && (
-                    <span className="text-[10px] text-muted-foreground">
+                    <span className="text-xs text-muted-foreground">
                       {formatDistanceToNow(new Date(event.starts_at), { addSuffix: true, locale: dateLocale })}
                     </span>
                   )}
@@ -221,12 +221,12 @@ export default function MyEvents() {
                     {event.current_spots}/{event.max_spots}
                   </span>
                   {pendingByEvent[event.id] > 0 && (
-                    <span className="px-2 py-0.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold">
+                    <span className="px-2 py-0.5 rounded-full bg-destructive text-destructive-foreground text-xs font-bold">
                       {t('myEvents.requests', { count: pendingByEvent[event.id] })}
                     </span>
                   )}
                   {event.justApproved && (
-                    <span className="px-2 py-0.5 rounded-full bg-success/15 text-success text-[10px] font-bold">
+                    <span className="px-2 py-0.5 rounded-full bg-success/15 text-success text-xs font-bold">
                       {t('myEvents.approved')}
                     </span>
                   )}
@@ -242,7 +242,7 @@ export default function MyEvents() {
         {!loading && visibleCount < allFiltered.length && (
           <button
             onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
-            className="w-full py-2 text-sm font-semibold text-primary"
+            className="w-full min-h-[44px] text-sm font-semibold text-primary"
           >
             {t('common.loadMore')}
           </button>
@@ -264,7 +264,7 @@ export default function MyEvents() {
               navegador, porque el `fixed inset-0` mide la ventana entera y no
               los 430px del móvil. En el mapa no pasaba: allí su contenedor ya
               es la columna de AppShell. */}
-          <div className="relative mx-auto h-full w-full max-w-[430px]">
+          <div className="relative mx-auto h-full w-full sm:max-w-[430px]">
             <EventBottomSheet event={selected} onClose={handleCloseSheet} />
           </div>
         </div>
