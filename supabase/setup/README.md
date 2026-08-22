@@ -50,7 +50,8 @@ CORS a tu dominio en vez de `*`:
 supabase secrets set APP_ORIGIN=https://tec-spotter-app.vercel.app
 ```
 
-`get-mapbox-token` solo hace falta si NO usas `VITE_MAPBOX_TOKEN`.
+El token de Mapbox va en `VITE_MAPBOX_TOKEN` y viaja en el bundle: es público
+por diseño y se restringe por dominio desde el panel de Mapbox.
 
 ## Moderación (revisar a diario)
 

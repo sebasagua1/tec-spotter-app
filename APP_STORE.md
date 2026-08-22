@@ -8,25 +8,25 @@ de tu Mac y de tu cuenta de Apple.
 
 ## 0. Prerrequisitos (los instalas tú, una vez)
 
-Este Mac hoy **no** los tiene:
-
 1. **Xcode** (completo, no solo Command Line Tools) — desde la **Mac App Store** (~15 GB).
    Luego apúntalo como toolchain activa:
    ```bash
    sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
    sudo xcodebuild -license accept
    ```
-2. **CocoaPods**:
-   ```bash
-   sudo gem install cocoapods
-   ```
-3. **Cuenta de Apple Developer Program** (ya la tienes ✅) — inicia sesión en
+2. **Cuenta de Apple Developer Program** — inicia sesión en
    Xcode → Settings → Accounts.
 
 Verifica que quedó todo:
 ```bash
-xcodebuild -version && pod --version
+xcodebuild -version
 ```
+
+> **Nada de CocoaPods.** Las dependencias nativas van por **Swift Package
+> Manager**, que viene dentro de Xcode: no hay `Podfile` ni `pod install` en
+> este proyecto. `npx cap sync ios` escribe `ios/App/CapApp-SPM/Package.swift`
+> y Xcode resuelve los paquetes al abrir. Si el build falla con algo de
+> paquetes, la salida suele ser **File → Packages → Reset Package Caches**.
 
 ---
 
@@ -38,18 +38,23 @@ obliga a regenerarlo. Debe ser DNS inverso y único.
 
 ---
 
-## 2. Genera el proyecto iOS
+## 2. Sincroniza el proyecto iOS
+
+La carpeta `ios/` **ya está en el repositorio**, así que no hay que generarla: sus
+capacidades, entitlements y número de build están versionados. Basta con:
 
 ```bash
 cd ~/Developer/tec-spotter-app
-npx cap add ios     # crea la carpeta ios/ y corre pod install
 npm run ios:sync    # build web + copia el dist al proyecto nativo
 ```
 
 > `ios:sync` = `npm run build && npx cap sync ios`. Córrelo **cada vez** que cambies
-> el código web.
+> el código web, y en particular **justo antes de archivar**: si no, el build que
+> subes lleva los assets de la última sincronización, no los de ahora.
 
-Commitea la carpeta `ios/` (es la recomendación de Capacitor para no perder la config nativa).
+`npx cap add ios` solo haría falta para regenerar el proyecto desde cero, y
+borraría la configuración nativa que ya está commiteada. No lo corras salvo que
+sepas que quieres exactamente eso.
 
 ---
 
@@ -148,12 +153,11 @@ npx capacitor-assets generate --ios
 
 ---
 
-## Resumen de comandos (cuando ya tengas Xcode + CocoaPods)
+## Resumen de comandos (cuando ya tengas Xcode)
 
 ```bash
 cd ~/Developer/tec-spotter-app
-npx cap add ios
 npm run ios:sync
 npm run ios:open
-# …firmar y archivar desde Xcode
+# …destino "Any iOS Device (arm64)" → Product → Archive → Distribute App
 ```

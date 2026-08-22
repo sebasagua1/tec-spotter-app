@@ -21,11 +21,12 @@ supabase db push
 
 ### 1.3 Desplegar la Edge Function y sus secretos
 ```bash
-supabase functions deploy get-mapbox-token
-supabase secrets set MAPBOX_TOKEN=pk.TU_TOKEN_PUBLICO_DE_MAPBOX
+supabase functions deploy delete-account
 supabase secrets set APP_ORIGIN=https://TU-DOMINIO.vercel.app
 ```
 > `APP_ORIGIN` fija el CORS de la función. Sin él usa `*` (menos seguro).
+> El token de Mapbox NO va aquí: es público y viaja en el bundle vía
+> `VITE_MAPBOX_TOKEN`. Se restringe por dominio desde el panel de Mapbox.
 
 ### 1.4 Configurar Auth (Dashboard → Authentication)
 - **URL Configuration** → agrega la URL de producción a *Site URL* y *Redirect URLs*

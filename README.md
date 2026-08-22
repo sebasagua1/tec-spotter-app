@@ -20,8 +20,10 @@ npm run dev
 ### Variables de entorno
 
 Ver `.env.example`. Necesitas un proyecto de **Supabase** (URL + anon key) y un token
-público de **Mapbox**. El token de Mapbox también se configura como secreto
-(`MAPBOX_TOKEN`) en la Edge Function `get-mapbox-token`.
+público de **Mapbox** en `VITE_MAPBOX_TOKEN`.
+
+> El token de Mapbox es público por diseño: viaja en el bundle. Se protege
+> restringiéndolo por dominio desde el panel de Mapbox, no escondiéndolo.
 
 > El proyecto usa **npm** (`package-lock.json`). No commitear lockfiles de otros gestores.
 
@@ -47,7 +49,7 @@ src/
   i18n/          Configuración y locales es/en
 supabase/
   migrations/    Esquema, RLS, reputación, badges, check-ins, ratings
-  functions/     Edge Functions (get-mapbox-token)
+  functions/     Edge Functions (delete-account)
 ```
 
 ## Despliegue

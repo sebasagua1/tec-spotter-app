@@ -80,18 +80,14 @@ export default function MapHome() {
   useEffect(() => {
     if (!mapContainer.current || mapRef.current) return;
 
-    const initMap = async () => {
+    const initMap = () => {
 
-      // Prefer the env-var token (zero round-trip); fall back to the edge function
-      let token = (import.meta.env.VITE_MAPBOX_TOKEN as string) ?? '';
-      if (!token) {
-        try {
-          const { data, error } = await supabase.functions.invoke('get-mapbox-token');
-          if (!error && data?.token) token = data.token;
-        } catch (err) {
-          console.error('Failed to fetch Mapbox token from edge function:', err);
-        }
-      }
+      // El token de Mapbox es público por diseño: va en el bundle y se protege
+      // restringiendo por dominio desde el panel de Mapbox, no escondiéndolo.
+      // Aquí hubo un respaldo que pedía el token a una edge function; se quitó
+      // porque esa función nunca llegó a desplegarse (devolvía 404) y, aunque
+      // se hubiera desplegado, no habría protegido nada.
+      const token = (import.meta.env.VITE_MAPBOX_TOKEN as string) ?? '';
       if (!token) {
         setMapboxToken(null);
         return;
