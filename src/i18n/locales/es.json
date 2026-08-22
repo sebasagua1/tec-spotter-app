@@ -247,7 +247,9 @@
     "createdDesc": "Tu evento ya está en el mapa.",
     "privacyHintOpen": "Lo ve todo el mundo y cualquiera puede unirse.",
     "privacyHintFriends": "Solo lo ven tus amigos, y entran directo.",
-    "privacyHintPrivate": "Lo ve todo el mundo, pero tú apruebas quién entra."
+    "privacyHintPrivate": "Lo ve todo el mundo, pero tú apruebas quién entra.",
+    "when": "Cuándo",
+    "pickWhen": "Elegir fecha y hora"
   },
   "edit": {
     "title": "Editar evento",
@@ -386,5 +388,14 @@
   "notFound": {
     "message": "Esta página no existe.",
     "back": "Volver al mapa"
+  },
+  "when": {
+    "today": "Hoy",
+    "tomorrow": "Mañana",
+    "date": "Fecha",
+    "hour": "Hora",
+    "minute": "Minuto",
+    "meridiem": "AM o PM",
+    "done": "Listo"
   }
 }

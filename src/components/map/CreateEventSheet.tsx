@@ -9,9 +9,8 @@ import { es as esLocale, enUS } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { TimePicker } from '@/components/ui/time-picker';
+import { DateTimeWheel } from '@/components/ui/datetime-wheel';
+import { combineDateTime, toTimeValue } from '@/lib/datetime';
 import { EVENT_CATEGORIES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -45,6 +44,7 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('study');
   const [date, setDate] = useState<Date>();
+  const [whenOpen, setWhenOpen] = useState(false);
   const [time, setTime] = useState('');
   const [address, setAddress] = useState('');
   const [maxSpots, setMaxSpots] = useState(10);
@@ -181,38 +181,22 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
             </div>
 
             {/* Date & Time */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-sm font-semibold text-foreground mb-1 block">{t('create.date')}</label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        'h-12 w-full justify-start text-left font-normal rounded-xl',
-                        !date && 'text-muted-foreground'
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {date ? format(date, 'MMM d, yyyy', { locale: dateLocale }) : <span>{t('create.pickDate')}</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={date}
-                      onSelect={setDate}
-                      disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
-                      initialFocus
-                      className="p-3 pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-              <div>
-                <label className="text-sm font-semibold text-foreground mb-1 block">{t('create.time')}</label>
-                <TimePicker value={time} onChange={setTime} />
-              </div>
+            <div>
+              <label className="text-sm font-semibold text-foreground mb-1 block">{t('create.when')}</label>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setWhenOpen(true)}
+                className={cn(
+                  'h-12 w-full justify-start text-left font-normal rounded-xl',
+                  !(date && time) && 'text-muted-foreground'
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {date && time
+                  ? format(combineDateTime(date, time), "EEE d MMM · h:mm a", { locale: dateLocale })
+                  : <span>{t('create.pickWhen')}</span>}
+              </Button>
             </div>
 
             {/* Duration */}
@@ -325,6 +309,20 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
           </div>
         </div>
       </div>
+
+      {whenOpen && (
+        <DateTimeWheel
+          value={date && time ? combineDateTime(date, time) : null}
+          minDate={new Date()}
+          title={t('create.when')}
+          onCancel={() => setWhenOpen(false)}
+          onConfirm={(d) => {
+            setDate(d);
+            setTime(toTimeValue(d));
+            setWhenOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }

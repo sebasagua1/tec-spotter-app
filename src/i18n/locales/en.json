@@ -247,7 +247,9 @@
     "createdDesc": "Your event is now live on the map.",
     "privacyHintOpen": "Everyone sees it and anyone can join.",
     "privacyHintFriends": "Only your friends see it, and they join directly.",
-    "privacyHintPrivate": "Everyone sees it, but you approve who gets in."
+    "privacyHintPrivate": "Everyone sees it, but you approve who gets in.",
+    "when": "When",
+    "pickWhen": "Pick date and time"
   },
   "edit": {
     "title": "Edit event",
@@ -386,5 +388,14 @@
   "notFound": {
     "message": "This page doesn't exist.",
     "back": "Back to the map"
+  },
+  "when": {
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "date": "Date",
+    "hour": "Hour",
+    "minute": "Minute",
+    "meridiem": "AM or PM",
+    "done": "Done"
   }
 }

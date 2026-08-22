@@ -7,9 +7,8 @@ import { es as esLocale, enUS } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { TimePicker } from '@/components/ui/time-picker';
+import { DateTimeWheel } from '@/components/ui/datetime-wheel';
+import { combineDateTime, toTimeValue } from '@/lib/datetime';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type { MapEvent } from '@/stores/eventStore';
@@ -36,6 +35,7 @@ export function EditEventSheet({ event, onClose, onSaved }: Props) {
   const [startTime, setStartTime] = useState(toTimeString(event.starts_at));
   const [endDate, setEndDate] = useState<Date>(new Date(event.ends_at));
   const [endTime, setEndTime] = useState(toTimeString(event.ends_at));
+  const [wheel, setWheel] = useState<'start' | 'end' | null>(null);
   const [maxSpots, setMaxSpots] = useState(event.max_spots);
   const [privacy, setPrivacy] = useState(event.privacy);
   const [saving, setSaving] = useState(false);
@@ -126,51 +126,29 @@ export function EditEventSheet({ event, onClose, onSaved }: Props) {
             {/* Start date & time */}
             <div>
               <label className="text-sm font-semibold text-foreground mb-2 block">{t('edit.starts')}</label>
-              <div className="grid grid-cols-2 gap-3">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="h-12 w-full justify-start font-normal rounded-xl">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {format(startDate, 'MMM d, yyyy', { locale: dateLocale })}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={startDate}
-                      onSelect={d => d && setStartDate(d)}
-                      initialFocus
-                      className="p-3 pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-                <TimePicker value={startTime} onChange={setStartTime} />
-              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setWheel('start')}
+                className="h-12 w-full justify-start text-left font-normal rounded-xl"
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {format(combineDateTime(startDate, startTime), "EEE d MMM · h:mm a", { locale: dateLocale })}
+              </Button>
             </div>
 
             {/* End date & time */}
             <div>
               <label className="text-sm font-semibold text-foreground mb-2 block">{t('edit.ends')}</label>
-              <div className="grid grid-cols-2 gap-3">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="h-12 w-full justify-start font-normal rounded-xl">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {format(endDate, 'MMM d, yyyy', { locale: dateLocale })}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={endDate}
-                      onSelect={d => d && setEndDate(d)}
-                      initialFocus
-                      className="p-3 pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-                <TimePicker value={endTime} onChange={setEndTime} />
-              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setWheel('end')}
+                className="h-12 w-full justify-start text-left font-normal rounded-xl"
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {format(combineDateTime(endDate, endTime), "EEE d MMM · h:mm a", { locale: dateLocale })}
+              </Button>
             </div>
 
             {/* Max spots */}
@@ -217,6 +195,21 @@ export function EditEventSheet({ event, onClose, onSaved }: Props) {
           </Button>
         </div>
       </div>
+
+      {wheel && (
+        <DateTimeWheel
+          value={wheel === 'start'
+            ? combineDateTime(startDate, startTime)
+            : combineDateTime(endDate, endTime)}
+          title={wheel === 'start' ? t('edit.starts') : t('edit.ends')}
+          onCancel={() => setWheel(null)}
+          onConfirm={(d) => {
+            if (wheel === 'start') { setStartDate(d); setStartTime(toTimeValue(d)); }
+            else { setEndDate(d); setEndTime(toTimeValue(d)); }
+            setWheel(null);
+          }}
+        />
+      )}
     </div>
   );
 }
