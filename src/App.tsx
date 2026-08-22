@@ -17,6 +17,7 @@ const Friends = lazy(() => import('@/pages/Friends'));
 const Profile = lazy(() => import('@/pages/Profile'));
 const GroupChat = lazy(() => import('@/pages/GroupChat'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
+const ResetPassword = lazy(() => import('@/pages/ResetPassword'));
 
 function PageSpinner() {
   return (
@@ -27,11 +28,14 @@ function PageSpinner() {
 }
 
 function AuthGate() {
-  const { user, session, profile, profileLoaded, loading, setSession, setLoading, fetchProfile } = useAuthStore();
+  const { user, session, profile, profileLoaded, loading, passwordRecovery, setPasswordRecovery, setSession, setLoading, fetchProfile } = useAuthStore();
 
   useEffect(() => {
     // Set up auth listener first
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // El enlace del correo abre sesión por su cuenta: sin esto el usuario
+      // entraría directo a la app sin cambiar la contraseña.
+      if (event === 'PASSWORD_RECOVERY') setPasswordRecovery(true);
       setSession(session);
       setLoading(false);
     });
@@ -43,7 +47,7 @@ function AuthGate() {
     });
 
     return () => subscription.unsubscribe();
-  }, [setSession, setLoading]);
+  }, [setSession, setLoading, setPasswordRecovery]);
 
   // Fetch profile when user changes
   useEffect(() => {
@@ -53,6 +57,10 @@ function AuthGate() {
   if (loading) return <PageSpinner />;
 
   if (!session) return <Auth />;
+
+  // Antes que el onboarding y que todo lo demás: la sesión existe, pero es la
+  // que abrió el enlace de recuperación y solo sirve para cambiar la clave.
+  if (passwordRecovery) return <ResetPassword />;
 
   // Esperar al perfil antes de decidir. Sin esto, con el perfil todavía sin
   // cargar se entraba a la app —montando el mapa entero, mapbox incluido— y un

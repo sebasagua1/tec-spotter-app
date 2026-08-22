@@ -36,7 +36,12 @@
     "checkEmail": "Revisa tu correo",
     "verifyLink": "Te enviamos un enlace de verificación.",
     "emailHint": "Usa tu correo institucional (@tec.mx o @exatec.mx).",
-    "tecEmailOnly": "Solo se permiten correos del Tec (@tec.mx o @exatec.mx)."
+    "tecEmailOnly": "Solo se permiten correos del Tec (@tec.mx o @exatec.mx).",
+    "forgot": "¿Olvidaste tu contraseña?",
+    "sendResetLink": "Enviarme el enlace",
+    "backToSignIn": "Volver a iniciar sesión",
+    "resetSent": "Revisa tu correo",
+    "resetSentDesc": "Si esa dirección tiene cuenta, te llega un enlace para elegir contraseña nueva."
   },
   "onboarding": {
     "campusTitle": "Tu campus 🏫",
@@ -454,5 +459,17 @@
     "searchState": "Buscar estado",
     "searchCountry": "Buscar país",
     "noResults": "Sin resultados"
+  },
+  "reset": {
+    "title": "Elige una contraseña nueva",
+    "subtitle": "Escríbela dos veces para confirmar.",
+    "newPassword": "Contraseña nueva",
+    "confirm": "Repite la contraseña",
+    "tooShort": "Mínimo {{count}} caracteres",
+    "mismatch": "Las dos contraseñas no coinciden",
+    "save": "Guardar contraseña",
+    "cancel": "Cancelar y salir",
+    "done": "Contraseña actualizada",
+    "doneDesc": "Ya puedes usarla la próxima vez que entres."
   }
 }

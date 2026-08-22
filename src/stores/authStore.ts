@@ -13,6 +13,10 @@ interface AuthState {
   /** false hasta que el primer fetchProfile termina, haya perfil o no. Sin
    *  esto no se puede distinguir "todavía no se ha pedido" de "no hay". */
   profileLoaded: boolean;
+  /** El enlace del correo de recuperación abre sesión por su cuenta. Sin esta
+   *  bandera el usuario entraría a la app sin llegar a cambiar la contraseña. */
+  passwordRecovery: boolean;
+  setPasswordRecovery: (v: boolean) => void;
   setSession: (session: Session | null) => void;
   setProfile: (profile: Profile | null) => void;
   setLoading: (loading: boolean) => void;
@@ -26,12 +30,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   profile: null,
   loading: true,
   profileLoaded: false,
+  // Se decide antes del primer render: supabase-js consume el hash de la URL
+  // al arrancar, y para entonces el evento PASSWORD_RECOVERY puede haber
+  // pasado ya sin que nadie escuchara.
+  passwordRecovery:
+    typeof window !== 'undefined' && window.location.hash.includes('type=recovery'),
+  setPasswordRecovery: (passwordRecovery) => set({ passwordRecovery }),
   setSession: (session) => set({ session, user: session?.user ?? null }),
   setProfile: (profile) => set({ profile }),
   setLoading: (loading) => set({ loading }),
   signOut: async () => {
     await supabase.auth.signOut();
-    set({ user: null, session: null, profile: null, profileLoaded: false });
+    set({ user: null, session: null, profile: null, profileLoaded: false, passwordRecovery: false });
   },
   fetchProfile: async () => {
     const { user } = get();

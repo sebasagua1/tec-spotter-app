@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { useToast } from '@/hooks/use-toast';
 import { MapPin } from 'lucide-react';
-import { PRIVACY_URL, TERMS_URL } from '@/lib/legal';
+import { PRIVACY_URL, TERMS_URL, SITE_URL } from '@/lib/legal';
 import {
   isNative,
   googleNativeConfigured,
@@ -32,6 +32,7 @@ export default function Auth() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
+  const [forgot, setForgot] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   // Qué botón social nativo está en curso (Apple/Google en iOS).
@@ -69,6 +70,30 @@ export default function Auth() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (forgot) {
+      setLoading(true);
+      try {
+        // redirectTo apunta a la web y no a window.location.origin: dentro del
+        // webview de Capacitor el origen es capacitor://localhost, y el enlace
+        // del correo se abre en el navegador del sistema, donde eso no existe.
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: SITE_URL,
+        });
+        if (error) throw error;
+      } catch (err: unknown) {
+        showError(err);
+        setLoading(false);
+        return;
+      }
+      // El mismo mensaje exista o no la cuenta: decir "ese correo no está
+      // registrado" permitiría averiguar quién tiene cuenta.
+      toast({ title: t('auth.resetSent'), description: t('auth.resetSentDesc') });
+      setForgot(false);
+      setLoading(false);
+      return;
+    }
+
     if (isSignUp && RESTRICT_TEC_EMAIL && !isTecEmail(email)) {
       toast({ title: t('common.error'), description: t('auth.tecEmailOnly'), variant: 'destructive' });
       return;
@@ -216,26 +241,43 @@ export default function Auth() {
               <p className="text-xs text-muted-foreground">{t('auth.emailHint')}</p>
             )}
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="auth-password">{t('auth.password')}</Label>
-            <Input
-              id="auth-password"
-              type="password"
-              placeholder={t('auth.passwordPlaceholder')}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              autoComplete={isSignUp ? 'new-password' : 'current-password'}
-              className="h-12 rounded-xl bg-card border-border text-base"
-            />
-          </div>
+          {!forgot && (
+            <div className="space-y-2">
+              <Label htmlFor="auth-password">{t('auth.password')}</Label>
+              <Input
+                id="auth-password"
+                type="password"
+                placeholder={t('auth.passwordPlaceholder')}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+                autoComplete={isSignUp ? 'new-password' : 'current-password'}
+                className="h-12 rounded-xl bg-card border-border text-base"
+              />
+              {!isSignUp && (
+                <button
+                  type="button"
+                  onClick={() => setForgot(true)}
+                  className="text-xs text-primary font-semibold hover:underline"
+                >
+                  {t('auth.forgot')}
+                </button>
+              )}
+            </div>
+          )}
           <Button
             type="submit"
             disabled={loading}
             className="w-full h-12 rounded-xl text-base font-bold"
           >
-            {loading ? t('common.loading') : isSignUp ? t('auth.createAccount') : t('auth.signIn')}
+            {loading
+              ? t('common.loading')
+              : forgot
+                ? t('auth.sendResetLink')
+                : isSignUp
+                  ? t('auth.createAccount')
+                  : t('auth.signIn')}
           </Button>
         </form>
 
@@ -253,13 +295,24 @@ export default function Auth() {
         </p>
 
         <p className="text-center text-sm text-muted-foreground">
-          {isSignUp ? t('auth.hasAccount') : t('auth.noAccount')}{' '}
-          <button
-            onClick={() => setIsSignUp(!isSignUp)}
-            className="text-primary font-semibold hover:underline"
-          >
-            {isSignUp ? t('auth.signIn') : t('auth.signUp')}
-          </button>
+          {forgot ? (
+            <button
+              onClick={() => setForgot(false)}
+              className="text-primary font-semibold hover:underline"
+            >
+              {t('auth.backToSignIn')}
+            </button>
+          ) : (
+            <>
+              {isSignUp ? t('auth.hasAccount') : t('auth.noAccount')}{' '}
+              <button
+                onClick={() => setIsSignUp(!isSignUp)}
+                className="text-primary font-semibold hover:underline"
+              >
+                {isSignUp ? t('auth.signIn') : t('auth.signUp')}
+              </button>
+            </>
+          )}
         </p>
       </div>
     </div>
