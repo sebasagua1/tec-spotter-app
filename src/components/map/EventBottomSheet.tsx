@@ -356,7 +356,7 @@ export function EventBottomSheet({ event, onClose }: Props) {
 
   return (
     <>
-    <div className="absolute bottom-20 left-0 right-0 z-20 animate-slide-up">
+    <div className="absolute above-nav left-0 right-0 z-20 animate-slide-up">
       <div className="mx-3 bg-card rounded-3xl shadow-lifted p-5 relative">
         <div className="drag-handle" />
 

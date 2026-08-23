@@ -137,7 +137,7 @@ export function EditProfileSheet({ profile, onClose }: Props) {
     // pinta después y se comía la mitad inferior de Cancelar y Guardar.
     <div className="fixed inset-0 z-[60] flex flex-col bg-background animate-slide-up">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-border">
+      <div className="flex items-center justify-between px-5 pb-3 border-b border-border pt-[calc(1.25rem+env(safe-area-inset-top,0px))]">
         <h2 className="text-lg font-extrabold text-foreground">{t('profile.edit')}</h2>
         <button onClick={onClose} className="p-3 -m-2 text-muted-foreground">
           <X className="w-5 h-5" />

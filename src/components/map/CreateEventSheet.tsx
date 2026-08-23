@@ -138,7 +138,7 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
       >
         <div className="drag-handle" />
 
-        <div className="px-5 pb-24">
+        <div className="px-5 pb-nav">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-xl font-extrabold text-foreground">{t('create.title')}</h2>
             <button onClick={onClose} aria-label={t('common.close')} className="p-3 -m-2 text-muted-foreground">

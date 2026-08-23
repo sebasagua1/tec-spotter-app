@@ -321,8 +321,19 @@ export default function MapHome() {
     }
   }, []);
 
-  // Surface permission/GPS errors once
+  // Surface permission/GPS errors once.
+  //
+  // La condición mira también `location`: watchPosition puede entregar un
+  // error DESPUÉS de haber dado posiciones buenas (precisión aproximada,
+  // un fallo puntual del GPS), y entonces salía un aviso de "ubicación
+  // denegada" con el punto azul pintado en el mapa, contradiciéndose solo.
   useEffect(() => {
+    if (userLocation) {
+      // Si acabó llegando la posición, el aviso vuelve a estar disponible
+      // por si de verdad se revoca el permiso más adelante.
+      deniedToastShownRef.current = false;
+      return;
+    }
     if (permission === 'denied' && !deniedToastShownRef.current) {
       deniedToastShownRef.current = true;
       toast({
@@ -338,7 +349,7 @@ export default function MapHome() {
         variant: 'destructive',
       });
     }
-  }, [permission, t]);
+  }, [permission, userLocation, t]);
 
   useEffect(() => {
     if (geoError && geoError.code !== geoError.PERMISSION_DENIED) {
@@ -436,7 +447,7 @@ export default function MapHome() {
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder={t('map.searchEvents')}
-                className="w-full h-11 pl-9 pr-11 rounded-full text-sm font-medium glass border border-border shadow-soft bg-background/80 backdrop-blur focus:outline-none focus:ring-2 focus:ring-primary/40"
+                className="w-full h-11 pl-9 pr-11 rounded-full text-sm font-medium border border-border shadow-soft bg-background/80 backdrop-blur-xl focus:outline-none focus:ring-2 focus:ring-primary/40"
               />
               {searchQuery && (
                 <button
@@ -480,7 +491,7 @@ export default function MapHome() {
 
       {/* List view overlay */}
       {!pickingLocation && viewMode === 'list' && (
-        <div className="absolute inset-0 z-10 bg-background overflow-y-auto pt-20 px-4 safe-top pb-24">
+        <div className="absolute inset-0 z-10 bg-background overflow-y-auto px-4 pb-nav pt-[calc(5rem+env(safe-area-inset-top,0px))]">
           <EventListView
             events={events}
             filterCategory={filterCategory}
@@ -496,7 +507,7 @@ export default function MapHome() {
           onClick={handleRecenter}
           aria-label={t('map.recenter')}
           className={cn(
-            'absolute bottom-44 right-4 z-10 w-12 h-12 rounded-full flex items-center justify-center shadow-lifted active:scale-95 transition-all glass border border-border',
+            'absolute above-nav mb-24 right-4 z-10 w-12 h-12 rounded-full flex items-center justify-center shadow-lifted active:scale-95 transition-all glass border border-border',
             userLocation ? 'text-primary' : 'text-muted-foreground'
           )}
         >
@@ -517,7 +528,7 @@ export default function MapHome() {
             setPickingLocation(true);
           }}
           aria-label={t('map.createEvent')}
-          className="absolute bottom-24 right-4 z-10 w-14 h-14 bg-primary rounded-full flex items-center justify-center shadow-lifted active:scale-95 transition-transform"
+          className="absolute above-nav mb-4 right-4 z-10 w-14 h-14 bg-primary rounded-full flex items-center justify-center shadow-lifted active:scale-95 transition-transform"
         >
           <Plus className="w-7 h-7 text-primary-foreground" />
         </button>

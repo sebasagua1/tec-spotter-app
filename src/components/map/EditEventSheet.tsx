@@ -182,7 +182,7 @@ export function EditEventSheet({ event, onClose, onSaved }: Props) {
         </div>
 
         {/* Sticky footer */}
-        <div className="sticky bottom-0 bg-card border-t border-border px-5 py-4 flex gap-3 safe-bottom">
+        <div className="sticky bottom-0 bg-card border-t border-border px-5 pt-4 flex gap-3 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
           <Button variant="outline" onClick={onClose} className="h-12 rounded-xl px-6">
             {t('common.cancel')}
           </Button>

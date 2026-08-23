@@ -105,7 +105,7 @@ export default function Profile() {
 
   if (!profile) {
     return (
-      <div className="min-h-screen pb-24 pt-4 px-4 safe-top space-y-4">
+      <div className="min-h-screen pb-nav px-4 pt-safe space-y-4">
         <Skeleton className="h-8 w-32" />
         <Skeleton className="h-28 w-full rounded-2xl" />
         <Skeleton className="h-24 w-full rounded-2xl" />
@@ -121,7 +121,7 @@ export default function Profile() {
     profile.reputation < 750 ? 'active' : 'legend';
 
   return (
-    <div className="min-h-screen pb-24 pt-4 px-4 safe-top">
+    <div className="min-h-screen pb-nav px-4 pt-safe">
       <Helmet>
         <title>{t('profile.title')} — ConnectTec</title>
         <meta name="description" content={t('profile.metaDesc')} />

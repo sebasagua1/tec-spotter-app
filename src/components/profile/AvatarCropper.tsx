@@ -71,7 +71,7 @@ export function AvatarCropper({ file, onCancel, onCropped }: Props) {
 
   return (
     <div className="fixed inset-0 z-[70] flex flex-col bg-foreground/95 animate-fade-in">
-      <div className="px-5 pt-5 pb-3 text-center">
+      <div className="px-5 pb-3 text-center pt-[calc(1.25rem+env(safe-area-inset-top,0px))]">
         <h2 className="text-lg font-extrabold text-background">{t('profile.adjustPhoto')}</h2>
         <p className="text-xs text-background/70 mt-1">{t('profile.adjustPhotoHint')}</p>
       </div>
@@ -92,7 +92,7 @@ export function AvatarCropper({ file, onCancel, onCropped }: Props) {
         )}
       </div>
 
-      <div className="px-5 py-4 space-y-4 safe-bottom">
+      <div className="px-5 pt-4 space-y-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
         {failed && (
           <p className="text-xs text-destructive text-center">{t('profile.photoError')}</p>
         )}

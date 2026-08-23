@@ -241,9 +241,9 @@ export default function GroupChat() {
   };
 
   return (
-    <div className="flex flex-col h-below-nav">
+    <div className="flex flex-col h-screen-nav overflow-hidden bg-background">
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 pt-4 pb-3 bg-card border-b border-border shrink-0">
+      <div className="flex items-center gap-3 px-4 pb-3 bg-card border-b border-border shrink-0 pt-[calc(1rem+env(safe-area-inset-top,0px))]">
         <button
           onClick={() => navigate('/friends', { state: { tab: 'groups' } })}
           className="p-3 -m-2 text-muted-foreground"
@@ -344,7 +344,7 @@ export default function GroupChat() {
       </Sheet>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-3">
         {messages.length === 0 && (
           <p className="text-center text-sm text-muted-foreground py-12">{t('groups.noMessages')}</p>
         )}

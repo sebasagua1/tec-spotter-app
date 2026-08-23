@@ -120,19 +120,40 @@
 }
 
 @layer utilities {
-  /* Alto del chat descontando BottomNav. La barra mide h-16 (64px) MÁS el
-     safe-area-inset, que en un iPhone con indicador de inicio son otros ~34px:
-     descontando solo 64px el campo de escribir queda debajo de la barra.
-     La línea con 100vh es el respaldo para navegadores sin dvh. */
-  .h-below-nav {
-    height: calc(100vh - 4rem - env(safe-area-inset-bottom, 0px));
-    height: calc(100dvh - 4rem - env(safe-area-inset-bottom, 0px));
+  /* Pantalla completa con el sitio de la barra inferior RESERVADO por
+     padding en vez de restado. Con box-sizing: border-box el padding va
+     dentro del alto, así que el contenido acaba justo donde empieza la
+     barra — sin una resta que tenga que cuadrar al píxel.
+     La línea con 100vh es el respaldo para Safari anterior a 15.4, que no
+     entiende dvh y sigue dentro del objetivo de despliegue (iOS 15). */
+  .h-screen-nav {
+    height: 100vh;
+    height: 100dvh;
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
   }
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
+  /* El hueco REAL de la barra inferior: sus 4rem más el borde del aparato.
+     Se venía escribiendo a mano como pb-24 (96px) y bottom-20 (80px), pero
+     en un iPhone con indicador de inicio la barra mide 64 + 34 = 98, así
+     que lo de abajo quedaba tapado. */
+  .pb-nav {
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+  }
+  .above-nav {
+    bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+  }
   .safe-top {
     padding-top: env(safe-area-inset-top, 0px);
+  }
+  /* Respiro MÁS el hueco de la barra de estado, en una sola declaración.
+     Antes se escribía `pt-4 safe-top` y no se sumaban: las dos ponen
+     padding-top y en el CSS generado safe-top va después, así que el pt-4
+     se perdía. En el móvil no cantaba porque el hueco del notch ya es
+     ancho; en la web, con inset 0, el contenido quedaba pegado al borde. */
+  .pt-safe {
+    padding-top: calc(1rem + env(safe-area-inset-top, 0px));
   }
   .glass {
     @apply bg-card/80 backdrop-blur-xl;
@@ -196,6 +217,36 @@
 }
 
 @layer utilities {
+  /* ---------------------------------------------------------------
+     Transiciones entre pantallas.
+
+     El fundido entre pestañas NO usa transform, y es deliberado: un
+     transform en un ancestro convierte a sus descendientes position:fixed
+     en hijos suyos, y esta app tiene siete hojas y modales que son
+     `fixed inset-0`. Un fundido de opacidad no puede romperlos.
+
+     Los deslizamientos sí llevan transform, pero solo se usan al entrar y
+     salir de un detalle (el chat), y PageTransition les quita la clase al
+     terminar para que no quede ningún transform residual.
+     --------------------------------------------------------------- */
+  @keyframes page-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes page-forward {
+    from { opacity: 0; transform: translate3d(28px, 0, 0); }
+    to   { opacity: 1; transform: translate3d(0, 0, 0); }
+  }
+  @keyframes page-back {
+    from { opacity: 0; transform: translate3d(-28px, 0, 0); }
+    to   { opacity: 1; transform: translate3d(0, 0, 0); }
+  }
+  /* La curva es la misma que ya usaban las hojas: salida rápida y frenada
+     larga, que es como se mueven las cosas en iOS. */
+  .animate-page-fade    { animation: page-fade 180ms ease-out both; }
+  .animate-page-forward { animation: page-forward 280ms cubic-bezier(0.32, 0.72, 0, 1) both; }
+  .animate-page-back    { animation: page-back 280ms cubic-bezier(0.32, 0.72, 0, 1) both; }
+
   /* Transición entre pasos del onboarding: entra deslizando desde el lado al
      que se avanza, en vez de cambiar de golpe. */
   @keyframes step-in-right {
@@ -212,7 +263,10 @@
   /* Quien pide menos movimiento en el sistema no debería ver deslizamientos. */
   @media (prefers-reduced-motion: reduce) {
     .animate-step-in-right,
-    .animate-step-in-left { animation: none; }
+    .animate-step-in-left,
+    .animate-page-fade,
+    .animate-page-forward,
+    .animate-page-back { animation: none; }
   }
 }
 

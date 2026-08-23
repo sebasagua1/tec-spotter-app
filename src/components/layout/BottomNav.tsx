@@ -37,12 +37,19 @@ export function BottomNav() {
               key={path}
               onClick={() => navigate(path)}
               className={cn(
-                'flex flex-col items-center gap-0.5 px-4 py-2 min-w-[64px] transition-colors',
+                'flex flex-col items-center gap-0.5 px-4 py-2 min-w-[64px]',
+                'transition-[color,transform] duration-200 active:scale-95',
                 active ? 'text-primary' : 'text-muted-foreground'
               )}
             >
               <span className="relative">
-                <Icon className="w-6 h-6" strokeWidth={active ? 2.5 : 1.8} />
+                <Icon
+                  className={cn(
+                    'w-6 h-6 transition-transform duration-200',
+                    active && 'scale-110'
+                  )}
+                  strokeWidth={active ? 2.5 : 1.8}
+                />
                 {count > 0 && (
                   <span
                     aria-label={t('notifications.pending', { count })}

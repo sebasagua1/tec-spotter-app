@@ -132,7 +132,7 @@ export default function MyEvents() {
   const filtered = allFiltered.slice(0, visibleCount);
 
   return (
-    <div className="min-h-screen pb-24 pt-4 px-4 safe-top">
+    <div className="min-h-screen pb-nav px-4 pt-safe">
       <Helmet>
         <title>{t('myEvents.title')} — ConnectTec</title>
         <meta name="description" content={t('myEvents.metaDesc')} />
