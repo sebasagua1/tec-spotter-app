@@ -11,8 +11,26 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+// Supabase está migrando de las claves JWT (anon / service_role) a las
+// nuevas (sb_publishable_ / sb_secret_), y según el proyecto inyecta unas,
+// otras o las dos. Comparar solo contra SUPABASE_SERVICE_ROLE_KEY hacía que
+// la función devolviera 401 con una clave perfectamente válida, sin decir
+// por qué. Se aceptan las dos, y se avisa si no hay ninguna.
+const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const SECRET_KEY = Deno.env.get("SUPABASE_SECRET_KEY") ?? "";
+// Último recurso, y el único que no depende de lo que Supabase decida
+// inyectar: un secreto puesto a mano en los ajustes de la función. Si un día
+// dejan de inyectarse las dos de arriba, basta con rellenar esta.
+const FALLBACK_KEY = Deno.env.get("PUSH_SERVER_KEY") ?? "";
+const ANON_KEY =
+  Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? "";
+
+/** Las claves que identifican al servidor llamándose a sí mismo. */
+const SERVER_KEYS = [SERVICE_ROLE, SECRET_KEY, FALLBACK_KEY].filter((k) => k.length > 0);
+
+/** La que sirve para hablar con la base saltándose la RLS. */
+const ADMIN_KEY = FALLBACK_KEY || SERVICE_ROLE || SECRET_KEY;
 const APP_ORIGIN = Deno.env.get("APP_ORIGIN") ?? "*";
 
 const APNS_KEY_ID = Deno.env.get("APNS_KEY_ID")!;
@@ -135,11 +153,38 @@ serve(async (req) => {
   }
   if (!body.title || !body.body) return json({ error: "Faltan title y body" }, 400);
 
-  const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
+  // Diagnóstico. No devuelve ninguna clave: solo si existen y cuánto miden,
+  // que es lo que hace falta para saber por qué un bearer no encaja.
+  if ((body as { diagnostico?: boolean }).diagnostico === true) {
+    return json({
+      service_role_definida: SERVICE_ROLE.length > 0,
+      secret_key_definida: SECRET_KEY.length > 0,
+      push_server_key_definida: FALLBACK_KEY.length > 0,
+      anon_definida: ANON_KEY.length > 0,
+      largos: {
+        service_role: SERVICE_ROLE.length,
+        secret_key: SECRET_KEY.length,
+        push_server_key: FALLBACK_KEY.length,
+        bearer_recibido: bearer.length,
+      },
+      bearer_empieza_por: bearer.slice(0, 3),
+      coincide_con_alguna: SERVER_KEYS.includes(bearer),
+    });
+  }
+
+  if (SERVER_KEYS.length === 0) {
+    console.error(
+      "Ni SUPABASE_SERVICE_ROLE_KEY ni SUPABASE_SECRET_KEY están definidas: " +
+        "nadie puede autenticarse como servidor.",
+    );
+    return json({ error: "Función mal configurada: falta la clave de servidor" }, 500);
+  }
+
+  const admin = createClient(SUPABASE_URL, ADMIN_KEY);
 
   // Quién manda decide a quién se puede enviar.
   let targetUserId: string;
-  if (bearer === SERVICE_ROLE) {
+  if (SERVER_KEYS.includes(bearer)) {
     if (!body.user_id) return json({ error: "Falta user_id" }, 400);
     targetUserId = body.user_id;
   } else {
@@ -147,7 +192,12 @@ serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     });
     const { data: userData, error } = await anon.auth.getUser();
-    if (error || !userData.user) return json({ error: "Unauthorized" }, 401);
+    if (error || !userData.user) {
+      // Sin esto, una clave de servidor que no coincide y un JWT caducado
+      // devolvían el mismo "Unauthorized" pelado.
+      console.warn("Bearer rechazado: no es clave de servidor ni JWT válido.");
+      return json({ error: "Unauthorized", hint: "El bearer no es una clave de servidor válida ni un JWT de usuario" }, 401);
+    }
     // Con JWT de persona el destinatario es siempre quien llama, aunque el
     // body diga otra cosa.
     targetUserId = userData.user.id;
