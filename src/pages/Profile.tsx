@@ -26,6 +26,7 @@ import { BlockedUsersSheet } from '@/components/moderation/BlockedUsersSheet';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { formatOrigin } from '@/lib/origin';
 
 export default function Profile() {
@@ -163,13 +164,12 @@ export default function Profile() {
       {/* Profile card */}
       <div className="bg-card rounded-2xl p-5 shadow-soft mb-5">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary overflow-hidden">
-            {profile.avatar_url ? (
-              <img src={profile.avatar_url} alt={profile.name ?? ''} className="w-full h-full object-cover" />
-            ) : (
-              profile.name?.[0] ?? '?'
-            )}
-          </div>
+          <UserAvatar
+            url={profile.avatar_url}
+            name={profile.name}
+            className="w-16 h-16 bg-primary/10"
+            textClassName="text-2xl text-primary"
+          />
           <div className="flex-1">
             <h2 className="text-lg font-extrabold text-foreground">{profile.name ?? t('profile.student')}</h2>
             <p className="text-sm text-muted-foreground">{profile.major ?? t('profile.noMajor')}</p>

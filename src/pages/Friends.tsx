@@ -20,6 +20,8 @@ import i18n from '@/i18n';
 import { rpcMessage } from '@/lib/rpcErrors';
 import { ModerationMenu } from '@/components/moderation/ModerationMenu';
 import { cn } from '@/lib/utils';
+import { UserAvatar } from '@/components/ui/user-avatar';
+import { UserProfileSheet } from '@/components/profile/UserProfileSheet';
 import type { Database } from '@/integrations/supabase/types';
 
 type FriendData = Pick<
@@ -40,6 +42,7 @@ type Group = {
 type LeaderEntry = {
   id: string | null;
   name: string | null;
+  avatar_url: string | null;
   reputation: number;
 };
 
@@ -72,6 +75,8 @@ export default function Friends() {
 
   // Leaderboard state
   const [leaderboard, setLeaderboard] = useState<LeaderEntry[]>([]);
+  /** Persona cuya ficha se está mirando. */
+  const [viewingUserId, setViewingUserId] = useState<string | null>(null);
   const [leaderLoading, setLeaderLoading] = useState(false);
   const [leaderOffset, setLeaderOffset] = useState(0);
   const [leaderHasMore, setLeaderHasMore] = useState(true);
@@ -207,7 +212,7 @@ export default function Friends() {
     try {
       const { data, error } = await supabase
         .from('public_profiles')
-        .select('id, name, reputation')
+        .select('id, name, avatar_url, reputation')
         .order('reputation', { ascending: false })
         .range(offset, offset + LEADER_PAGE_SIZE - 1);
       if (error) {
@@ -253,7 +258,9 @@ export default function Friends() {
       return;
     }
 
-    navigate(`/groups/${groupId}`);
+    // El chat necesita saber de dónde se vino para que el botón de atrás
+    // devuelva a la pestaña correcta.
+    navigate(`/groups/${groupId}`, { state: { from: 'friends' } });
   }, [user, navigate, toast, t]);
 
   const acceptRequest = async (req: PendingRequest) => {
@@ -409,15 +416,22 @@ export default function Friends() {
               <h2 className="text-sm font-semibold text-muted-foreground">{t('friends.results')}</h2>
               {searchResults.map((s) => (
                 <div key={s.id ?? ''} className="flex items-center justify-between bg-card rounded-xl p-3 shadow-soft">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-sm font-bold text-muted-foreground">
-                      {s.name?.[0] ?? '?'}
+                  <button
+                    onClick={() => setViewingUserId(s.id ?? null)}
+                    aria-label={t('friends.viewProfile', { name: s.name ?? '' })}
+                    className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                  >
+                    <UserAvatar
+                      url={s.avatar_url}
+                      name={s.name}
+                      className="w-10 h-10 bg-muted"
+                      textClassName="text-sm text-muted-foreground"
+                    />
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm text-foreground truncate">{s.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{s.major}</p>
                     </div>
-                    <div>
-                      <p className="font-semibold text-sm text-foreground">{s.name}</p>
-                      <p className="text-xs text-muted-foreground">{s.major}</p>
-                    </div>
-                  </div>
+                  </button>
                   <div className="flex items-center">
                     <button
                       onClick={() => sendFriendRequest(s.id ?? '')}
@@ -446,9 +460,12 @@ export default function Friends() {
               {pendingRequests.map((req) => (
                 <div key={req.friendshipId} className="flex items-center justify-between bg-card rounded-xl p-3 shadow-soft">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
-                      {req.profile.name?.[0] ?? '?'}
-                    </div>
+                    <UserAvatar
+                      url={req.profile.avatar_url}
+                      name={req.profile.name}
+                      className="w-10 h-10 bg-primary/10"
+                      textClassName="text-sm text-primary"
+                    />
                     <div>
                       <p className="font-semibold text-sm text-foreground">{req.profile.name}</p>
                       <p className="text-xs text-muted-foreground">{req.profile.major}</p>
@@ -500,15 +517,22 @@ export default function Friends() {
             {!loading &&
               friends.map((f) => (
                 <div key={f.id ?? ''} className="flex items-center justify-between bg-card rounded-xl p-3 shadow-soft">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
-                      {f.name?.[0] ?? '?'}
+                  <button
+                    onClick={() => setViewingUserId(f.id ?? null)}
+                    aria-label={t('friends.viewProfile', { name: f.name ?? '' })}
+                    className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                  >
+                    <UserAvatar
+                      url={f.avatar_url}
+                      name={f.name}
+                      className="w-10 h-10 bg-primary/10"
+                      textClassName="text-sm text-primary"
+                    />
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm text-foreground truncate">{f.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{f.major}</p>
                     </div>
-                    <div>
-                      <p className="font-semibold text-sm text-foreground">{f.name}</p>
-                      <p className="text-xs text-muted-foreground">{f.major}</p>
-                    </div>
-                  </div>
+                  </button>
                   <div className="flex items-center">
                     <button
                       onClick={() => handleMessageFriend(f)}
@@ -573,7 +597,7 @@ export default function Friends() {
               groups.map((g) => (
                 <button
                   key={g.id}
-                  onClick={() => navigate(`/groups/${g.id}`)}
+                  onClick={() => navigate(`/groups/${g.id}`, { state: { from: 'groups' } })}
                   className="w-full flex items-center gap-3 bg-card rounded-xl p-3 shadow-soft text-left"
                 >
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
@@ -627,17 +651,24 @@ export default function Friends() {
                 <span className="w-7 text-center text-sm font-bold text-muted-foreground shrink-0">
                   {rankMedal(i)}
                 </span>
-                <div
+                <UserAvatar
+                  url={entry.avatar_url}
+                  name={entry.name}
                   className={cn(
-                    'w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0',
-                    i === 0 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-300' :
-                    i === 1 ? 'bg-slate-100 text-slate-600 dark:bg-slate-400/20 dark:text-slate-200' :
-                    i === 2 ? 'bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-300' :
-                    'bg-primary/10 text-primary'
+                    'w-10 h-10',
+                    i === 0 ? 'bg-yellow-100 dark:bg-yellow-500/20' :
+                    i === 1 ? 'bg-slate-100 dark:bg-slate-400/20' :
+                    i === 2 ? 'bg-orange-100 dark:bg-orange-500/20' :
+                    'bg-primary/10'
                   )}
-                >
-                  {entry.name?.[0] ?? '?'}
-                </div>
+                  textClassName={cn(
+                    'text-sm',
+                    i === 0 ? 'text-yellow-700 dark:text-yellow-300' :
+                    i === 1 ? 'text-slate-600 dark:text-slate-200' :
+                    i === 2 ? 'text-orange-700 dark:text-orange-300' :
+                    'text-primary'
+                  )}
+                />
                 <p className="flex-1 font-semibold text-sm text-foreground truncate">{entry.name}</p>
                 <span className="text-sm font-bold text-primary shrink-0">
                   {entry.reputation} {t('leaderboard.pts')}
@@ -686,6 +717,41 @@ export default function Friends() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Ficha de otra persona. La acción de abajo se decide sola según si
+          ya es amigo: mandarle un mensaje, o pedirle amistad. */}
+      {viewingUserId && (
+        <UserProfileSheet
+          userId={viewingUserId}
+          onClose={() => setViewingUserId(null)}
+          footer={(() => {
+            const friend = friends.find((f) => f.id === viewingUserId);
+            return friend ? (
+              <Button
+                className="w-full rounded-xl"
+                onClick={() => {
+                  setViewingUserId(null);
+                  handleMessageFriend(friend);
+                }}
+              >
+                <MessageCircle className="w-4 h-4" />
+                {t('friends.sendMessage')}
+              </Button>
+            ) : (
+              <Button
+                className="w-full rounded-xl"
+                onClick={() => {
+                  sendFriendRequest(viewingUserId);
+                  setViewingUserId(null);
+                }}
+              >
+                <UserPlus className="w-4 h-4" />
+                {t('friends.addFriend')}
+              </Button>
+            );
+          })()}
+        />
+      )}
     </div>
   );
 }

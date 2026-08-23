@@ -97,7 +97,9 @@
     "zoom": "Zoom",
     "photoError": "No se pudo procesar la imagen. Prueba con otra.",
     "photoNotImage": "Ese archivo no es una imagen",
-    "photoTooLarge": "La imagen es demasiado grande (máx. 15 MB)"
+    "photoTooLarge": "La imagen es demasiado grande (máx. 15 MB)",
+    "interests": "Intereses",
+    "languages": "Idiomas"
   },
   "myEvents": {
     "title": "Mis eventos",
@@ -129,7 +131,10 @@
     "requestDeclined": "Solicitud rechazada",
     "alreadySent": "Ya enviaste solicitud a esta persona",
     "metaDesc": "Encuentra estudiantes del Tec y conecta con tu comunidad en ConnectTec.",
-    "messageAria": "Enviar mensaje a {{name}}"
+    "messageAria": "Enviar mensaje a {{name}}",
+    "viewProfile": "Ver el perfil de {{name}}",
+    "addFriend": "Agregar",
+    "sendMessage": "Mensaje"
   },
   "groups": {
     "myGroups": "Mis grupos",
