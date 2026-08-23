@@ -36,6 +36,11 @@ export default function MapHome() {
   const [pickedLocation, setPickedLocation] = useState<{ lng: number; lat: number } | null>(null);
   const [pickReturnsToForm, setPickReturnsToForm] = useState(false);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
+  // Alto real de la barra flotante. La vista de lista lo necesita para
+  // empezar por debajo: escrito a mano como un pt-20 se quedaba corto y la
+  // primera tarjeta aparecía metida bajo el buscador.
+  const topBarRef = useRef<HTMLDivElement>(null);
+  const [topBarHeight, setTopBarHeight] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const pickMarkerRef = useRef<MapboxMarker | null>(null);
   const userMarkerRef = useRef<MapboxMarker | null>(null);
@@ -138,6 +143,18 @@ export default function MapHome() {
       mapRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    const el = topBarRef.current;
+    if (!el) return;
+    const measure = () => setTopBarHeight(el.offsetHeight);
+    measure();
+    // Cambia de alto al rotar, al cambiar el tamaño de letra del sistema o
+    // si las pastillas pasan a dos líneas en otro idioma.
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [pickingLocation]);
 
   // El mapa vive fuera del CSS de la app: cuando el sistema cambia de tema
   // hay que cambiarle el estilo a mano. Los marcadores son elementos del DOM
@@ -435,9 +452,24 @@ export default function MapHome() {
         />
       )}
 
-      {/* Filter pills + view toggle - hide during picking */}
+      {/* Filter pills + view toggle - hide during picking.
+
+          z-20 y no z-10: la vista de lista es un `absolute inset-0` que va
+          después en el DOM, así que con el mismo z-10 tapaba esta barra
+          entera — incluido el botón que devuelve al mapa, y no había forma
+          de salir de la lista. La lista reserva 5rem arriba precisamente
+          para dejar ver esta barra. */}
       {!pickingLocation && (
-        <div className="absolute top-4 left-0 right-0 z-10 px-4 safe-top">
+        <div
+          ref={topBarRef}
+          className={cn(
+            'absolute top-0 left-0 right-0 z-20 px-4 pb-3 pt-[calc(1rem+env(safe-area-inset-top,0px))]',
+            // Sobre el mapa flota transparente. Sobre la lista se convierte
+            // en cabecera: sin fondo, las tarjetas se veían pasar por los
+            // huecos entre las pastillas al hacer scroll.
+            viewMode === 'list' && 'bg-background/85 backdrop-blur-xl border-b border-border',
+          )}
+        >
           {/* Search bar */}
           <div className="flex items-center gap-2 mb-2">
             <div className="relative flex-1">
@@ -481,7 +513,7 @@ export default function MapHome() {
             <button
               onClick={() => setViewMode(v => v === 'map' ? 'list' : 'map')}
               aria-label={viewMode === 'map' ? t('map.listView') : t('map.mapView')}
-              className="flex-shrink-0 w-9 h-9 rounded-full glass border border-border flex items-center justify-center shadow-soft text-foreground"
+              className="flex-shrink-0 w-11 h-11 rounded-full glass border border-border flex items-center justify-center shadow-soft text-foreground"
             >
               {viewMode === 'map' ? <List className="w-4 h-4" /> : <MapIcon className="w-4 h-4" />}
             </button>
@@ -491,7 +523,12 @@ export default function MapHome() {
 
       {/* List view overlay */}
       {!pickingLocation && viewMode === 'list' && (
-        <div className="absolute inset-0 z-10 bg-background overflow-y-auto px-4 pb-nav pt-[calc(5rem+env(safe-area-inset-top,0px))]">
+        <div
+          className="absolute inset-0 z-10 bg-background overflow-y-auto px-4 pb-nav pt-[calc(8.5rem+env(safe-area-inset-top,0px))]"
+          // El valor de la clase es solo el respaldo para el primer pintado,
+          // antes de que la barra se haya medido.
+          style={topBarHeight ? { paddingTop: topBarHeight + 12 } : undefined}
+        >
           <EventListView
             events={events}
             filterCategory={filterCategory}

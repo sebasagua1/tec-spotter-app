@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useNotificationStore } from '@/stores/notificationStore';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Send, Users, UserPlus, LogOut } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -42,6 +43,7 @@ interface Message {
 export default function GroupChat() {
   const { id: groupId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuthStore();
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -54,8 +56,8 @@ export default function GroupChat() {
 
   // Members sheet state
   const [membersOpen, setMembersOpen] = useState(false);
-  const [members, setMembers] = useState<{ id: string; name: string | null }[]>([]);
-  const [friends, setFriends] = useState<{ id: string; name: string | null }[]>([]);
+  const [members, setMembers] = useState<{ id: string; name: string | null; avatar_url: string | null }[]>([]);
+  const [friends, setFriends] = useState<{ id: string; name: string | null; avatar_url: string | null }[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
   const [addingMember, setAddingMember] = useState<string | null>(null);
 
@@ -160,9 +162,9 @@ export default function GroupChat() {
       const memberIds = memberRows?.map((r) => r.user_id) ?? [];
       const { data: profiles } = await supabase
         .from('public_profiles')
-        .select('id, name')
+        .select('id, name, avatar_url')
         .in('id', memberIds);
-      setMembers((profiles ?? []).map((p) => ({ id: p.id ?? '', name: p.name })));
+      setMembers((profiles ?? []).map((p) => ({ id: p.id ?? '', name: p.name, avatar_url: p.avatar_url })));
 
       // Friends not already in the group
       const { data: accepted } = await supabase
@@ -178,9 +180,9 @@ export default function GroupChat() {
       if (friendIds.length > 0) {
         const { data: friendProfiles } = await supabase
           .from('public_profiles')
-          .select('id, name')
+          .select('id, name, avatar_url')
           .in('id', friendIds);
-        setFriends((friendProfiles ?? []).map((p) => ({ id: p.id ?? '', name: p.name })));
+        setFriends((friendProfiles ?? []).map((p) => ({ id: p.id ?? '', name: p.name, avatar_url: p.avatar_url })));
       } else {
         setFriends([]);
       }
@@ -207,6 +209,22 @@ export default function GroupChat() {
       if (added) setMembers((prev) => [...prev, added]);
     }
     setAddingMember(null);
+  };
+
+  /**
+   * Volver a la pestaña de la que se vino.
+   *
+   * Antes iba siempre a Grupos, así que salir de un mensaje directo te
+   * dejaba en la lista de grupos, que no es de donde venías.
+   *
+   * Se prefiere el `from` que manda quien abre el chat; si no hay —al
+   * recargar, o si algún día se entra desde una notificación— se deduce del
+   * tipo de conversación, que es la respuesta correcta casi siempre: un DM
+   * pertenece a Amigos y un grupo a Grupos.
+   */
+  const goBack = () => {
+    const from = (location.state as { from?: 'friends' | 'groups' } | null)?.from;
+    navigate('/friends', { state: { tab: from ?? (isDM ? 'friends' : 'groups') } });
   };
 
   const handleLeaveGroup = async () => {
@@ -245,7 +263,7 @@ export default function GroupChat() {
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pb-3 bg-card border-b border-border shrink-0 pt-[calc(1rem+env(safe-area-inset-top,0px))]">
         <button
-          onClick={() => navigate('/friends', { state: { tab: 'groups' } })}
+          onClick={goBack}
           className="p-3 -m-2 text-muted-foreground"
           aria-label={t('groups.backToGroups')}
         >
@@ -278,9 +296,12 @@ export default function GroupChat() {
               <div className="space-y-2">
                 {members.map((m) => (
                   <div key={m.id} className="flex items-center gap-3 py-1">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-                      {m.name?.[0] ?? '?'}
-                    </div>
+                    <UserAvatar
+                      url={m.avatar_url}
+                      name={m.name}
+                      className="w-8 h-8 bg-primary/10"
+                      textClassName="text-xs text-primary"
+                    />
                     <span className="text-sm font-medium text-foreground">{m.name}</span>
                     {m.id === user?.id && (
                       <span className="ml-auto text-xs text-muted-foreground">{t('groups.you')}</span>
@@ -297,9 +318,12 @@ export default function GroupChat() {
                   </p>
                   {friends.map((f) => (
                     <div key={f.id} className="flex items-center gap-3 py-1">
-                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground">
-                        {f.name?.[0] ?? '?'}
-                      </div>
+                      <UserAvatar
+                        url={f.avatar_url}
+                        name={f.name}
+                        className="w-8 h-8 bg-muted"
+                        textClassName="text-xs text-muted-foreground"
+                      />
                       <span className="text-sm font-medium text-foreground flex-1">{f.name}</span>
                       <button
                         onClick={() => handleAddMember(f.id)}
