@@ -6,7 +6,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 // iOS, cambiarlo implica regenerarlo, así que decídelo antes de
 // correr `npx cap add ios`.
 const config: CapacitorConfig = {
-  appId: 'mx.tec.connecttec',
+  appId: 'com.alwaysconnected.app',
   appName: 'Always Connected',
   webDir: 'dist',
 };

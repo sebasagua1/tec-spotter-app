@@ -35,7 +35,7 @@ const APP_ORIGIN = Deno.env.get("APP_ORIGIN") ?? "*";
 
 const APNS_KEY_ID = Deno.env.get("APNS_KEY_ID")!;
 const APNS_TEAM_ID = Deno.env.get("APNS_TEAM_ID")!;
-const APNS_BUNDLE_ID = Deno.env.get("APNS_BUNDLE_ID") ?? "mx.tec.connecttec";
+const APNS_BUNDLE_ID = Deno.env.get("APNS_BUNDLE_ID") ?? "com.alwaysconnected.app";
 const APNS_PRIVATE_KEY = Deno.env.get("APNS_PRIVATE_KEY")!;
 
 const corsHeaders = {

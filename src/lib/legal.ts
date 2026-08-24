@@ -2,7 +2,7 @@
 // vercel.json). Se enlazan con URL absoluta a propósito: dentro del webview
 // de Capacitor el origen es capacitor://localhost, donde una ruta relativa
 // como /privacy no existe.
-export const SITE_URL = 'https://tec-spotter-app.vercel.app';
+export const SITE_URL = 'https://alwaysconnected.vercel.app';
 const SITE = SITE_URL;
 
 export const PRIVACY_URL = `${SITE}/privacy`;

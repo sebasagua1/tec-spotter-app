@@ -75,9 +75,22 @@
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
+			<!-- Esquema propio: alwaysconnected://groups/<id>, ://friends, ://events…
+			     Lo resuelve src/lib/deepLinks.ts, que valida contra lista blanca. -->
+			<key>CFBundleURLName</key>
+			<string>com.alwaysconnected.app.deeplink</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<!-- iOS client ID de Google, invertido (callback de Google Sign-In) -->
+				<string>alwaysconnected</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<!-- iOS client ID de Google, invertido (callback de Google Sign-In).
+				     OJO: está atado al bundle ID. Al cambiar a com.alwaysconnected.app
+				     hay que crear un client ID nuevo en Google Cloud y sustituir este,
+				     o el botón de Google deja de funcionar. -->
 				<string>com.googleusercontent.apps.419887173763-s4l2ed276ffiqv19effm57b42tpud3in</string>
 			</array>
 		</dict>

@@ -1,5 +1,5 @@
 import { useEffect, lazy, Suspense } from 'react';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Route, Routes, useNavigate } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,6 +7,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { AppShell } from '@/components/layout/AppShell';
 import Auth from '@/pages/Auth';
 import { registerPush } from '@/lib/push';
+import { initDeepLinks, setDeepLinkNavigator } from '@/lib/deepLinks';
 
 // Rutas cargadas bajo demanda: mantienen el bundle inicial pequeño
 // (importante en móvil). Auth se queda eager porque es el primer
@@ -30,6 +31,7 @@ function PageSpinner() {
 
 function AuthGate() {
   const { user, session, profile, profileLoaded, loading, passwordRecovery, setPasswordRecovery, setSession, setLoading, fetchProfile } = useAuthStore();
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Set up auth listener first
@@ -60,6 +62,14 @@ function AuthGate() {
   useEffect(() => {
     if (user) registerPush();
   }, [user]);
+
+  // Enlaces profundos y salto al tocar una notificación. AuthGate va dentro de
+  // <BrowserRouter>, así que aquí sí hay router al que entregarle la ruta.
+  useEffect(() => {
+    setDeepLinkNavigator((route) => navigate(route));
+    initDeepLinks();
+    return () => setDeepLinkNavigator(null);
+  }, [navigate]);
 
   if (loading) return <PageSpinner />;
 

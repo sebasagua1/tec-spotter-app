@@ -87,7 +87,7 @@ contenedor nativo. Ruta recomendada con **Capacitor**:
 ```bash
 npm install @capacitor/core @capacitor/ios
 npm install -D @capacitor/cli
-npx cap init "Always Connected" mx.tec.connecttec --web-dir=dist
+npx cap init "Always Connected" com.alwaysconnected.app --web-dir=dist
 npm run build && npx cap add ios && npx cap sync
 npx cap open ios   # abre Xcode
 ```

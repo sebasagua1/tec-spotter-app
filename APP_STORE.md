@@ -32,7 +32,7 @@ xcodebuild -version
 
 ## 1. Confirma el Bundle ID
 
-En `capacitor.config.ts`, `appId` es `mx.tec.connecttec`. Es el identificador que
+En `capacitor.config.ts`, `appId` es `com.alwaysconnected.app`. Es el identificador que
 registrarás en Apple. **Decídelo ahora** — cambiarlo después de crear el proyecto iOS
 obliga a regenerarlo. Debe ser DNS inverso y único.
 
@@ -81,12 +81,12 @@ sin el redirect que se rompe en el webview). Falta la config de cuentas/proveedo
    **+ Capability → "Sign in with Apple"**. Esto añade el entitlement y registra la
    capability en tu App ID del portal de Apple Developer.
 2. **Supabase** → Authentication → Providers → **Apple** → activar. En *Authorized Client IDs*
-   agrega tu Bundle ID: `mx.tec.connecttec`. (Para el flujo nativo por idToken basta el
+   agrega tu Bundle ID: `com.alwaysconnected.app`. (Para el flujo nativo por idToken basta el
    Bundle ID; el Services ID/secret solo hace falta para Apple en web.)
 
 ### 4.2 Google Sign-In nativo
 1. **Google Cloud** → Credentials → crea **dos** OAuth Client IDs:
-   - Tipo **iOS** → Bundle ID `mx.tec.connecttec`. Copia el *iOS client ID*.
+   - Tipo **iOS** → Bundle ID `com.alwaysconnected.app`. Copia el *iOS client ID*.
    - Tipo **Web** → copia el *Web client ID* (y su secret, para Supabase).
 2. **Env vars** (se hornean en el build; ponlas ANTES de `npm run ios:sync`):
    ```

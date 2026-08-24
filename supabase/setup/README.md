@@ -23,8 +23,8 @@ en `full_schema.sql` (consolidado de `../migrations/`).
    - Vercel: mismas 3 variables en Settings → Environment Variables → **Redeploy**.
 
 5. **Auth → URL Configuration**:
-   - Site URL: `https://tec-spotter-app.vercel.app`
-   - Redirect URLs: `https://tec-spotter-app.vercel.app/**` y `http://localhost:8080/**`
+   - Site URL: `https://alwaysconnected.vercel.app`
+   - Redirect URLs: `https://alwaysconnected.vercel.app/**` y `http://localhost:8080/**`
 
 6. *(Opcional)* **Google login en web**: Auth → Providers → Google (Client ID/Secret) y en
    Google Cloud agrega el callback `https://XXXX.supabase.co/auth/v1/callback`.
@@ -47,7 +47,7 @@ inyectadas por Supabase; no hay que configurarlas. Opcionalmente, para acotar el
 CORS a tu dominio en vez de `*`:
 
 ```bash
-supabase secrets set APP_ORIGIN=https://tec-spotter-app.vercel.app
+supabase secrets set APP_ORIGIN=https://alwaysconnected.vercel.app
 ```
 
 El token de Mapbox va en `VITE_MAPBOX_TOKEN` y viaja en el bundle: es público
