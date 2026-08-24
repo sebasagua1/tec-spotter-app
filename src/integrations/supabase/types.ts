@@ -135,6 +135,7 @@ export type Database = {
           ends_at: string
           id: string
           is_active: boolean
+          institution_id: string | null
           is_recurring: boolean
           lat: number | null
           lng: number | null
@@ -154,6 +155,7 @@ export type Database = {
           ends_at: string
           id?: string
           is_active?: boolean
+          institution_id?: string | null
           is_recurring?: boolean
           lat?: number | null
           lng?: number | null
@@ -173,6 +175,7 @@ export type Database = {
           ends_at?: string
           id?: string
           is_active?: boolean
+          institution_id?: string | null
           is_recurring?: boolean
           lat?: number | null
           lng?: number | null
