@@ -88,10 +88,10 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<!-- iOS client ID de Google, invertido (callback de Google Sign-In).
-				     OJO: está atado al bundle ID. Al cambiar a com.alwaysconnected.app
-				     hay que crear un client ID nuevo en Google Cloud y sustituir este,
-				     o el botón de Google deja de funcionar. -->
-				<string>com.googleusercontent.apps.419887173763-s4l2ed276ffiqv19effm57b42tpud3in</string>
+				     Atado al bundle ID com.alwaysconnected.app: si el bundle cambia,
+				     hay que crear otro client ID y sustituir este. Debe coincidir
+				     siempre con VITE_GOOGLE_IOS_CLIENT_ID del .env. -->
+				<string>com.googleusercontent.apps.419887173763-60p3lpgkrijiokitha3eug9vh9lu2vh9</string>
 			</array>
 		</dict>
 	</array>
