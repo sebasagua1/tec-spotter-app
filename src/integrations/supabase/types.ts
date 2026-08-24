@@ -350,6 +350,7 @@ export type Database = {
           availability: Json | null
           avatar_url: string | null
           campus_id: string | null
+          institution_verified: boolean
           created_at: string
           email: string
           id: string
@@ -369,6 +370,7 @@ export type Database = {
           availability?: Json | null
           avatar_url?: string | null
           campus_id?: string | null
+          institution_verified?: boolean
           created_at?: string
           email: string
           id: string
@@ -388,6 +390,7 @@ export type Database = {
           availability?: Json | null
           avatar_url?: string | null
           campus_id?: string | null
+          institution_verified?: boolean
           created_at?: string
           email?: string
           id?: string
@@ -463,6 +466,7 @@ export type Database = {
           origin: string | null
           avatar_url: string | null
           campus_id: string | null
+          institution_verified: boolean | null
           created_at: string | null
           id: string | null
           interests: string[] | null
@@ -477,6 +481,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           campus_id?: string | null
+          institution_verified?: boolean | null
           created_at?: string | null
           id?: string | null
           interests?: string[] | null
@@ -491,6 +496,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           campus_id?: string | null
+          institution_verified?: boolean | null
           created_at?: string | null
           id?: string | null
           interests?: string[] | null

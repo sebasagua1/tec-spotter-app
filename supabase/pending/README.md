@@ -5,9 +5,12 @@ no se aplica con `supabase db push` ni con `db reset`.
 
 ## restrict-tec-email-domain.sql
 
-> **Heredada.** Codifica los dominios del Tec a mano. La sustituye el
-> auto-join por dominio contra la tabla de instituciones (Fase 3); cuando
-> esa entre, este archivo se borra.
+> **SUPERADA — ya se puede borrar.** La sustituyó
+> `migrations/20260828000000_institutions.sql`, que resuelve la pertenencia
+> por dominio contra `institutions.email_domains` en el trigger de alta.
+> Aquella cerraba el registro; esta lo deja abierto y acredita quién es de la
+> institución. No las mezcles: aplicar ambas rechazaría altas que el modelo
+> nuevo quiere aceptar.
 
 Restringe el registro a correos institucionales del Tec (`@tec.mx`,
 `@exatec.mx`, `@itesm.mx`) mediante un trigger en `auth.users`.

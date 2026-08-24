@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X } from 'lucide-react';
+import { X, BadgeCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { formatOrigin } from '@/lib/origin';
@@ -29,6 +29,7 @@ type PublicProfile = {
   points: number | null;
   reputation: number | null;
   origin: string | null;
+  institution_verified: boolean | null;
 };
 
 interface Props {
@@ -50,7 +51,7 @@ export function UserProfileSheet({ userId, footer, onClose }: Props) {
     (async () => {
       const { data, error } = await supabase
         .from('public_profiles')
-        .select('id, name, avatar_url, major, semester, residence_type, interests, languages, points, reputation, origin')
+        .select('id, name, avatar_url, major, semester, residence_type, interests, languages, points, reputation, origin, institution_verified')
         .eq('id', userId)
         .maybeSingle();
 
@@ -99,9 +100,20 @@ export function UserProfileSheet({ userId, footer, onClose }: Props) {
                 textClassName="text-3xl text-primary"
               />
               <div className="min-w-0">
-                <p className="text-base font-extrabold text-foreground truncate">
-                  {profile.name ?? t('profile.student')}
-                </p>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <p className="text-base font-extrabold text-foreground truncate">
+                    {profile.name ?? t('profile.student')}
+                  </p>
+                  {/* La insignia es lo que hace que verificar sirva de algo:
+                      sin nada visible, la comprobación del servidor no cambia
+                      en qué se fija quien mira el perfil. */}
+                  {profile.institution_verified && (
+                    <BadgeCheck
+                      className="w-4 h-4 shrink-0 text-primary"
+                      aria-label={t('profile.institutionVerified')}
+                    />
+                  )}
+                </div>
                 <p className="text-sm text-muted-foreground truncate">
                   {profile.major ?? t('profile.noMajor')}
                 </p>

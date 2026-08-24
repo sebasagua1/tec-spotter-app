@@ -24,7 +24,7 @@ interface Campus {
 }
 
 export default function Onboarding() {
-  const { user, fetchProfile } = useAuthStore();
+  const { user, profile, profileLoaded, fetchProfile } = useAuthStore();
   const { toast } = useToast();
   const { t } = useTranslation();
   const [step, setStep] = useState(0);
@@ -43,25 +43,29 @@ export default function Onboarding() {
   const [campusSearch, setCampusSearch] = useState('');
   const [needsCampusSelection, setNeedsCampusSelection] = useState(false);
 
-  // Determine if user needs campus selection (non-tec email)
+  // Quién pertenece a qué institución lo decide el SERVIDOR, en el trigger de
+  // alta (handle_new_user), comparando el dominio del correo contra
+  // institutions.email_domains. Aquí antes se hacía `email.endsWith('@tec.mx')`,
+  // que además de dejar fuera a exatec.mx e itesm.mx no verificaba nada: el
+  // cliente escribía su propio campus_id y podía poner el que quisiera.
+  //
+  // Así que esto ya no decide, solo lee lo que el servidor decidió.
   useEffect(() => {
-    if (!user) return;
-    const email = user.email || '';
-    const isTecEmail = email.endsWith('@tec.mx');
+    if (!user || !profileLoaded) return;
 
-    if (isTecEmail) {
-      // Auto-assign tec campus
-      supabase.from('campuses').select('id').eq('email_domain', 'tec.mx').single().then(({ data }) => {
-        if (data) setSelectedCampusId(data.id);
-      });
+    if (profile?.campus_id) {
+      setSelectedCampusId(profile.campus_id);
       setNeedsCampusSelection(false);
-    } else {
-      setNeedsCampusSelection(true);
-      supabase.from('campuses').select('*').then(({ data }) => {
-        if (data) setCampuses(data);
-      });
+      return;
     }
-  }, [user]);
+
+    // Sin institución asignada: el correo no coincide con ninguna. Que elija,
+    // sabiendo que esa elección queda sin verificar.
+    setNeedsCampusSelection(true);
+    supabase.from('campuses').select('*').then(({ data }) => {
+      if (data) setCampuses(data);
+    });
+  }, [user, profileLoaded, profile?.campus_id]);
 
   // Lista explícita de pasos. Antes se hacía con aritmética sobre el índice
   // (`adjustedStep = step + 1`), que ya era difícil de seguir con un paso

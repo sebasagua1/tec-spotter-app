@@ -59,9 +59,14 @@ export const POINTS = {
   RATE_EVENT: 5,
 } as const;
 
-// Centro por defecto del mapa. Provisional: en la Fase 3 sale de la
-// fila de la institución, no de una constante.
-export const TEC_CENTER = {
+/**
+ * Respaldo del centro del mapa.
+ *
+ * El centro de verdad sale de la fila de la institución del usuario
+ * (ver useInstitutionCenter). Esto es lo que se usa mientras esa consulta
+ * va en camino, o si el usuario todavía no pertenece a ninguna.
+ */
+export const MAP_FALLBACK_CENTER = {
   lng: -100.4063,
   lat: 20.6134,
 } as const;

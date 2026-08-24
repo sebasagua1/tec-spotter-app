@@ -64,8 +64,9 @@ vercel --prod
 
 ## 3. Verificación post-deploy
 
-- [ ] Registro con un correo **institucional** funciona; con uno genérico es rechazado
-      (solo aplica si `VITE_RESTRICT_TEC_EMAIL=true`; por defecto está apagado).
+- [ ] Registro con un correo **institucional** entra con la institución ya asignada
+      y la insignia de verificado; con uno genérico entra sin institución y el
+      onboarding pide elegirla.
 - [ ] Login con Google funciona (redirect correcto).
 - [ ] El mapa carga (token de Mapbox OK, vía env var o edge function).
 - [ ] El service worker se registra sin 404 (`/sw.js` existe en el deploy).

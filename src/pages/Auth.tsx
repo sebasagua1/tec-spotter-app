@@ -16,17 +16,12 @@ import {
 } from '@/lib/socialAuth';
 import { APP_NAME } from '@/lib/brand';
 
-// Restricción de registro a correos institucionales del Tec.
-// APAGADA por defecto: durante pruebas/lanzamiento cualquier correo
-// puede registrarse. Para limitar el registro al campus, pon
-// VITE_RESTRICT_TEC_EMAIL=true en el entorno Y aplica la migración
-// enforce_tec_email en Supabase (el servidor es la fuente de verdad;
-// este chequeo de cliente es solo para mejor UX).
-const RESTRICT_TEC_EMAIL = import.meta.env.VITE_RESTRICT_TEC_EMAIL === 'true';
-const ALLOWED_EMAIL_DOMAINS = ['tec.mx', 'exatec.mx', 'itesm.mx'];
-
-const isTecEmail = (value: string) =>
-  ALLOWED_EMAIL_DOMAINS.includes(value.split('@')[1]?.toLowerCase() ?? '');
+// Aquí había una lista de dominios permitidos y un interruptor para rechazar
+// el registro de quien no los usara. Se quita: cualquiera puede registrarse, y
+// la pertenencia a una institución se acredita en el servidor por el dominio
+// del correo (institutions.email_domains). Es menos fricción y, sobre todo,
+// deja de haber una lista de dominios de una universidad concreta en el
+// código del cliente.
 
 export default function Auth() {
   const { t } = useTranslation();
@@ -95,10 +90,6 @@ export default function Auth() {
       return;
     }
 
-    if (isSignUp && RESTRICT_TEC_EMAIL && !isTecEmail(email)) {
-      toast({ title: t('common.error'), description: t('auth.institutionalEmailOnly'), variant: 'destructive' });
-      return;
-    }
     setLoading(true);
     try {
       if (isSignUp) {
@@ -238,9 +229,6 @@ export default function Auth() {
               autoComplete="email"
               className="h-12 rounded-xl bg-card border-border text-base"
             />
-            {isSignUp && RESTRICT_TEC_EMAIL && (
-              <p className="text-xs text-muted-foreground">{t('auth.emailHint')}</p>
-            )}
           </div>
           {!forgot && (
             <div className="space-y-2">

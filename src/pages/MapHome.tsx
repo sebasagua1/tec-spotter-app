@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { Plus, LocateFixed, Layers, List, Map as MapIcon, Search, X as XIcon, type LucideIcon } from 'lucide-react';
 import { useEventStore, selectSelectedEvent } from '@/stores/eventStore';
-import { EVENT_CATEGORIES, TEC_CENTER, MAPBOX_STYLE_LIGHT, MAPBOX_STYLE_DARK } from '@/lib/constants';
+import { EVENT_CATEGORIES, MAPBOX_STYLE_LIGHT, MAPBOX_STYLE_DARK } from '@/lib/constants';
 import { prefersDark, onColorSchemeChange } from '@/lib/theme';
 import { CATEGORY_ICONS, getCategoryMarkerSVG } from '@/lib/categoryIcons';
 import { EventListView } from '@/components/map/EventListView';
@@ -18,6 +18,7 @@ import i18n from '@/i18n';
 import mapboxgl, { type Map as MapboxMap, type Marker as MapboxMarker } from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { pageTitle } from '@/lib/brand';
+import { useInstitutionCenter } from '@/hooks/useInstitutionCenter';
 
 export default function MapHome() {
   const { t } = useTranslation();
@@ -30,6 +31,13 @@ export default function MapHome() {
   const selectedEvent = useEventStore(selectSelectedEvent);
   const [showCreate, setShowCreate] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
+  // El centro sale de la institución del usuario, no de una constante.
+  const { center: institutionCenter, resolved: centerResolved } = useInstitutionCenter();
+  // Ref y no dependencia del efecto: ese efecto tiene una limpieza que destruye
+  // el mapa, así que si `center` entrara en sus deps el mapa se recrearía
+  // entero cada vez que cambiara.
+  const centerRef = useRef(institutionCenter);
+  centerRef.current = institutionCenter;
   const [mapboxToken, setMapboxToken] = useState<string | null>(
     (import.meta.env.VITE_MAPBOX_TOKEN as string) ?? null
   );
@@ -95,6 +103,8 @@ export default function MapHome() {
 
   // Initialize map
   useEffect(() => {
+    // Esperar a saber el centro: recentrar después da un tirón visible.
+    if (!centerResolved) return;
     if (!mapContainer.current || mapRef.current) return;
 
     const initMap = () => {
@@ -115,7 +125,7 @@ export default function MapHome() {
       const map = new mapboxgl.Map({
         container: mapContainer.current!,
         style: prefersDark() ? MAPBOX_STYLE_DARK : MAPBOX_STYLE_LIGHT,
-        center: [TEC_CENTER.lng, TEC_CENTER.lat],
+        center: [centerRef.current.lng, centerRef.current.lat],
         zoom: 15.5,
         pitch: 0,
         attributionControl: false,
@@ -143,7 +153,7 @@ export default function MapHome() {
       mapRef.current?.remove();
       mapRef.current = null;
     };
-  }, []);
+  }, [centerResolved]);
 
   useEffect(() => {
     const el = topBarRef.current;
