@@ -43,7 +43,7 @@
     "resetSentDesc": "If that address has an account, a link to choose a new password is on its way."
   },
   "onboarding": {
-    "campusTitle": "Your Campus 🏫",
+    "campusTitle": "Your Campus",
     "campusSubtitle": "Select your university or campus",
     "campusSearch": "Search campuses…",
     "campusEmpty": "No campuses found",
