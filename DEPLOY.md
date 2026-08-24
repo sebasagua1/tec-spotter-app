@@ -9,15 +9,20 @@ Guía reproducible para publicar la app. Dos plataformas: **Supabase** (backend)
 
 ### 1.1 Linkear el proyecto (una sola vez)
 ```bash
-supabase link --project-ref tcajllgflxpfzjkyvtbq
+supabase link --project-ref myarlozvkbebygwszgkf
 ```
 
 ### 1.2 Aplicar migraciones a producción
-Incluye la restricción de correo institucional (`20260725000000_restrict-tec-email-domain.sql`).
 ```bash
 supabase db push
 ```
-> Verifica en el SQL Editor que existe el trigger `trg_enforce_tec_email` sobre `auth.users`.
+> **Sin la CLI de Supabase**, que es el caso habitual aquí: abre cada migración
+> pendiente de `supabase/migrations/` y pégala en el
+> [SQL Editor](https://supabase.com/dashboard/project/myarlozvkbebygwszgkf/sql/new)
+> en orden de fecha. Están escritas para tolerar que se ejecuten dos veces.
+
+> Verifica que el alta asigna institución: `select tgname from pg_trigger
+> where tgrelid = 'auth.users'::regclass;` debe listar `on_auth_user_created`.
 
 ### 1.3 Desplegar la Edge Function y sus secretos
 ```bash
@@ -43,9 +48,9 @@ Project → Settings → Environment Variables (marca *Production* y *Preview*):
 
 | Variable | Valor |
 |---|---|
-| `VITE_SUPABASE_URL` | `https://tcajllgflxpfzjkyvtbq.supabase.co` |
+| `VITE_SUPABASE_URL` | `https://myarlozvkbebygwszgkf.supabase.co` |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | tu **anon/public** key (nunca la service_role) |
-| `VITE_SUPABASE_PROJECT_ID` | `tcajllgflxpfzjkyvtbq` |
+| `VITE_SUPABASE_PROJECT_ID` | `myarlozvkbebygwszgkf` |
 | `VITE_MAPBOX_TOKEN` | tu token público de Mapbox (`pk...`) |
 
 ### 2.2 Build (Vercel lo detecta solo)
