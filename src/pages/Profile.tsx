@@ -28,6 +28,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { formatOrigin } from '@/lib/origin';
+import { pageTitle } from '@/lib/brand';
 
 export default function Profile() {
   const { profile, signOut, fetchProfile } = useAuthStore();
@@ -124,10 +125,10 @@ export default function Profile() {
   return (
     <div className="min-h-screen pb-nav px-4 pt-safe">
       <Helmet>
-        <title>{t('profile.title')} — Always Connected</title>
+        <title>{pageTitle(t('profile.title'))}</title>
         <meta name="description" content={t('profile.metaDesc')} />
         <link rel="canonical" href="/profile" />
-        <meta property="og:title" content={`${t('profile.title')} — Always Connected`} />
+        <meta property="og:title" content={pageTitle(t('profile.title'))} />
         <meta property="og:description" content={t('profile.metaDesc')} />
         <meta property="og:url" content="/profile" />
       </Helmet>

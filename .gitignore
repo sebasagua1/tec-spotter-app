@@ -10,6 +10,8 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+# Service worker de desarrollo, que genera vite-plugin-pwa con devOptions.
+dev-dist
 *.local
 
 # Environment files — never commit real env values

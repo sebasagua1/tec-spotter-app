@@ -3,6 +3,7 @@ import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import es from './locales/es.json';
 import en from './locales/en.json';
+import { APP_NAME } from '@/lib/brand';
 
 i18n
   .use(LanguageDetector)
@@ -14,7 +15,10 @@ i18n
     },
     fallbackLng: 'es',
     supportedLngs: ['es', 'en'],
-    interpolation: { escapeValue: false },
+    // `defaultVariables` deja {{app}} disponible en TODAS las cadenas sin
+    // tener que pasarlo en cada t(). Así el nombre de la marca no vuelve a
+    // escribirse a mano en los archivos de traducción.
+    interpolation: { escapeValue: false, defaultVariables: { app: APP_NAME } },
     detection: {
       order: ['localStorage', 'navigator'],
       lookupLocalStorage: 'connecttec_lang',

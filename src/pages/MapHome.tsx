@@ -17,6 +17,7 @@ import { toast } from '@/hooks/use-toast';
 import i18n from '@/i18n';
 import mapboxgl, { type Map as MapboxMap, type Marker as MapboxMarker } from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import { pageTitle } from '@/lib/brand';
 
 export default function MapHome() {
   const { t } = useTranslation();
@@ -399,10 +400,10 @@ export default function MapHome() {
   return (
     <div className="relative w-full h-screen">
       <Helmet>
-        <title>{t('map.title')}</title>
+        <title>{pageTitle(t('map.title'))}</title>
         <meta name="description" content={t('map.metaDesc')} />
         <link rel="canonical" href="/" />
-        <meta property="og:title" content={t('map.title')} />
+        <meta property="og:title" content={pageTitle(t('map.title'))} />
         <meta property="og:description" content={t('map.metaDesc')} />
         <meta property="og:url" content="/" />
       </Helmet>

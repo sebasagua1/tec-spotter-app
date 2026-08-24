@@ -1,0 +1,15 @@
+// Identidad de la app para el lado nativo.
+//
+// Espejo de src/lib/brand.ts: Vite no llega hasta aquí, así que el nombre vive
+// en dos sitios y solo en dos. Si cambias uno, cambia el otro.
+//
+// Lo incluye debug.xcconfig, y las configuraciones Release lo usan como base
+// directamente. Ojo: si alguna configuración se quedara sin este archivo, la
+// app se instalaría SIN NOMBRE bajo el icono.
+
+// Bajo el icono de la pantalla de inicio. iOS corta sobre los 12 caracteres,
+// por eso aquí va el nombre corto y no la marca completa.
+APP_DISPLAY_NAME = Always
+
+// Marca completa, para los textos de permiso ("$(APP_BRAND_NAME) usa la cámara…").
+APP_BRAND_NAME = Always Connected

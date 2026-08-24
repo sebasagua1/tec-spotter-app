@@ -14,6 +14,7 @@ import {
   signInWithAppleNative,
   signInWithGoogleNative,
 } from '@/lib/socialAuth';
+import { APP_NAME } from '@/lib/brand';
 
 // Restricción de registro a correos institucionales del Tec.
 // APAGADA por defecto: durante pruebas/lanzamiento cualquier correo
@@ -147,7 +148,7 @@ export default function Auth() {
           <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto shadow-soft">
             <MapPin className="w-8 h-8 text-primary-foreground" />
           </div>
-          <h1 className="text-3xl font-extrabold text-foreground tracking-tight">Always Connected</h1>
+          <h1 className="text-3xl font-extrabold text-foreground tracking-tight">{APP_NAME}</h1>
           <p className="text-muted-foreground text-sm">{t('auth.tagline')}</p>
         </div>
 

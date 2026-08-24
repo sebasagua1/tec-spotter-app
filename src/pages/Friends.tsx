@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { UserProfileSheet } from '@/components/profile/UserProfileSheet';
 import type { Database } from '@/integrations/supabase/types';
+import { pageTitle } from '@/lib/brand';
 
 type FriendData = Pick<
   Database['public']['Views']['public_profiles']['Row'],
@@ -360,10 +361,10 @@ export default function Friends() {
   return (
     <div className="min-h-screen pb-nav px-4 pt-safe">
       <Helmet>
-        <title>{t('friends.title')} — Always Connected</title>
+        <title>{pageTitle(t('friends.title'))}</title>
         <meta name="description" content={t('friends.metaDesc')} />
         <link rel="canonical" href="/friends" />
-        <meta property="og:title" content={`${t('friends.title')} — Always Connected`} />
+        <meta property="og:title" content={pageTitle(t('friends.title'))} />
         <meta property="og:description" content={t('friends.metaDesc')} />
         <meta property="og:url" content="/friends" />
       </Helmet>

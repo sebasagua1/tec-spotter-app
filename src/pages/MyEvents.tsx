@@ -13,6 +13,7 @@ import { useNotificationStore } from '@/stores/notificationStore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format, isPast, formatDistanceToNow } from 'date-fns';
 import { es as esLocale, enUS } from 'date-fns/locale';
+import { pageTitle } from '@/lib/brand';
 
 // Extiende MapEvent porque la tarjeta abre el mismo EventBottomSheet que el
 // mapa, y ese componente necesita el evento completo (creator_id, privacy...),
@@ -134,10 +135,10 @@ export default function MyEvents() {
   return (
     <div className="min-h-screen pb-nav px-4 pt-safe">
       <Helmet>
-        <title>{t('myEvents.title')} — Always Connected</title>
+        <title>{pageTitle(t('myEvents.title'))}</title>
         <meta name="description" content={t('myEvents.metaDesc')} />
         <link rel="canonical" href="/events" />
-        <meta property="og:title" content={`${t('myEvents.title')} — Always Connected`} />
+        <meta property="og:title" content={pageTitle(t('myEvents.title'))} />
         <meta property="og:description" content={t('myEvents.metaDesc')} />
         <meta property="og:url" content="/events" />
       </Helmet>

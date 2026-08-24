@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
+import { pageTitle } from '@/lib/brand';
 
 const MIN_LENGTH = 6;
 
@@ -49,7 +50,7 @@ export default function ResetPassword() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 bg-background">
       <Helmet>
-        <title>{t('reset.title')} — Always Connected</title>
+        <title>{pageTitle(t('reset.title'))}</title>
       </Helmet>
       <div className="w-full max-w-[380px] space-y-8">
         <div className="text-center space-y-2">

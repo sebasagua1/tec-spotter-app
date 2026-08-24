@@ -15,6 +15,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
 import { ChevronRight, ChevronLeft, Search } from 'lucide-react';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { pageTitle } from '@/lib/brand';
 
 interface Campus {
   id: string;
@@ -263,8 +264,8 @@ export default function Onboarding() {
         <LanguageSwitcher />
       </div>
       <Helmet>
-        <title>{t('onboarding.complete')} — Always Connected</title>
-        <meta name="description" content="Configura tu perfil de Always Connected: campus, carrera, intereses e idiomas." />
+        <title>{pageTitle(t('onboarding.complete'))}</title>
+        <meta name="description" content={t('onboarding.metaDesc')} />
         <link rel="canonical" href="/" />
       </Helmet>
       <h1 className="sr-only">{t('onboarding.complete')}</h1>

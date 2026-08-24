@@ -64,6 +64,7 @@
     "languagesTitle": "Languages",
     "languagesSubtitle": "Which languages do you speak?",
     "getStarted": "Get Started 🚀",
+    "metaDesc": "Set up your {{app}} profile: campus, major, interests and languages.",
     "complete": "Complete your profile"
   },
   "profile": {
@@ -90,7 +91,7 @@
     "save": "Save changes",
     "saved": "Profile updated",
     "changePhoto": "Change photo",
-    "metaDesc": "Your Always Connected profile: reputation, points, badges and stats.",
+    "metaDesc": "Your {{app}} profile: reputation, points, badges and stats.",
     "adjustPhoto": "Adjust your photo",
     "adjustPhotoHint": "Drag to move, pinch or use the slider to zoom",
     "usePhoto": "Use this photo",
@@ -130,7 +131,7 @@
     "requestAccepted": "Friend request accepted",
     "requestDeclined": "Request declined",
     "alreadySent": "You already sent a request to this person",
-    "metaDesc": "Find students and connect with your campus community on Always Connected.",
+    "metaDesc": "Find students and connect with your campus community on {{app}}.",
     "messageAria": "Message {{name}}",
     "viewProfile": "View {{name}}'s profile",
     "addFriend": "Add friend",
@@ -351,7 +352,7 @@
     "streak_7": "7-Day Streak"
   },
   "map": {
-    "title": "Always Connected — Campus Event Map",
+    "title": "Campus Event Map",
     "metaDesc": "Explore the live map of your campus: discover, create and join real activities near you.",
     "all": "All",
     "recenter": "Center on my location",
