@@ -61,6 +61,13 @@
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>ConnectTec usa tu ubicación para mostrarte eventos cercanos en el campus y validar tu asistencia (check-in).</string>
+	<!-- El selector de foto de perfil es un <input type="file" accept="image/*">.
+	     WKWebView le ofrece "Tomar foto", y sin esta clave iOS cierra la app en
+	     el acto al tocarla. Ver EditProfileSheet.tsx. -->
+	<key>NSCameraUsageDescription</key>
+	<string>ConnectTec usa la cámara para que puedas tomarte una foto de perfil.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>ConnectTec accede a tus fotos para que puedas elegir tu foto de perfil.</string>
 	<!-- La app solo usa encriptación estándar (HTTPS/TLS), exenta. Evita la
 	     pregunta de cumplimiento de exportación en cada subida a TestFlight. -->
 	<key>ITSAppUsesNonExemptEncryption</key>
