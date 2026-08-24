@@ -1,7 +1,7 @@
 {
-  "name": "ConnectTec",
-  "short_name": "ConnectTec",
-  "description": "Descubre, crea y únete a actividades en tu campus del Tec de Monterrey",
+  "name": "Always Connected",
+  "short_name": "Always",
+  "description": "Descubre, crea y únete a actividades en tu campus",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#F5F7FA",

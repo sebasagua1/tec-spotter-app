@@ -20,7 +20,7 @@
     "profile": "Profile"
   },
   "auth": {
-    "tagline": "Connect through action, not status.",
+    "tagline": "There's always something.",
     "continueGoogle": "Continue with Google",
     "continueApple": "Continue with Apple",
     "signingIn": "Signing in…",
@@ -36,8 +36,8 @@
     "noAccount": "Don't have an account?",
     "checkEmail": "Check your email",
     "verifyLink": "We sent you a verification link.",
-    "emailHint": "Use your institutional email (@tec.mx or @exatec.mx).",
-    "tecEmailOnly": "Only Tec emails are allowed (@tec.mx or @exatec.mx).",
+    "emailHint": "Use your institutional email.",
+    "institutionalEmailOnly": "Only institutional emails are allowed.",
     "forgot": "Forgot your password?",
     "sendResetLink": "Send me the link",
     "backToSignIn": "Back to sign in",
@@ -90,7 +90,7 @@
     "save": "Save changes",
     "saved": "Profile updated",
     "changePhoto": "Change photo",
-    "metaDesc": "Your ConnectTec profile: reputation, points, badges and stats.",
+    "metaDesc": "Your Always Connected profile: reputation, points, badges and stats.",
     "adjustPhoto": "Adjust your photo",
     "adjustPhotoHint": "Drag to move, pinch or use the slider to zoom",
     "usePhoto": "Use this photo",
@@ -110,7 +110,7 @@
     "emptyUpcoming": "No upcoming events",
     "viewDetails": "View details",
     "emptyPast": "No past events",
-    "metaDesc": "Review the events you've created or joined on your Tec campus.",
+    "metaDesc": "Review the events you've created or joined on your campus.",
     "requests": "{{count}} to approve",
     "approved": "You're in!"
   },
@@ -130,7 +130,7 @@
     "requestAccepted": "Friend request accepted",
     "requestDeclined": "Request declined",
     "alreadySent": "You already sent a request to this person",
-    "metaDesc": "Find Tec students and connect with your campus community on ConnectTec.",
+    "metaDesc": "Find students and connect with your campus community on Always Connected.",
     "messageAria": "Message {{name}}",
     "viewProfile": "View {{name}}'s profile",
     "addFriend": "Add friend",
@@ -351,8 +351,8 @@
     "streak_7": "7-Day Streak"
   },
   "map": {
-    "title": "ConnectTec — Campus Event Map",
-    "metaDesc": "Explore the live map of your Tec campus: discover, create and join real activities near you.",
+    "title": "Always Connected — Campus Event Map",
+    "metaDesc": "Explore the live map of your campus: discover, create and join real activities near you.",
     "all": "All",
     "recenter": "Center on my location",
     "createEvent": "Create new event",

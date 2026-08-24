@@ -7,7 +7,7 @@ en `full_schema.sql` (consolidado de `../migrations/`).
 ## Pasos
 
 1. **Crea el proyecto**: supabase.com/dashboard → **New Project**.
-   - Elige tu organización, nombre (`ConnectTec`), una región cercana y guarda la
+   - Elige tu organización, nombre (`Always Connected`), una región cercana y guarda la
      **contraseña de la base** en un lugar seguro.
 
 2. **Reconstruye el esquema**: cuando el proyecto esté listo, **SQL Editor** → pega el

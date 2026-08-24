@@ -1,5 +1,5 @@
 -- ============================================================
--- ConnectTec — esquema completo (consolidado de migrations/)
+-- Always Connected — esquema completo (consolidado de migrations/)
 -- Pegar en el SQL Editor de un proyecto Supabase NUEVO y ejecutar.
 -- Generado: 2026-08-16
 --

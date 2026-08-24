@@ -59,7 +59,8 @@ export const POINTS = {
   RATE_EVENT: 5,
 } as const;
 
-// Tec de Monterrey Campus Querétaro center coordinates
+// Centro por defecto del mapa. Provisional: en la Fase 3 sale de la
+// fila de la institución, no de una constante.
 export const TEC_CENTER = {
   lng: -100.4063,
   lat: 20.6134,

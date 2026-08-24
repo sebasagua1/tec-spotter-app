@@ -300,7 +300,7 @@ export default function Friends() {
       .neq('id', user?.id ?? '')
       .limit(10);
     // El más engañoso de todos: una búsqueda fallida se veía igual que una
-    // sin resultados, o sea "esa persona no está en ConnectTec".
+    // sin resultados, o sea "esa persona no está en Always Connected".
     if (error) {
       toast({ title: t('errors.searchFailed'), variant: 'destructive' });
       return;
@@ -360,10 +360,10 @@ export default function Friends() {
   return (
     <div className="min-h-screen pb-nav px-4 pt-safe">
       <Helmet>
-        <title>{t('friends.title')} — ConnectTec</title>
+        <title>{t('friends.title')} — Always Connected</title>
         <meta name="description" content={t('friends.metaDesc')} />
         <link rel="canonical" href="/friends" />
-        <meta property="og:title" content={`${t('friends.title')} — ConnectTec`} />
+        <meta property="og:title" content={`${t('friends.title')} — Always Connected`} />
         <meta property="og:description" content={t('friends.metaDesc')} />
         <meta property="og:url" content="/friends" />
       </Helmet>

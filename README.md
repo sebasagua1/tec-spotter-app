@@ -1,6 +1,6 @@
-# ConnectTec — Campus Social App
+# Always Connected — Campus Social App
 
-App web mobile-first (PWA) para la comunidad del **Tec de Monterrey**: descubre, crea
+App web mobile-first (PWA) para comunidades universitarias: descubre, crea
 y únete a actividades reales del campus en un mapa en tiempo real, con chats de grupo,
 amigos, perfiles y reputación.
 

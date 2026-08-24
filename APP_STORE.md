@@ -1,4 +1,4 @@
-# Publicar ConnectTec en la App Store (iOS)
+# Publicar Always Connected en la App Store (iOS)
 
 La app es una **PWA** que se empaqueta como app nativa con **Capacitor**. El proyecto
 JS ya está preparado (deps + `capacitor.config.ts` + scripts). Faltan pasos que dependen
@@ -64,7 +64,7 @@ Abre el proyecto: `npm run ios:open`. En Xcode, target **App → Info**, agrega:
 
 - **`NSLocationWhenInUseUsageDescription`** (OBLIGATORIO — la app usa el GPS para el mapa
   y el check-in):
-  > "ConnectTec usa tu ubicación para mostrarte eventos cercanos y validar tu asistencia."
+  > "Always Connected usa tu ubicación para mostrarte eventos cercanos y validar tu asistencia."
 
 Sin esta clave, iOS mata la app al pedir ubicación **y** Apple rechaza el envío.
 
@@ -148,8 +148,8 @@ npx capacitor-assets generate --ios
 - Apple pide justificar el uso de ubicación → el texto del Info.plist debe ser claro.
 - Si dejas el login con Google, Apple **exige** también ofrecer **Sign in with Apple**
   (guideline 4.8). Por eso, para el primer envío, lo más simple es email+contraseña solo.
-- Ten a la mano una **cuenta de prueba @tec.mx** para los revisores (el registro está
-  restringido a correos del Tec).
+- Ten a la mano una **cuenta de prueba institucional** para los revisores (si el registro está
+  restringido a un dominio institucional).
 
 ---
 

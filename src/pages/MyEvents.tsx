@@ -134,10 +134,10 @@ export default function MyEvents() {
   return (
     <div className="min-h-screen pb-nav px-4 pt-safe">
       <Helmet>
-        <title>{t('myEvents.title')} — ConnectTec</title>
+        <title>{t('myEvents.title')} — Always Connected</title>
         <meta name="description" content={t('myEvents.metaDesc')} />
         <link rel="canonical" href="/events" />
-        <meta property="og:title" content={`${t('myEvents.title')} — ConnectTec`} />
+        <meta property="og:title" content={`${t('myEvents.title')} — Always Connected`} />
         <meta property="og:description" content={t('myEvents.metaDesc')} />
         <meta property="og:url" content="/events" />
       </Helmet>

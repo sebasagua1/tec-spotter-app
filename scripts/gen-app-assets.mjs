@@ -1,5 +1,5 @@
 // Genera los assets fuente (icon + splash) para @capacitor/assets.
-// Diseño: marca ConnectTec — azul #003DA5 + pin de ubicación blanco.
+// Diseño: marca Always Connected — azul #003DA5 + pin de ubicación blanco.
 import sharp from 'sharp';
 import { mkdirSync } from 'node:fs';
 

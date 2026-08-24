@@ -95,7 +95,7 @@ export default function Auth() {
     }
 
     if (isSignUp && RESTRICT_TEC_EMAIL && !isTecEmail(email)) {
-      toast({ title: t('common.error'), description: t('auth.tecEmailOnly'), variant: 'destructive' });
+      toast({ title: t('common.error'), description: t('auth.institutionalEmailOnly'), variant: 'destructive' });
       return;
     }
     setLoading(true);
@@ -147,7 +147,7 @@ export default function Auth() {
           <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto shadow-soft">
             <MapPin className="w-8 h-8 text-primary-foreground" />
           </div>
-          <h1 className="text-3xl font-extrabold text-foreground tracking-tight">ConnectTec</h1>
+          <h1 className="text-3xl font-extrabold text-foreground tracking-tight">Always Connected</h1>
           <p className="text-muted-foreground text-sm">{t('auth.tagline')}</p>
         </div>
 

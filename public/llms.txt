@@ -1,8 +1,8 @@
-# ConnectTec
+# Always Connected
 
-> Campus social app for the Tec de Monterrey community. Students discover, create, and join real activities happening on campus through a live event map.
+> Campus social app for university communities. Students discover, create, and join real activities happening on campus through a live event map.
 
-ConnectTec connects students through action, not status. The app is mobile-first (max 430px), uses a Mapbox-based live event map, and groups users by campus. There are no public posts, rankings, or social status metrics — focus is on privacy and spontaneous in-person activity.
+Always Connected shows students what is happening on campus right now. The app is mobile-first (max 430px), uses a Mapbox-based live event map, and groups users by campus. There are no public posts, rankings, or social status metrics — focus is on privacy and spontaneous in-person activity.
 
 ## Pages
 

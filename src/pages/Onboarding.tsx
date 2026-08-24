@@ -263,8 +263,8 @@ export default function Onboarding() {
         <LanguageSwitcher />
       </div>
       <Helmet>
-        <title>{t('onboarding.complete')} — ConnectTec</title>
-        <meta name="description" content="Configura tu perfil de ConnectTec: campus, carrera, intereses e idiomas." />
+        <title>{t('onboarding.complete')} — Always Connected</title>
+        <meta name="description" content="Configura tu perfil de Always Connected: campus, carrera, intereses e idiomas." />
         <link rel="canonical" href="/" />
       </Helmet>
       <h1 className="sr-only">{t('onboarding.complete')}</h1>

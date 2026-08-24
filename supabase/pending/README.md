@@ -4,6 +4,11 @@ SQL listo pero **desactivado a propósito**. Supabase ignora esta carpeta:
 no se aplica con `supabase db push` ni con `db reset`.
 
 ## restrict-tec-email-domain.sql
+
+> **Heredada.** Codifica los dominios del Tec a mano. La sustituye el
+> auto-join por dominio contra la tabla de instituciones (Fase 3); cuando
+> esa entre, este archivo se borra.
+
 Restringe el registro a correos institucionales del Tec (`@tec.mx`,
 `@exatec.mx`, `@itesm.mx`) mediante un trigger en `auth.users`.
 

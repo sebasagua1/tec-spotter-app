@@ -20,7 +20,7 @@
     "profile": "Perfil"
   },
   "auth": {
-    "tagline": "Conecta a través de la acción, no del estatus.",
+    "tagline": "Siempre hay algo.",
     "continueGoogle": "Continuar con Google",
     "continueApple": "Continuar con Apple",
     "signingIn": "Iniciando sesión…",
@@ -36,8 +36,8 @@
     "noAccount": "¿No tienes cuenta?",
     "checkEmail": "Revisa tu correo",
     "verifyLink": "Te enviamos un enlace de verificación.",
-    "emailHint": "Usa tu correo institucional (@tec.mx o @exatec.mx).",
-    "tecEmailOnly": "Solo se permiten correos del Tec (@tec.mx o @exatec.mx).",
+    "emailHint": "Usa tu correo institucional.",
+    "institutionalEmailOnly": "Solo se permiten correos institucionales.",
     "forgot": "¿Olvidaste tu contraseña?",
     "sendResetLink": "Enviarme el enlace",
     "backToSignIn": "Volver a iniciar sesión",
@@ -90,7 +90,7 @@
     "save": "Guardar cambios",
     "saved": "Perfil actualizado",
     "changePhoto": "Cambiar foto",
-    "metaDesc": "Tu perfil de ConnectTec: reputación, puntos, insignias y estadísticas.",
+    "metaDesc": "Tu perfil de Always Connected: reputación, puntos, insignias y estadísticas.",
     "adjustPhoto": "Ajusta tu foto",
     "adjustPhotoHint": "Arrastra para mover y pellizca o usa la barra para acercar",
     "usePhoto": "Usar esta foto",
@@ -110,7 +110,7 @@
     "emptyUpcoming": "Sin eventos próximos",
     "viewDetails": "Ver detalles",
     "emptyPast": "Sin eventos pasados",
-    "metaDesc": "Revisa los eventos que has creado o a los que te has unido en tu campus del Tec.",
+    "metaDesc": "Revisa los eventos que has creado o a los que te has unido en tu campus.",
     "requests": "{{count}} por aprobar",
     "approved": "¡Te aprobaron!"
   },
@@ -130,7 +130,7 @@
     "requestAccepted": "Solicitud de amistad aceptada",
     "requestDeclined": "Solicitud rechazada",
     "alreadySent": "Ya enviaste solicitud a esta persona",
-    "metaDesc": "Encuentra estudiantes del Tec y conecta con tu comunidad en ConnectTec.",
+    "metaDesc": "Encuentra estudiantes y conecta con tu comunidad en Always Connected.",
     "messageAria": "Enviar mensaje a {{name}}",
     "viewProfile": "Ver el perfil de {{name}}",
     "addFriend": "Agregar",
@@ -351,8 +351,8 @@
     "streak_7": "Racha de 7 días"
   },
   "map": {
-    "title": "ConnectTec — Mapa de eventos del campus",
-    "metaDesc": "Explora el mapa en vivo de tu campus del Tec: descubre, crea y únete a actividades cerca de ti.",
+    "title": "Always Connected — Mapa de eventos del campus",
+    "metaDesc": "Explora el mapa en vivo de tu campus: descubre, crea y únete a actividades cerca de ti.",
     "all": "Todo",
     "recenter": "Centrar en mi ubicación",
     "createEvent": "Crear nuevo evento",

@@ -1,4 +1,4 @@
-# Deploy — ConnectTec
+# Deploy — Always Connected
 
 Guía reproducible para publicar la app. Dos plataformas: **Supabase** (backend) y
 **Vercel** (frontend). Requiere que hayas hecho login en ambos CLIs / dashboards.
@@ -64,7 +64,8 @@ vercel --prod
 
 ## 3. Verificación post-deploy
 
-- [ ] Registro con un correo **@tec.mx** funciona; con un **@gmail.com** es rechazado.
+- [ ] Registro con un correo **institucional** funciona; con uno genérico es rechazado
+      (solo aplica si `VITE_RESTRICT_TEC_EMAIL=true`; por defecto está apagado).
 - [ ] Login con Google funciona (redirect correcto).
 - [ ] El mapa carga (token de Mapbox OK, vía env var o edge function).
 - [ ] El service worker se registra sin 404 (`/sw.js` existe en el deploy).
@@ -80,7 +81,7 @@ contenedor nativo. Ruta recomendada con **Capacitor**:
 ```bash
 npm install @capacitor/core @capacitor/ios
 npm install -D @capacitor/cli
-npx cap init ConnectTec mx.tec.connecttec --web-dir=dist
+npx cap init "Always Connected" mx.tec.connecttec --web-dir=dist
 npm run build && npx cap add ios && npx cap sync
 npx cap open ios   # abre Xcode
 ```

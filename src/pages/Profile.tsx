@@ -124,10 +124,10 @@ export default function Profile() {
   return (
     <div className="min-h-screen pb-nav px-4 pt-safe">
       <Helmet>
-        <title>{t('profile.title')} — ConnectTec</title>
+        <title>{t('profile.title')} — Always Connected</title>
         <meta name="description" content={t('profile.metaDesc')} />
         <link rel="canonical" href="/profile" />
-        <meta property="og:title" content={`${t('profile.title')} — ConnectTec`} />
+        <meta property="og:title" content={`${t('profile.title')} — Always Connected`} />
         <meta property="og:description" content={t('profile.metaDesc')} />
         <meta property="og:url" content="/profile" />
       </Helmet>
