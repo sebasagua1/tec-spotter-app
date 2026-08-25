@@ -6,6 +6,7 @@ import { EVENT_CATEGORIES } from '@/lib/constants';
 import { CATEGORY_ICONS } from '@/lib/categoryIcons';
 import { cn } from '@/lib/utils';
 import type { MapEvent } from '@/stores/eventStore';
+import { filterEvents } from '@/lib/eventFilter';
 
 interface Props {
   events: MapEvent[];
@@ -18,11 +19,9 @@ export function EventListView({ events, filterCategory, searchQuery = '', onSele
   const { t, i18n } = useTranslation();
   const dateLocale = i18n.language?.startsWith('en') ? enUS : esLocale;
 
-  const q = searchQuery.trim().toLowerCase();
-  const visible = events.filter(e =>
-    (!filterCategory || e.category === filterCategory) &&
-    (!q || e.title.toLowerCase().includes(q))
-  );
+  // Mismo criterio que los marcadores del mapa, y a propósito el mismo código:
+  // por duplicado, mapa y lista acababan enseñando cosas distintas.
+  const visible = filterEvents(events, { category: filterCategory, query: searchQuery });
 
   if (visible.length === 0) {
     return (

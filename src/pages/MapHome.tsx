@@ -20,6 +20,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { pageTitle } from '@/lib/brand';
 import { useInstitutionCenter } from '@/hooks/useInstitutionCenter';
 import { toMapEvent, needsServerCheck, type EventRow } from '@/lib/eventSync';
+import { matchesFilter } from '@/lib/eventFilter';
 
 /**
  * Lo que hace falta del payload de tiempo real.
@@ -29,6 +30,17 @@ import { toMapEvent, needsServerCheck, type EventRow } from '@/lib/eventSync';
  * depender de un paquete que no está en package.json y solo llega como
  * dependencia transitiva.
  */
+/** Un marcador vivo, con lo justo para saber qué hay que refrescar de él. */
+type MarkerEntry = {
+  marker: MapboxMarker;
+  /** El hijo que lleva el color y el icono; a la raíz la posiciona Mapbox. */
+  inner: HTMLDivElement;
+  category: string;
+  lng: number;
+  lat: number;
+  onMap: boolean;
+};
+
 type EventChange =
   | { eventType: 'INSERT'; new: EventRow }
   | { eventType: 'UPDATE'; new: EventRow }
@@ -38,7 +50,11 @@ export default function MapHome() {
   const { t } = useTranslation();
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapboxMap | null>(null);
-  const markersRef = useRef<MapboxMarker[]>([]);
+  // Indexado por id de evento: es lo que permite reutilizar el marcador que ya
+  // existe en vez de rehacerlo. `markersMapRef` guarda a qué instancia del mapa
+  // pertenece el caché, para vaciarlo si el mapa se recreara.
+  const markersRef = useRef<Map<string, MarkerEntry>>(new Map());
+  const markersMapRef = useRef<MapboxMap | null>(null);
   const { events, setEvents, upsertEvent, removeEvent, setSelectedEvent, filterCategory, setFilterCategory } = useEventStore();
   // Resuelto contra la lista viva en cada render: así la hoja abierta refleja
   // lo que llegue por tiempo real.
@@ -276,63 +292,126 @@ export default function MapHome() {
     mapRef.current?.setStyle(dark ? MAPBOX_STYLE_DARK : MAPBOX_STYLE_LIGHT);
   }), []);
 
-  // Update markers
+  // Marcadores.
+  //
+  // Se reutilizan entre renders. Antes este efecto empezaba derribándolo todo
+  // —`markersRef.current.forEach(m => m.remove())`— y lo reconstruía entero, y
+  // como `searchQuery` está en sus dependencias, escribir "fiesta" en el
+  // buscador eran seis derribos y seis reconstrucciones completas: con 300
+  // eventos, cada tecla creaba y destruía 600 nodos, parseaba 300 SVG y colgaba
+  // 300 escuchadores.
+  //
+  // Ahora filtrar solo saca y mete del mapa marcadores que ya existen, con su
+  // DOM y su escuchador intactos. Crear y destruir queda para cuando un evento
+  // entra o sale de la lista de verdad.
   useEffect(() => {
-    if (!mapRef.current || !mapLoaded) return;
+    const map = mapRef.current;
+    if (!map || !mapLoaded) return;
 
-    const updateMarkers = async () => {
+    // El caché pertenece a una instancia concreta del mapa: si el mapa se
+    // recreara, sus nodos colgarían de un contenedor que ya no existe.
+    if (markersMapRef.current !== map) {
+      markersRef.current.forEach((e) => e.marker.remove());
+      markersRef.current.clear();
+      markersMapRef.current = map;
+    }
 
-      // Clear existing markers
-      markersRef.current.forEach(m => m.remove());
-      markersRef.current = [];
+    const seen = new Set<string>();
 
-      const q = searchQuery.trim().toLowerCase();
-      const filtered = events.filter(e =>
-        (!filterCategory || e.category === filterCategory) &&
-        (!q || e.title.toLowerCase().includes(q))
-      );
+    events.forEach((event) => {
+      if (!event.location) return;
+      const cat = EVENT_CATEGORIES.find((c) => c.key === event.category);
+      if (!cat) return;
 
-      filtered.forEach(event => {
-        if (!event.location) return;
-        const cat = EVENT_CATEGORIES.find(c => c.key === event.category);
-        if (!cat) return;
+      const id = event.id;
+      const { lng, lat } = event.location;
+      const visible = matchesFilter(event, { category: filterCategory, query: searchQuery });
 
-        // Root element: sized only — Mapbox writes transform here for positioning.
-        // No transform-based animation on the root or it overwrites Mapbox's translate.
+      seen.add(id);
+      let entry = markersRef.current.get(id);
+
+      if (!entry) {
+        // Raíz: solo tamaño. Mapbox le escribe el transform para colocarla, así
+        // que no puede llevar animaciones que lo pisen.
         const el = document.createElement('div');
         el.style.cssText = 'width: 36px; height: 36px; cursor: pointer;';
 
-        // Inner child carries all visuals and the pulse animation.
+        // El hijo lleva todo lo visual y el latido.
         const inner = document.createElement('div');
         inner.className = 'animate-flag-pulse';
         inner.style.cssText = `
           width: 100%; height: 100%; border-radius: 50%;
-          background: ${cat.color}; border: 3px solid white;
+          border: 3px solid white;
           box-shadow: 0 2px 12px rgba(0,0,0,0.2);
           display: flex; align-items: center; justify-content: center;
         `;
-        inner.innerHTML = getCategoryMarkerSVG(event.category);
         el.appendChild(inner);
 
+        let marker: MapboxMarker;
+        try {
+          marker = new mapboxgl.Marker({ element: el }).setLngLat([lng, lat]);
+        } catch (err) {
+          console.error('Failed to create marker for event:', id, err);
+          return;
+        }
+
+        // Se captura el id y no el evento: el objeto cambia con cada cambio de
+        // aforo, y quedarse con una copia vieja aquí abriría la hoja con datos
+        // caducados. La posición se le pregunta al marcador, que la tiene al
+        // día aunque editen el sitio del evento.
         el.addEventListener('click', (ev) => {
           ev.stopPropagation();
-          mapRef.current?.flyTo({ center: [event.location!.lng, event.location!.lat], zoom: 17, duration: 600 });
-          setSelectedEvent(event);
+          const at = marker.getLngLat();
+          mapRef.current?.flyTo({ center: [at.lng, at.lat], zoom: 17, duration: 600 });
+          const fresh = useEventStore.getState().events.find((e) => e.id === id);
+          if (fresh) setSelectedEvent(fresh);
         });
 
-        try {
-          const marker = new mapboxgl.Marker({ element: el })
-            .setLngLat([event.location.lng, event.location.lat])
-            .addTo(mapRef.current!);
-          markersRef.current.push(marker);
-        } catch (err) {
-          console.error('Failed to add marker for event:', event.id, err);
-        }
-      });
-    };
+        entry = { marker, inner, category: '', lng, lat, onMap: false };
+        markersRef.current.set(id, entry);
+      }
 
-    updateMarkers();
+      // De aquí en adelante solo se toca lo que de verdad haya cambiado.
+      if (entry.lng !== lng || entry.lat !== lat) {
+        entry.marker.setLngLat([lng, lat]);
+        entry.lng = lng;
+        entry.lat = lat;
+      }
+
+      if (entry.category !== event.category) {
+        entry.inner.style.background = cat.color;
+        entry.inner.innerHTML = getCategoryMarkerSVG(event.category);
+        entry.category = event.category;
+      }
+
+      // Sacarlo del mapa, y no esconderlo con display:none: un marcador
+      // escondido le sigue costando a Mapbox recalcular su posición en cada
+      // fotograma del desplazamiento. Fuera del mapa no cuesta nada, y su
+      // elemento y su escuchador siguen vivos para cuando vuelva a entrar.
+      if (visible !== entry.onMap) {
+        if (visible) entry.marker.addTo(map);
+        else entry.marker.remove();
+        entry.onMap = visible;
+      }
+    });
+
+    // Lo que ya no está en la lista sí se destruye. Borrar durante un forEach
+    // sobre un Map es seguro.
+    markersRef.current.forEach((entry, id) => {
+      if (seen.has(id)) return;
+      entry.marker.remove();
+      markersRef.current.delete(id);
+    });
   }, [events, filterCategory, searchQuery, mapLoaded, setSelectedEvent]);
+
+  // Al desmontar: el mapa se destruye en su propio efecto y se lleva por
+  // delante el DOM de los marcadores, pero el caché hay que vaciarlo a mano
+  // para no dejar instancias apuntando a un mapa muerto.
+  useEffect(() => () => {
+    markersRef.current.forEach((e) => e.marker.remove());
+    markersRef.current.clear();
+    markersMapRef.current = null;
+  }, []);
 
   // Handle map click for location picking
   useEffect(() => {
