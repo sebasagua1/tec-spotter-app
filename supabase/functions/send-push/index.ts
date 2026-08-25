@@ -137,10 +137,6 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
-  if (!APNS_KEY_ID || !APNS_TEAM_ID || !APNS_PRIVATE_KEY) {
-    return json({ error: "APNs no configurado: faltan secretos" }, 500);
-  }
-
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
   const bearer = authHeader.slice("Bearer ".length);
@@ -151,26 +147,6 @@ serve(async (req) => {
   } catch {
     return json({ error: "Body inválido" }, 400);
   }
-  if (!body.title || !body.body) return json({ error: "Faltan title y body" }, 400);
-
-  // Diagnóstico. No devuelve ninguna clave: solo si existen y cuánto miden,
-  // que es lo que hace falta para saber por qué un bearer no encaja.
-  if ((body as { diagnostico?: boolean }).diagnostico === true) {
-    return json({
-      service_role_definida: SERVICE_ROLE.length > 0,
-      secret_key_definida: SECRET_KEY.length > 0,
-      push_server_key_definida: FALLBACK_KEY.length > 0,
-      anon_definida: ANON_KEY.length > 0,
-      largos: {
-        service_role: SERVICE_ROLE.length,
-        secret_key: SECRET_KEY.length,
-        push_server_key: FALLBACK_KEY.length,
-        bearer_recibido: bearer.length,
-      },
-      bearer_empieza_por: bearer.slice(0, 3),
-      coincide_con_alguna: SERVER_KEYS.includes(bearer),
-    });
-  }
 
   if (SERVER_KEYS.length === 0) {
     console.error(
@@ -180,11 +156,51 @@ serve(async (req) => {
     return json({ error: "Función mal configurada: falta la clave de servidor" }, 500);
   }
 
+  const esServidor = SERVER_KEYS.includes(bearer);
+
+  // Diagnóstico: SOLO con clave de servidor.
+  //
+  // Antes iba aquí arriba, sin comprobar nada más que si la cabecera empezaba
+  // por "Bearer ". Cualquiera podía llamarlo y lo que devolvía era un oráculo:
+  // `coincide_con_alguna` confirmaba sí o no si un candidato ERA la clave del
+  // servidor, gratis, sin límite de intentos y con la longitud exacta servida
+  // de antemano. Adivinar una clave deja de ser a ciegas cuando algo te dice
+  // si has acertado.
+  //
+  // Ya no salen ni longitudes ni comparaciones: solo si cada secreto está
+  // puesto, que es lo único que hacía falta para depurar un despliegue. Para
+  // el caso de "mi clave no encaja" está el registro de abajo, que se lee
+  // desde el panel de la función y no desde internet.
+  if ((body as { diagnostico?: boolean }).diagnostico === true) {
+    if (!esServidor) {
+      console.warn(
+        `Diagnóstico rechazado: bearer de ${bearer.length} caracteres que ` +
+          `empieza por "${bearer.slice(0, 3)}". No coincide con ninguna clave de servidor.`,
+      );
+      return json({ error: "Unauthorized" }, 401);
+    }
+    return json({
+      service_role_definida: SERVICE_ROLE.length > 0,
+      secret_key_definida: SECRET_KEY.length > 0,
+      push_server_key_definida: FALLBACK_KEY.length > 0,
+      anon_definida: ANON_KEY.length > 0,
+      apns_configurado: Boolean(APNS_KEY_ID && APNS_TEAM_ID && APNS_PRIVATE_KEY),
+    });
+  }
+
+  // Después del diagnóstico a propósito: si faltan los secretos de APNs, esto
+  // cortaba antes de llegar, justo en el caso en que uno querría diagnosticar.
+  if (!APNS_KEY_ID || !APNS_TEAM_ID || !APNS_PRIVATE_KEY) {
+    return json({ error: "APNs no configurado: faltan secretos" }, 500);
+  }
+
+  if (!body.title || !body.body) return json({ error: "Faltan title y body" }, 400);
+
   const admin = createClient(SUPABASE_URL, ADMIN_KEY);
 
   // Quién manda decide a quién se puede enviar.
   let targetUserId: string;
-  if (SERVER_KEYS.includes(bearer)) {
+  if (esServidor) {
     if (!body.user_id) return json({ error: "Falta user_id" }, 400);
     targetUserId = body.user_id;
   } else {
