@@ -69,5 +69,23 @@ order by r.created_at;
 Al resolver, pon `status` en `reviewed`, `actioned` o `dismissed`.
 
 ## Nota
-`full_schema.sql` es **generado** a partir de `../migrations/`. Si cambian las migraciones,
-regenéralo. Los datos del proyecto viejo no se recuperan (empiezas limpio).
+`full_schema.sql` es **generado** a partir de `../migrations/`; no se edita a mano.
+Cada vez que añadas una migración, regenéralo:
+
+```bash
+node scripts/gen-full-schema.mjs
+```
+
+Para comprobar si se ha quedado atrás sin reescribirlo (sale con código 1 si lo está):
+
+```bash
+node scripts/gen-full-schema.mjs --check
+```
+
+Merece la pena hacerlo: este archivo se ensambló a mano una vez y nadie volvió a
+tocarlo, así que acabó **diez migraciones por detrás**. Lo malo es que seguía
+ejecutándose sin un solo error — simplemente creaba una base sin aislamiento por
+institución y con las insignias de todo el mundo a la vista (`USING (true)`).
+Un esquema desactualizado no se queja; solo te deja agujeros.
+
+Los datos del proyecto viejo no se recuperan (empiezas limpio).

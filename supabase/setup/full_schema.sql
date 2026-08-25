@@ -1,14 +1,18 @@
 -- ============================================================
 -- Always Connected — esquema completo (consolidado de migrations/)
 -- Pegar en el SQL Editor de un proyecto Supabase NUEVO y ejecutar.
--- Generado: 2026-08-16
+--
+-- NO EDITAR A MANO: lo genera scripts/gen-full-schema.mjs.
+-- Migraciones incluidas: 36 (hasta 20260905000000_create-tip-seen.sql).
 --
 -- NOTA: se omite el bloque de RLS sobre realtime.messages (tabla
 -- interna de Supabase) porque el SQL Editor no es su dueño. El
 -- realtime por postgres_changes funciona igual vía la RLS de las
 -- tablas public.* y la publicación supabase_realtime. Ver README.
+--
+-- Los SELECT de comprobación que cierran cada migración se omiten
+-- aquí: son para ejecutarlas sueltas, no para el arranque.
 -- ============================================================
-
 
 -- >>> 20260325002039_580a4570-80e2-489b-a6c5-bff44bc6f240.sql <<<
 
@@ -266,7 +270,6 @@ CREATE POLICY "Avatar images are publicly accessible" ON storage.objects FOR SEL
 CREATE POLICY "Users can upload their own avatar" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'avatars' AND auth.uid()::text = (storage.foldername(name))[1]);
 CREATE POLICY "Users can update their own avatar" ON storage.objects FOR UPDATE USING (bucket_id = 'avatars' AND auth.uid()::text = (storage.foldername(name))[1]);
 
-
 -- >>> 20260325002054_ff739100-9da0-4f4b-8e55-e0122e1ecf77.sql <<<
 
 -- Fix: Move PostGIS to a dedicated schema
@@ -284,7 +287,6 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
 
 -- >>> 20260326151750_6a998335-d3f9-4f6a-8fae-3467a3e7cc34.sql <<<
 -- Create campuses table
@@ -512,7 +514,6 @@ ON storage.objects
 FOR SELECT
 TO anon, authenticated
 USING (bucket_id = 'avatars');
-
 -- =========================
 -- [bloque realtime.messages omitido en el consolidado — aplicar aparte si se requiere]
 
@@ -526,7 +527,6 @@ GRANT EXECUTE ON FUNCTION public.is_event_participant(uuid, uuid) TO authenticat
 GRANT EXECUTE ON FUNCTION public.is_event_creator(uuid, uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.is_group_member(uuid, uuid) TO authenticated;
 
-
 -- >>> 20260519005344_8a7032f0-d3c0-4b3a-b755-d2f23f909e64.sql <<<
 
 REVOKE ALL ON FUNCTION public.is_event_participant(uuid, uuid) FROM PUBLIC, anon;
@@ -536,7 +536,6 @@ REVOKE ALL ON FUNCTION public.is_group_member(uuid, uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.is_event_participant(uuid, uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.is_event_creator(uuid, uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.is_group_member(uuid, uuid) TO authenticated;
-
 
 -- >>> 20260519045254_82d0885d-faab-4db0-9e3c-904c01d32fad.sql <<<
 CREATE OR REPLACE FUNCTION public.recalc_event_spots()
@@ -738,7 +737,6 @@ CREATE POLICY "Events visibility policy"
     OR creator_id = auth.uid()
     OR (privacy = 'friends' AND public.are_friends(creator_id, auth.uid()))
   );
-
 
 -- >>> 20260604130000_checkin-and-points.sql <<<
 
@@ -961,7 +959,6 @@ $$;
 REVOKE EXECUTE ON FUNCTION public.check_in_to_event(uuid, double precision, double precision) FROM PUBLIC, anon;
 GRANT  EXECUTE ON FUNCTION public.check_in_to_event(uuid, double precision, double precision) TO authenticated;
 
-
 -- >>> 20260608000000_badge-awards.sql <<<
 
 -- ============================================================
@@ -1099,7 +1096,6 @@ DROP TRIGGER IF EXISTS trg_badge_check_on_event ON public.events;
 CREATE TRIGGER trg_badge_check_on_event
     AFTER INSERT ON public.events
     FOR EACH ROW EXECUTE FUNCTION public.on_event_badge_check();
-
 
 -- >>> 20260608010000_reputation.sql <<<
 
@@ -1244,7 +1240,6 @@ $$;
 REVOKE EXECUTE ON FUNCTION public.check_in_to_event(uuid, double precision, double precision) FROM PUBLIC, anon;
 GRANT  EXECUTE ON FUNCTION public.check_in_to_event(uuid, double precision, double precision) TO authenticated;
 
-
 -- >>> 20260608020000_fix-messages-insert-policy.sql <<<
 DROP POLICY IF EXISTS "Users can send messages" ON public.messages;
 
@@ -1257,7 +1252,6 @@ WITH CHECK (
     OR (group_id IS NOT NULL AND public.is_group_member(group_id, auth.uid()))
   )
 );
-
 
 -- >>> 20260608040000_event-ratings.sql <<<
 -- ============================================================
@@ -1332,8 +1326,6 @@ $$;
 
 REVOKE EXECUTE ON FUNCTION public.rate_event(uuid, uuid, smallint) FROM PUBLIC, anon;
 GRANT  EXECUTE ON FUNCTION public.rate_event(uuid, uuid, smallint) TO authenticated;
-
-
 
 -- >>> 20260817000000_group-membership-rpcs.sql <<<
 -- ============================================================
@@ -1832,7 +1824,6 @@ ALTER TABLE public.reports
 ALTER TABLE public.reports
   ADD CONSTRAINT reports_reporter_id_fkey
   FOREIGN KEY (reporter_id) REFERENCES auth.users(id) ON DELETE SET NULL;
-
 
 -- >>> 20260819000000_join-requests.sql <<<
 -- ============================================================
@@ -2375,7 +2366,6 @@ BEGIN
   END IF;
 END $$;
 
-
 -- >>> 20260822000000_approval-notice.sql <<<
 -- ============================================================
 -- Aviso a quien fue aprobado.
@@ -2558,7 +2548,6 @@ $$;
 REVOKE EXECUTE ON FUNCTION public.notification_counts() FROM PUBLIC, anon;
 GRANT  EXECUTE ON FUNCTION public.notification_counts() TO authenticated;
 
-
 -- >>> 20260823000000_profile-origin.sql <<<
 -- ============================================================
 -- De dónde es quien no vive en la ciudad del campus.
@@ -2604,7 +2593,6 @@ WHERE auth.uid() IS NOT NULL
   AND NOT public.is_blocked(auth.uid(), p.id);
 
 GRANT SELECT ON public.public_profiles TO authenticated;
-
 
 -- >>> 20260824000000_indexes.sql <<<
 -- ============================================================
@@ -2652,7 +2640,6 @@ CREATE INDEX IF NOT EXISTS group_members_user_id_idx
 -- Mensajes sin leer: el contador excluye los propios comparando sender_id.
 CREATE INDEX IF NOT EXISTS messages_sender_id_idx
   ON public.messages (sender_id);
-
 
 -- >>> 20260825000000_spots-race-and-retention.sql <<<
 -- ============================================================
@@ -2779,10 +2766,6 @@ CREATE INDEX IF NOT EXISTS messages_expires_at_idx
   ON public.messages (expires_at)
   WHERE expires_at IS NOT NULL;
 
-
--- ============================================================
-
-
 -- >>> 20260825010000_schedule-message-purge.sql <<<
 -- ============================================================
 -- Programar la limpieza de mensajes caducados.
@@ -2813,7 +2796,6 @@ SELECT cron.schedule(
   '17 4 * * *',                       -- 04:17 cada día, fuera de horas punta
   $$SELECT public.purge_expired_messages()$$
 );
-
 
 -- >>> 20260826000000_device-tokens.sql <<<
 -- ============================================================
@@ -2900,3 +2882,1105 @@ $$;
 
 REVOKE EXECUTE ON FUNCTION public.unregister_device_token(text) FROM PUBLIC, anon;
 GRANT  EXECUTE ON FUNCTION public.unregister_device_token(text) TO authenticated;
+
+-- >>> 20260827000000_push-triggers.sql <<<
+-- ============================================================
+-- Disparadores de notificaciones push.
+--
+-- Hasta ahora send-push solo se podía llamar a mano. Esto conecta los
+-- cuatro momentos en los que la app debería avisar aunque esté cerrada:
+--   1. Alguien pide unirse a un evento mío.
+--   2. Me aprueban la solicitud.
+--   3. Me llega un mensaje.
+--   4. Me llega una solicitud de amistad.
+--
+-- Todo es servidor: la base llama a la Edge Function por HTTP (pg_net).
+-- No hace falta build nuevo de la app.
+--
+-- REQUISITOS antes de ejecutar este script:
+--   a) La extensión pg_net habilitada (el CREATE EXTENSION de abajo la
+--      pone; si el plan no la trae, se habilita en Database → Extensions).
+--   b) El secreto 'service_role_key' guardado en Vault. Va en su propio
+--      script porque lleva la clave dentro y esto se versiona en git.
+-- ============================================================
+
+CREATE EXTENSION IF NOT EXISTS pg_net;
+
+
+-- ============================================================
+-- 1. push_send() — el único sitio que habla con la Edge Function.
+--
+-- Tres decisiones que importan:
+--   · La clave sale de Vault, nunca de este archivo (esto va a git).
+--   · Si la persona no tiene ningún dispositivo registrado, ni se hace
+--     la llamada. Es la mayoría de los casos mientras solo iOS registre.
+--   · El EXCEPTION del final es lo más importante del script: una push
+--     que falla no puede tumbar el mensaje, la solicitud ni la
+--     aprobación que la provocó. Se queda en WARNING y la vida sigue.
+--
+-- net.http_post es asíncrono (encola y devuelve un id), así que esto no
+-- añade espera a la escritura del usuario.
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.push_send(
+    _user_id uuid,
+    _title   text,
+    _body    text,
+    _data    jsonb DEFAULT '{}'::jsonb
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+-- public al final a propósito: así nadie puede colar un http_post suyo
+-- que se resuelva antes que el de pg_net.
+SET search_path = extensions, net, public
+AS $$
+DECLARE
+  v_key text;
+BEGIN
+  IF _user_id IS NULL OR _title IS NULL OR _body IS NULL THEN
+    RETURN;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM public.device_tokens WHERE user_id = _user_id) THEN
+    RETURN;
+  END IF;
+
+  SELECT decrypted_secret INTO v_key
+  FROM   vault.decrypted_secrets
+  WHERE  name = 'service_role_key';
+
+  IF v_key IS NULL THEN
+    RAISE WARNING 'push_send: falta el secreto service_role_key en Vault';
+    RETURN;
+  END IF;
+
+  PERFORM http_post(
+    url     := 'https://myarlozvkbebygwszgkf.supabase.co/functions/v1/send-push',
+    headers := jsonb_build_object(
+                 'Content-Type',  'application/json',
+                 'Authorization', 'Bearer ' || v_key
+               ),
+    body    := jsonb_build_object(
+                 'user_id', _user_id,
+                 'title',   _title,
+                 'body',    _body,
+                 'data',    COALESCE(_data, '{}'::jsonb)
+               )
+  );
+EXCEPTION WHEN OTHERS THEN
+  RAISE WARNING 'push_send falló (%): %', SQLSTATE, SQLERRM;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.push_send(uuid, text, text, jsonb) FROM PUBLIC, anon, authenticated;
+
+
+-- ============================================================
+-- 2. Alguien pide unirse a un evento mío.
+--
+-- Solo eventos privados generan 'pending' (lo fija
+-- set_participant_initial_status), así que este trigger no se dispara
+-- en los abiertos.
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.on_join_request_push()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_creator uuid;
+  v_event   text;
+  v_who     text;
+BEGIN
+  SELECT e.creator_id, e.title INTO v_creator, v_event
+  FROM   public.events e WHERE e.id = NEW.event_id;
+
+  IF v_creator IS NULL OR v_creator = NEW.user_id THEN RETURN NEW; END IF;
+  IF public.is_blocked(v_creator, NEW.user_id)     THEN RETURN NEW; END IF;
+
+  SELECT COALESCE(NULLIF(p.name, ''), 'Alguien') INTO v_who
+  FROM   public.profiles p WHERE p.id = NEW.user_id;
+
+  PERFORM public.push_send(
+    v_creator,
+    'Nueva solicitud',
+    COALESCE(v_who, 'Alguien') || ' quiere unirse a ' || COALESCE(v_event, 'tu evento'),
+    jsonb_build_object('type', 'join_request', 'event_id', NEW.event_id)
+  );
+  RETURN NEW;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.on_join_request_push() FROM PUBLIC, anon, authenticated;
+
+DROP TRIGGER IF EXISTS trg_join_request_push ON public.event_participants;
+CREATE TRIGGER trg_join_request_push
+  AFTER INSERT ON public.event_participants
+  FOR EACH ROW
+  WHEN (NEW.status = 'pending')
+  EXECUTE FUNCTION public.on_join_request_push();
+
+
+-- ============================================================
+-- 3. Me aprobaron la solicitud.
+--
+-- Acotado a pending → joined: la otra transición hacia 'joined' es
+-- entrar directo a un evento abierto, y ahí no hay nada que avisar.
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.on_approval_push()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_event text;
+BEGIN
+  SELECT e.title INTO v_event
+  FROM   public.events e WHERE e.id = NEW.event_id;
+
+  PERFORM public.push_send(
+    NEW.user_id,
+    'Ya estás dentro',
+    'Te aprobaron en ' || COALESCE(v_event, 'el evento'),
+    jsonb_build_object('type', 'approval', 'event_id', NEW.event_id)
+  );
+  RETURN NEW;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.on_approval_push() FROM PUBLIC, anon, authenticated;
+
+DROP TRIGGER IF EXISTS trg_approval_push ON public.event_participants;
+CREATE TRIGGER trg_approval_push
+  AFTER UPDATE OF status ON public.event_participants
+  FOR EACH ROW
+  WHEN (OLD.status = 'pending' AND NEW.status = 'joined')
+  EXECUTE FUNCTION public.on_approval_push();
+
+
+-- ============================================================
+-- 4. Mensaje nuevo.
+--
+-- Los DM son grupos llamados '__dm_<uuid>_<uuid>' (ver create_dm), y ese
+-- nombre no se le enseña a nadie: en un DM el título es el nombre de
+-- quien escribe, y en un grupo el nombre del grupo con el remitente
+-- delante del texto.
+--
+-- Se respeta is_blocked: en un DM el bloqueo ya saca a las dos partes,
+-- pero en un grupo de tres o más la persona bloqueada sigue dentro.
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.on_message_push()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_group  text;
+  v_sender text;
+  v_title  text;
+  v_body   text;
+  r        RECORD;
+BEGIN
+  -- El chat de evento nunca llegó a usarse (messages.event_id está muerto);
+  -- si algún día se usa, aquí es donde iría.
+  IF NEW.group_id IS NULL THEN RETURN NEW; END IF;
+
+  SELECT g.name INTO v_group FROM public.groups g WHERE g.id = NEW.group_id;
+
+  SELECT COALESCE(NULLIF(p.name, ''), 'Alguien') INTO v_sender
+  FROM   public.profiles p WHERE p.id = NEW.sender_id;
+  v_sender := COALESCE(v_sender, 'Alguien');
+
+  v_body := left(NEW.content, 120);
+  IF length(NEW.content) > 120 THEN v_body := v_body || '…'; END IF;
+
+  IF left(COALESCE(v_group, ''), 5) = '__dm_' THEN
+    v_title := v_sender;
+  ELSE
+    v_title := COALESCE(v_group, 'Grupo');
+    v_body  := v_sender || ': ' || v_body;
+  END IF;
+
+  FOR r IN
+    SELECT gm.user_id
+    FROM   public.group_members gm
+    WHERE  gm.group_id  = NEW.group_id
+      AND  gm.user_id  <> NEW.sender_id
+      AND  NOT public.is_blocked(gm.user_id, NEW.sender_id)
+  LOOP
+    PERFORM public.push_send(
+      r.user_id, v_title, v_body,
+      jsonb_build_object('type', 'message', 'group_id', NEW.group_id)
+    );
+  END LOOP;
+
+  RETURN NEW;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.on_message_push() FROM PUBLIC, anon, authenticated;
+
+DROP TRIGGER IF EXISTS trg_message_push ON public.messages;
+CREATE TRIGGER trg_message_push
+  AFTER INSERT ON public.messages
+  FOR EACH ROW
+  EXECUTE FUNCTION public.on_message_push();
+
+
+-- ============================================================
+-- 5. Solicitud de amistad.
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.on_friend_request_push()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_who text;
+BEGIN
+  IF NEW.addressee_id = NEW.requester_id THEN RETURN NEW; END IF;
+  IF public.is_blocked(NEW.addressee_id, NEW.requester_id) THEN RETURN NEW; END IF;
+
+  SELECT COALESCE(NULLIF(p.name, ''), 'Alguien') INTO v_who
+  FROM   public.profiles p WHERE p.id = NEW.requester_id;
+
+  PERFORM public.push_send(
+    NEW.addressee_id,
+    'Solicitud de amistad',
+    COALESCE(v_who, 'Alguien') || ' te quiere agregar',
+    jsonb_build_object('type', 'friend_request', 'requester_id', NEW.requester_id)
+  );
+  RETURN NEW;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.on_friend_request_push() FROM PUBLIC, anon, authenticated;
+
+DROP TRIGGER IF EXISTS trg_friend_request_push ON public.friendships;
+CREATE TRIGGER trg_friend_request_push
+  AFTER INSERT ON public.friendships
+  FOR EACH ROW
+  WHEN (NEW.status = 'pending')
+  EXECUTE FUNCTION public.on_friend_request_push();
+
+-- >>> 20260828000000_institutions.sql <<<
+-- ============================================================
+-- Instituciones genéricas + auto-join por dominio verificado en servidor
+--
+-- Antes: `campuses` tenía UNA columna email_domain, y el cliente decidía la
+-- pertenencia con `email.endsWith('@tec.mx')` escrito a mano en Onboarding.
+-- Eso significa que cualquiera podía asignarse el campus que quisiera desde
+-- la API REST: el navegador no es un sitio donde verificar nada.
+--
+-- Después: `institutions` con una LISTA de dominios, y el servidor resuelve
+-- la pertenencia en el trigger de alta. El cliente puede seguir *eligiendo*
+-- una institución (queda sin verificar), pero no puede declararse verificado.
+--
+-- Idempotente: pensada para pegarse en el SQL Editor, incluso dos veces.
+-- ============================================================
+
+BEGIN;
+
+-- ------------------------------------------------------------
+-- 1. campuses -> institutions
+--
+-- RENAME y no una tabla nueva: conserva los datos, la PK y la clave ajena
+-- profiles.campus_id, que pasa a apuntar a institutions sin tocarla.
+-- ------------------------------------------------------------
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = 'campuses')
+     AND NOT EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = 'institutions')
+  THEN
+    ALTER TABLE public.campuses RENAME TO institutions;
+
+    IF EXISTS (
+      SELECT 1 FROM pg_policies
+      WHERE schemaname = 'public' AND tablename = 'institutions'
+        AND policyname = 'Anyone can view campuses'
+    ) THEN
+      ALTER POLICY "Anyone can view campuses" ON public.institutions
+        RENAME TO "Anyone can view institutions";
+    END IF;
+  END IF;
+END $$;
+
+-- ------------------------------------------------------------
+-- 2. Columnas nuevas
+-- ------------------------------------------------------------
+ALTER TABLE public.institutions
+  ADD COLUMN IF NOT EXISTS slug          text,
+  ADD COLUMN IF NOT EXISTS email_domains text[] NOT NULL DEFAULT '{}',
+  ADD COLUMN IF NOT EXISTS is_active     boolean NOT NULL DEFAULT true;
+
+-- Traspasa el dominio único al array, si la columna vieja sigue ahí.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'institutions' AND column_name = 'email_domain'
+  ) THEN
+    UPDATE public.institutions
+    SET email_domains = ARRAY[lower(email_domain)]
+    WHERE email_domain IS NOT NULL AND email_domains = '{}';
+  END IF;
+END $$;
+
+-- ------------------------------------------------------------
+-- 3. La fila existente pasa a ser una institución completa.
+--
+-- OJO, REVÍSAME ANTES DE EJECUTAR: las coordenadas del seed original eran
+-- las de Monterrey (25.6514, -100.2899), pero el mapa de la app arranca en
+-- Querétaro. Se unifican en Querétaro, que es lo que la app hace de verdad.
+-- Si tu campus es otro, cambia estas dos líneas y el nombre.
+-- ------------------------------------------------------------
+UPDATE public.institutions
+SET name          = 'Tec de Monterrey Campus Querétaro',
+    slug          = 'tec-mty-qro',
+    email_domains = ARRAY['tec.mx', 'exatec.mx', 'itesm.mx'],
+    lat           = 20.6134,
+    lng           = -100.4063
+WHERE slug IS NULL
+  AND 'tec.mx' = ANY (email_domains);
+
+-- Cualquier otra fila sin slug recibe uno derivado del nombre.
+UPDATE public.institutions
+SET slug = regexp_replace(lower(name), '[^a-z0-9]+', '-', 'g')
+WHERE slug IS NULL;
+
+-- ------------------------------------------------------------
+-- 4. Restricciones, ya con los datos limpios
+-- ------------------------------------------------------------
+ALTER TABLE public.institutions ALTER COLUMN slug SET NOT NULL;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'institutions_slug_key'
+  ) THEN
+    ALTER TABLE public.institutions ADD CONSTRAINT institutions_slug_key UNIQUE (slug);
+  END IF;
+END $$;
+
+-- El dominio único ya vive en el array; la columna sobra.
+ALTER TABLE public.institutions DROP COLUMN IF EXISTS email_domain;
+
+-- GIN, porque la búsqueda es "¿este dominio está en el array?".
+CREATE INDEX IF NOT EXISTS institutions_email_domains_idx
+  ON public.institutions USING gin (email_domains);
+
+-- institution_for_email compara con `= ANY (email_domains)` para poder usar
+-- ese índice, y eso exige que los dominios estén en minúsculas y sin espacios.
+--
+-- Se hace con un trigger y no con un CHECK por dos razones: Postgres no admite
+-- subconsultas en un CHECK (y recorrer un array necesita unnest), y además
+-- normalizar es mejor que rechazar — quien dé de alta una institución con
+-- "TEC.MX" quiere decir tec.mx, no equivocarse.
+CREATE OR REPLACE FUNCTION public.normalize_institution_domains()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
+BEGIN
+  NEW.email_domains := ARRAY(
+    SELECT lower(btrim(d))
+    FROM unnest(COALESCE(NEW.email_domains, '{}')) AS d
+    WHERE btrim(d) <> ''
+  );
+  RETURN NEW;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.normalize_institution_domains() FROM PUBLIC, anon, authenticated;
+
+DROP TRIGGER IF EXISTS trg_normalize_institution_domains ON public.institutions;
+CREATE TRIGGER trg_normalize_institution_domains
+  BEFORE INSERT OR UPDATE ON public.institutions
+  FOR EACH ROW EXECUTE FUNCTION public.normalize_institution_domains();
+
+-- Normaliza lo que ya hubiera en la tabla antes de este trigger.
+UPDATE public.institutions
+SET email_domains = ARRAY(SELECT lower(btrim(d)) FROM unnest(email_domains) AS d)
+WHERE email_domains IS DISTINCT FROM ARRAY(SELECT lower(btrim(d)) FROM unnest(email_domains) AS d);
+
+-- ------------------------------------------------------------
+-- 5. Vista de compatibilidad
+--
+-- El cliente y src/integrations/supabase/types.ts siguen hablando de
+-- `campuses`. La vista deja que ese código funcione sin cambios mientras se
+-- migra, exponiendo el primer dominio como el `email_domain` de siempre.
+-- ------------------------------------------------------------
+DROP VIEW IF EXISTS public.campuses;
+CREATE VIEW public.campuses WITH (security_invoker = true) AS
+SELECT id,
+       name,
+       email_domains[1] AS email_domain,
+       lat,
+       lng,
+       created_at
+FROM public.institutions
+WHERE is_active;
+
+GRANT SELECT ON public.campuses TO authenticated;
+
+-- ------------------------------------------------------------
+-- 6. La marca de pertenencia verificada
+-- ------------------------------------------------------------
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS institution_verified boolean NOT NULL DEFAULT false;
+
+-- ------------------------------------------------------------
+-- 7. Resolver institución a partir del correo
+--
+-- SECURITY DEFINER y sin permiso de ejecución para nadie: solo la llama el
+-- trigger de alta, que corre como postgres.
+-- ------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.institution_for_email(_email text)
+RETURNS uuid
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT id
+  FROM public.institutions
+  WHERE is_active
+    AND lower(split_part(_email, '@', 2)) = ANY (email_domains)
+  LIMIT 1;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.institution_for_email(text) FROM PUBLIC, anon, authenticated;
+
+-- ------------------------------------------------------------
+-- 8. El alta asigna la institución
+--
+-- Sustituye a handle_new_user() conservando lo que ya hacía (crear el
+-- perfil); ahora además resuelve la institución por dominio.
+-- ------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_institution uuid;
+BEGIN
+  v_institution := public.institution_for_email(NEW.email);
+
+  INSERT INTO public.profiles (id, email, campus_id, institution_verified)
+  VALUES (NEW.id, NEW.email, v_institution, v_institution IS NOT NULL);
+
+  RETURN NEW;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM PUBLIC, anon, authenticated;
+
+-- ------------------------------------------------------------
+-- 9. El cliente no puede declararse verificado
+--
+-- Mismo mecanismo que ya protege points y reputation: si quien escribe es el
+-- rol `authenticated` (es decir, el navegador) y la bandera cambia, se
+-- rechaza. Las funciones SECURITY DEFINER corren como postgres y pasan.
+-- ------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.prevent_score_tampering()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
+BEGIN
+  IF (NEW.points IS DISTINCT FROM OLD.points OR NEW.reputation IS DISTINCT FROM OLD.reputation)
+     AND current_user = 'authenticated' THEN
+    RAISE EXCEPTION 'permission denied: score fields are read-only for regular users'
+      USING ERRCODE = '42501';
+  END IF;
+
+  IF NEW.institution_verified IS DISTINCT FROM OLD.institution_verified
+     AND current_user = 'authenticated' THEN
+    RAISE EXCEPTION 'permission denied: institution_verified is set by the server, not the client'
+      USING ERRCODE = '42501';
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.prevent_score_tampering() FROM PUBLIC, anon, authenticated;
+
+-- El trigger ya existe desde 20260604120000, pero recrearlo hace que esta
+-- migración no dependa de ello.
+DROP TRIGGER IF EXISTS trg_prevent_score_tampering ON public.profiles;
+CREATE TRIGGER trg_prevent_score_tampering
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION public.prevent_score_tampering();
+
+-- ------------------------------------------------------------
+-- 10. Perfiles que ya existen
+--
+-- Quien se registró con un correo institucional antes de esta migración
+-- queda verificado y adscrito, aunque hubiera elegido otra cosa a mano.
+-- ------------------------------------------------------------
+UPDATE public.profiles p
+SET campus_id            = i.id,
+    institution_verified = true
+FROM public.institutions i
+WHERE i.is_active
+  AND lower(split_part(p.email, '@', 2)) = ANY (i.email_domains)
+  AND (p.campus_id IS DISTINCT FROM i.id OR NOT p.institution_verified);
+
+-- ------------------------------------------------------------
+-- 11. La vista pública expone la insignia
+--
+-- DROP + CREATE y no CREATE OR REPLACE: este último exige que las columnas
+-- que ya existen coincidan en nombre y ORDEN, y si la vista de producción
+-- hubiera derivado un milímetro respecto al esquema del repo, fallaría. Nada
+-- depende de esta vista, así que recrearla es seguro.
+--
+-- Se conserva security_invoker = false, que es como estaba
+-- (ver 20260604120000_fix-three-security-bugs.sql).
+-- ------------------------------------------------------------
+DROP VIEW IF EXISTS public.public_profiles;
+CREATE VIEW public.public_profiles
+WITH (security_invoker = false) AS
+SELECT
+  id,
+  name,
+  avatar_url,
+  major,
+  semester,
+  residence_type,
+  interests,
+  languages,
+  campus_id,
+  points,
+  reputation,
+  created_at,
+  origin,
+  institution_verified
+FROM public.profiles p
+WHERE auth.uid() IS NOT NULL
+  AND NOT public.is_blocked(auth.uid(), p.id);
+
+GRANT SELECT ON public.public_profiles TO authenticated;
+
+COMMIT;
+
+-- >>> 20260829000000_institution-isolation.sql <<<
+-- ============================================================
+-- Aislamiento por institución
+--
+-- Hasta ahora la institución ETIQUETABA a la gente pero no SEPARABA nada:
+-- la política de eventos era "cualquiera ve los abiertos" y la búsqueda de
+-- personas iba contra public_profiles sin filtro. Un correo genérico veía
+-- exactamente lo mismo que alguien del campus.
+--
+-- A partir de aquí cada institución es un entorno cerrado: solo ves eventos y
+-- personas de la tuya. Lo impone la RLS, no el cliente, así que no se salta
+-- llamando a la API directamente.
+--
+-- Se conserva SIEMPRE la visibilidad de lo propio: tus eventos y tu perfil los
+-- ves aunque tu institución cambie o falte, para no dejar a nadie encerrado
+-- fuera de sus propias cosas.
+--
+-- Idempotente: pensada para pegarse en el SQL Editor, incluso dos veces.
+-- ============================================================
+
+BEGIN;
+
+-- ------------------------------------------------------------
+-- 1. ¿Son de la misma institución?
+--
+-- SECURITY DEFINER porque tiene que leer profiles saltándose la RLS: si no,
+-- la propia política que la usa entraría en recursión.
+-- STABLE para que el planificador la evalúe una vez por consulta, no por fila.
+-- ------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.same_institution(_a uuid, _b uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.profiles pa
+    JOIN public.profiles pb ON pb.id = _b
+    WHERE pa.id = _a
+      AND pa.campus_id IS NOT NULL
+      AND pa.campus_id = pb.campus_id
+  );
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.same_institution(uuid, uuid) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION public.same_institution(uuid, uuid) TO authenticated;
+
+-- ------------------------------------------------------------
+-- 2. Eventos: se acotan a la institución de quien los crea
+--
+-- Se desnormaliza en una columna en vez de resolverlo con un JOIN dentro de la
+-- política: la RLS se evalúa por fila y en el mapa eso son cientos de filas.
+-- ------------------------------------------------------------
+ALTER TABLE public.events
+  ADD COLUMN IF NOT EXISTS institution_id uuid REFERENCES public.institutions(id);
+
+-- El cliente no la manda: la pone el servidor a partir del perfil del creador.
+CREATE OR REPLACE FUNCTION public.set_event_institution()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  SELECT campus_id INTO NEW.institution_id
+  FROM public.profiles
+  WHERE id = NEW.creator_id;
+  RETURN NEW;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.set_event_institution() FROM PUBLIC, anon, authenticated;
+
+DROP TRIGGER IF EXISTS trg_set_event_institution ON public.events;
+CREATE TRIGGER trg_set_event_institution
+  BEFORE INSERT ON public.events
+  FOR EACH ROW EXECUTE FUNCTION public.set_event_institution();
+
+-- Eventos que ya existen.
+UPDATE public.events e
+SET institution_id = p.campus_id
+FROM public.profiles p
+WHERE p.id = e.creator_id
+  AND e.institution_id IS DISTINCT FROM p.campus_id;
+
+CREATE INDEX IF NOT EXISTS events_institution_id_idx
+  ON public.events (institution_id) WHERE is_active;
+
+-- ------------------------------------------------------------
+-- 3. La política de visibilidad, con la institución dentro
+--
+-- Parte de la de 20260819000000_join-requests.sql y le añade el corte por
+-- institución. Lo propio se saca fuera del AND para que tus eventos sigan
+-- siendo tuyos pase lo que pase.
+-- ------------------------------------------------------------
+DROP POLICY IF EXISTS "Events visibility policy" ON public.events;
+
+CREATE POLICY "Events visibility policy"
+  ON public.events FOR SELECT TO authenticated
+  USING (
+    creator_id = auth.uid()
+    OR (
+      NOT public.is_blocked(auth.uid(), creator_id)
+      AND public.same_institution(auth.uid(), creator_id)
+      AND (
+        privacy IN ('open', 'private')
+        OR (privacy = 'friends' AND public.are_friends(creator_id, auth.uid()))
+      )
+    )
+  );
+
+-- ------------------------------------------------------------
+-- 4. Personas: la vista pública también se acota
+--
+-- Es la que alimentan la búsqueda de amigos y las fichas de perfil. Sin esto,
+-- acotar los eventos serviría de poco: se seguiría viendo a todo el mundo.
+-- ------------------------------------------------------------
+DROP VIEW IF EXISTS public.public_profiles;
+CREATE VIEW public.public_profiles
+WITH (security_invoker = false) AS
+SELECT
+  id,
+  name,
+  avatar_url,
+  major,
+  semester,
+  residence_type,
+  interests,
+  languages,
+  campus_id,
+  points,
+  reputation,
+  created_at,
+  origin,
+  institution_verified
+FROM public.profiles p
+WHERE auth.uid() IS NOT NULL
+  AND NOT public.is_blocked(auth.uid(), p.id)
+  AND (p.id = auth.uid() OR public.same_institution(auth.uid(), p.id));
+
+GRANT SELECT ON public.public_profiles TO authenticated;
+
+-- ------------------------------------------------------------
+-- 5. Sin institución no se termina el onboarding
+--
+-- El cliente ya lo exige (Onboarding.tsx no deja pasar el paso sin elegir),
+-- pero eso es una comprobación de navegador: se salta con una llamada a la
+-- API. Aquí se garantiza de verdad.
+--
+-- NOT VALID a propósito: solo se aplica a filas nuevas y a las que se
+-- actualicen. Sin eso, la migración fallaría entera si existiera un perfil
+-- antiguo con el onboarding hecho y sin campus, y no puedo comprobar desde
+-- fuera si lo hay. Para exigirlo también a los viejos, cuando estés seguro:
+--     ALTER TABLE public.profiles VALIDATE CONSTRAINT profiles_institution_required;
+-- ------------------------------------------------------------
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'profiles_institution_required'
+  ) THEN
+    ALTER TABLE public.profiles
+      ADD CONSTRAINT profiles_institution_required
+      CHECK (NOT onboarding_completed OR campus_id IS NOT NULL) NOT VALID;
+  END IF;
+END $$;
+
+COMMIT;
+
+-- >>> 20260830000000_seed-institutions.sql <<<
+-- ============================================================
+-- Siembra de universidades mexicanas
+--
+-- Con el aislamiento por institución activo, la tabla no puede tener una sola
+-- fila: quien no sea del Tec tendría que elegir el Tec o quedarse fuera.
+--
+-- SOBRE LA FIABILIDAD DE ESTOS DATOS:
+--
+--   · Los dominios están comprobados: los 20 tienen registros MX activos. Eso
+--     confirma que existen y reciben correo. NO confirma que los alumnos
+--     tengan cuenta ahí — en varias universidades el dominio principal es de
+--     personal y los alumnos usan un subdominio. Donde lo conozco, van los dos.
+--     Si un dominio está mal, esos alumnos no quedan inscritos solos: tendrán
+--     que elegir su universidad a mano y saldrán como no verificados.
+--
+--   · Las coordenadas son APROXIMADAS, de memoria, y no las he verificado. Solo
+--     deciden dónde abre el mapa. Un error de cientos de metros no se nota; uno
+--     de kilómetros sí. Revisa las de los campus que te importen antes de fiarte.
+--
+--   · Varias universidades tienen muchos campus. Aquí va uno por universidad,
+--     el principal. Si necesitas separar campus, añade filas con su propio slug.
+--
+-- Idempotente: ON CONFLICT DO NOTHING, así que re-ejecutarla no duplica nada
+-- ni pisa lo que ya hayas corregido a mano.
+-- ============================================================
+
+BEGIN;
+
+INSERT INTO public.institutions (name, slug, email_domains, lat, lng) VALUES
+  ('Universidad Nacional Autónoma de México',        'unam',    ARRAY['unam.mx', 'comunidad.unam.mx'], 19.3320,  -99.1870),
+  ('Instituto Politécnico Nacional',                 'ipn',     ARRAY['ipn.mx', 'alumno.ipn.mx'],      19.5045,  -99.1470),
+  ('Universidad de Guadalajara',                     'udg',     ARRAY['udg.mx', 'alumnos.udg.mx'],     20.6560, -103.3250),
+  ('Universidad Autónoma de Nuevo León',             'uanl',    ARRAY['uanl.edu.mx'],                  25.7250, -100.3130),
+  ('Universidad Autónoma Metropolitana',             'uam',     ARRAY['uam.mx'],                       19.3650,  -99.0740),
+  ('Benemérita Universidad Autónoma de Puebla',      'buap',    ARRAY['buap.mx', 'alumno.buap.mx'],    19.0000,  -98.2030),
+  ('Universidad Autónoma del Estado de México',      'uaemex',  ARRAY['uaemex.mx'],                    19.2900,  -99.6700),
+  ('Universidad Autónoma de San Luis Potosí',        'uaslp',   ARRAY['uaslp.mx'],                     22.1500, -100.9800),
+  ('Universidad Autónoma de Querétaro',              'uaq',     ARRAY['uaq.mx'],                       20.5880, -100.4050),
+  ('Universidad Iberoamericana',                     'ibero',   ARRAY['ibero.mx'],                     19.3770,  -99.2620),
+  ('Instituto Tecnológico Autónomo de México',       'itam',    ARRAY['itam.mx'],                      19.3480,  -99.2060),
+  ('Universidad Anáhuac',                            'anahuac', ARRAY['anahuac.mx'],                   19.4190,  -99.3020),
+  ('Universidad de las Américas Puebla',             'udlap',   ARRAY['udlap.mx'],                     19.0540,  -98.2830),
+  ('Universidad Panamericana',                       'up',      ARRAY['up.edu.mx'],                    19.3520,  -99.1900),
+  ('El Colegio de México',                           'colmex',  ARRAY['colmex.mx'],                    19.3020,  -99.2050),
+  ('Centro de Investigación y Docencia Económicas',  'cide',    ARRAY['cide.edu'],                     19.3720,  -99.2670)
+ON CONFLICT DO NOTHING;
+
+COMMIT;
+
+-- >>> 20260831000000_fix-institution-names.sql <<<
+-- ============================================================
+-- Reparacion: acentos rotos en los nombres de las instituciones
+--
+-- Los nombres entraron con mojibake (se veia "Quer" seguido de dos simbolos raros en vez de la e
+-- acentuada). La causa fue el portapapeles de macOS: pbcopy con la variable LANG
+-- vacia etiqueta el contenido como Mac Roman, y el navegador lo reconvierte
+-- como si lo fuera, convirtiendo cada byte UTF-8 en dos caracteres.
+--
+-- Este archivo es ASCII PURO a proposito. Los nombres van con escapes Unicode
+-- (U&'...\00E9...'), de modo que ningun portapapeles, editor ni terminal mal
+-- configurado puede volver a corromperlos. Postgres los expande al ejecutar.
+--
+-- Se corrige por slug, que es ASCII y llego intacto, asi que da igual como
+-- haya quedado el nombre.
+--
+-- Idempotente: ejecutarla dos veces no cambia nada la segunda vez.
+-- ============================================================
+
+BEGIN;
+
+UPDATE public.institutions i
+SET name = c.nombre
+FROM (VALUES
+    ('tec-mty-qro', U&'Tec de Monterrey Campus Quer\00E9taro'),
+    ('unam', U&'Universidad Nacional Aut\00F3noma de M\00E9xico'),
+    ('ipn', U&'Instituto Polit\00E9cnico Nacional'),
+    ('udg', 'Universidad de Guadalajara'),
+    ('uanl', U&'Universidad Aut\00F3noma de Nuevo Le\00F3n'),
+    ('uam', U&'Universidad Aut\00F3noma Metropolitana'),
+    ('buap', U&'Benem\00E9rita Universidad Aut\00F3noma de Puebla'),
+    ('uaemex', U&'Universidad Aut\00F3noma del Estado de M\00E9xico'),
+    ('uaslp', U&'Universidad Aut\00F3noma de San Luis Potos\00ED'),
+    ('uaq', U&'Universidad Aut\00F3noma de Quer\00E9taro'),
+    ('ibero', 'Universidad Iberoamericana'),
+    ('itam', U&'Instituto Tecnol\00F3gico Aut\00F3nomo de M\00E9xico'),
+    ('anahuac', U&'Universidad An\00E1huac'),
+    ('udlap', U&'Universidad de las Am\00E9ricas Puebla'),
+    ('up', 'Universidad Panamericana'),
+    ('colmex', U&'El Colegio de M\00E9xico'),
+    ('cide', U&'Centro de Investigaci\00F3n y Docencia Econ\00F3micas')
+) AS c(slug, nombre)
+WHERE i.slug = c.slug
+  AND i.name IS DISTINCT FROM c.nombre;
+
+COMMIT;
+
+-- >>> 20260901000000_events-map-index.sql <<<
+-- ============================================================
+-- Índice para la consulta principal del mapa.
+--
+-- MapHome pide siempre lo mismo:
+--
+--     select * from events where is_active and ends_at > now()
+--
+-- y hasta ahora eso era un recorrido secuencial de la tabla entera. Los
+-- índices que había son de creator_id e institution_id, que no sirven aquí.
+--
+-- Parcial sobre is_active en vez de un compuesto (is_active, ends_at): la
+-- inmensa mayoría de las filas tienen is_active = true, así que el índice
+-- pesa prácticamente lo mismo, pero se ahorra la columna y deja fuera los
+-- eventos cancelados, que es justo lo que la consulta nunca quiere.
+--
+-- Sobre ends_at y no sobre starts_at: la condición es un rango sobre
+-- ends_at, así que el índice se posiciona en now() y recorre hacia
+-- adelante. Los eventos ya pasados se quedan detrás del punto de entrada
+-- sin llegar a leerse, que es lo que hace que esto siga funcionando
+-- cuando la tabla acumule años de eventos viejos.
+--
+-- Sin CONCURRENTLY a propósito, por lo mismo que en 20260824000000: el SQL
+-- Editor ejecuta el script dentro de una transacción y CREATE INDEX
+-- CONCURRENTLY no puede correr ahí. Con el tamaño actual de la tabla el
+-- bloqueo es de milisegundos.
+--
+-- Idempotente: re-ejecutarlo no hace nada.
+-- ============================================================
+
+CREATE INDEX IF NOT EXISTS events_active_ends_idx
+  ON public.events (ends_at)
+  WHERE is_active;
+
+-- >>> 20260902000000_friends-pagination.sql <<<
+-- ============================================================
+-- Paginar amigos y solicitudes en el servidor.
+--
+-- El cliente traía TODAS las amistades y luego pedía los perfiles con
+-- `.in('id', [...])`, metiendo la lista entera de uuid en la URL. Son unos
+-- 37 bytes por uuid contra un límite de ~8 kB: pasados unos 200 amigos la
+-- petición se rechaza con 414 y la pestaña se queda vacía del todo.
+--
+-- De paso arregla dos cosas más que venían con ello:
+--
+--   · `.range()` iba sin `.order()`. Postgres no garantiza ningún orden sin
+--     ORDER BY, así que con LIMIT/OFFSET se podían repetir y saltar filas
+--     entre páginas. Aquí el orden es total (nombre, y el id para desempatar).
+--
+--   · El contador de la cabecera enseñaba los amigos CARGADOS, no los que
+--     hay. Ahora viene el total de verdad, gratis con una función de ventana:
+--     se evalúa antes del LIMIT.
+--
+-- SECURITY INVOKER (lo de por defecto), a propósito y no DEFINER: así la RLS
+-- de `friendships` sigue aplicándose y `public_profiles` filtra por su cuenta
+-- (bloqueos e institución). La función no puede enseñar nada que el cliente
+-- no pudiera pedir ya por su cuenta; solo lo hace en una consulta en vez de
+-- en dos y sin meter nada en la URL.
+--
+-- Idempotente: pensada para pegarse en el SQL Editor, incluso dos veces.
+-- ============================================================
+
+BEGIN;
+
+-- ------------------------------------------------------------
+-- 1. Una página de mis amigos
+-- ------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.friends_page(
+  _limit  integer DEFAULT 15,
+  _offset integer DEFAULT 0
+)
+RETURNS TABLE (
+  id         uuid,
+  name       text,
+  avatar_url text,
+  major      text,
+  total      bigint
+)
+LANGUAGE sql
+STABLE
+SET search_path = public
+AS $$
+  SELECT
+    p.id,
+    p.name,
+    p.avatar_url,
+    p.major,
+    -- Antes del LIMIT: da cuántos hay, no cuántos caben en la página.
+    count(*) OVER () AS total
+  FROM public.friendships f
+  JOIN public.public_profiles p
+    ON p.id = CASE
+                WHEN f.requester_id = auth.uid() THEN f.addressee_id
+                ELSE f.requester_id
+              END
+  WHERE f.status = 'accepted'
+    AND (f.requester_id = auth.uid() OR f.addressee_id = auth.uid())
+  -- El id desempata: sin él, dos personas con el mismo nombre podrían
+  -- intercambiarse entre páginas y aparecer dos veces o ninguna.
+  ORDER BY p.name NULLS LAST, p.id
+  LIMIT  least(greatest(_limit, 1), 100)
+  OFFSET greatest(_offset, 0);
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.friends_page(integer, integer) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION public.friends_page(integer, integer) TO authenticated;
+
+-- ------------------------------------------------------------
+-- 2. Las solicitudes de amistad que he recibido
+--
+-- Mismo problema de URL y misma solución. El tope es una válvula: una cuenta
+-- que dispare solicitudes en masa no debe poder tumbar la pantalla.
+-- ------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.friend_requests_incoming(
+  _limit integer DEFAULT 200
+)
+RETURNS TABLE (
+  friendship_id uuid,
+  id            uuid,
+  name          text,
+  avatar_url    text,
+  major         text
+)
+LANGUAGE sql
+STABLE
+SET search_path = public
+AS $$
+  SELECT
+    f.id,
+    p.id,
+    p.name,
+    p.avatar_url,
+    p.major
+  FROM public.friendships f
+  JOIN public.public_profiles p ON p.id = f.requester_id
+  WHERE f.addressee_id = auth.uid()
+    AND f.status = 'pending'
+  ORDER BY f.created_at DESC, f.id
+  LIMIT least(greatest(_limit, 1), 500);
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.friend_requests_incoming(integer) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION public.friend_requests_incoming(integer) TO authenticated;
+
+COMMIT;
+
+-- >>> 20260903000000_event-rate-limit.sql <<<
+-- ============================================================
+-- Límite de creación de eventos
+--
+-- La política de INSERT sobre events solo comprueba que el creador seas
+-- tú (`auth.uid() = creator_id`). No hay nada que impida a un script
+-- meter eventos en bucle.
+--
+-- Lo que lo vuelve urgente es que el mapa pasó a estar acotado a 500
+-- eventos (MAX_MAP_EVENTS, migración 20260901000000): con el tope, quien
+-- llene esos 500 no satura la app, hace algo peor — desplaza a los
+-- eventos reales fuera del mapa SIN que nada indique que faltan.
+--
+-- Va en un trigger y no dentro de la política porque así se puede
+-- devolver un código estable que el cliente traduce (ver rpcErrors.ts);
+-- una política que no pasa solo produce el error genérico de RLS.
+-- ============================================================
+
+-- Márgenes holgados: son para frenar un bucle, no para estorbar a quien
+-- organiza de verdad. Un usuario normal no llega a estos números.
+CREATE OR REPLACE FUNCTION public.enforce_event_rate_limit()
+RETURNS trigger
+LANGUAGE plpgsql
+-- DEFINER a propósito: el recuento tiene que ver TODAS las filas del
+-- usuario. Con INVOKER, alguien podría esconderse tras la política de
+-- visibilidad para que sus propios eventos no se contaran.
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_uid    uuid := auth.uid();
+  v_ultima int;
+  v_dia    int;
+BEGIN
+  -- Sin sesión: service_role, semillas y las propias migraciones. No se
+  -- les aplica el límite, o el seed de datos de prueba fallaría.
+  IF v_uid IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  SELECT
+    count(*) FILTER (WHERE created_at > now() - interval '1 hour'),
+    count(*) FILTER (WHERE created_at > now() - interval '1 day')
+  INTO v_ultima, v_dia
+  FROM public.events
+  WHERE creator_id = v_uid
+    AND created_at > now() - interval '1 day';
+
+  IF v_ultima >= 5 OR v_dia >= 20 THEN
+    RAISE EXCEPTION 'EVENT_RATE_LIMIT'
+      USING HINT = 'Demasiados eventos creados en poco tiempo.';
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.enforce_event_rate_limit() FROM PUBLIC, anon;
+
+DROP TRIGGER IF EXISTS trg_event_rate_limit ON public.events;
+CREATE TRIGGER trg_event_rate_limit
+  BEFORE INSERT ON public.events
+  FOR EACH ROW EXECUTE FUNCTION public.enforce_event_rate_limit();
+
+-- >>> 20260904000000_badges-own-only.sql <<<
+-- ============================================================
+-- Las insignias, solo las tuyas
+--
+-- `badges` se quedó con la política del primer día,
+-- `FOR SELECT USING (true)`: cualquiera autenticado podía leer las filas
+-- de todo el mundo. Era la única tabla de datos que seguía así, y
+-- contradice el aislamiento por institución que impusieron
+-- 20260828000000 y 20260829000000 — no filtra nombres, pero sí una
+-- lista de UUIDs de usuarios de OTRAS instituciones.
+--
+-- Se cierra a lo que la app usa de verdad: Profile.tsx es el único sitio
+-- que las lee, y siempre las del propio usuario. La hoja de perfil de
+-- otra persona (UserProfileSheet) no las enseña.
+-- ============================================================
+
+DROP POLICY IF EXISTS "Users can view badges" ON public.badges;
+
+CREATE POLICY "Users can view own badges"
+  ON public.badges FOR SELECT TO authenticated
+  USING (user_id = auth.uid());
+
+-- >>> 20260905000000_create-tip-seen.sql <<<
+-- ============================================================
+-- Aviso de "aquí se crean los eventos", una sola vez por persona
+--
+-- Va en profiles y no en localStorage a propósito: tiene que
+-- sobrevivir a un cambio de dispositivo. Mismo patrón que
+-- `onboarding_completed`, que ya vive aquí.
+--
+-- NO hace falta tocar RLS: las políticas de profiles ya dejan a cada
+-- usuario leer y actualizar su propia fila, así que la columna queda
+-- cubierta por las que hay.
+-- ============================================================
+
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS create_tip_seen boolean NOT NULL DEFAULT false;

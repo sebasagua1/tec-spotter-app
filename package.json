@@ -11,6 +11,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "schema:gen": "node scripts/gen-full-schema.mjs",
+    "schema:check": "node scripts/gen-full-schema.mjs --check",
     "ios:sync": "npm run build && npx cap sync ios",
     "ios:open": "npx cap open ios"
   },
