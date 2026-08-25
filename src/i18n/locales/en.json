@@ -234,14 +234,11 @@
     "pickDate": "Pick date",
     "time": "Time",
     "location": "Location",
-    "pickOnMap": "Tap to pick location on map",
     "locationNamePh": "Location name (optional)",
     "maxSpots": "Max spots",
     "decreaseSpots": "Decrease max spots",
     "increaseSpots": "Increase max spots",
     "descriptionPh": "Short description (optional)",
-    "showAdvanced": "Advanced options",
-    "hideAdvanced": "Hide advanced",
     "privacy": "Privacy",
     "privacyOpen": "Public",
     "privacyFriends": "Friends",
@@ -265,7 +262,13 @@
     "privacyHintFriends": "Only your friends see it, and they join directly.",
     "privacyHintPrivate": "Everyone sees it, but you approve who gets in.",
     "when": "When",
-    "pickWhen": "Pick date and time"
+    "pickWhen": "Pick date and time",
+    "locationQuestion": "Where's the event happening?",
+    "locationHint": "Tap the map to drop a pin",
+    "locationConfirmed": "This is where it'll be",
+    "locationChange": "Change location",
+    "locationUnnamed": "Selected location",
+    "locationLooking": "Looking up the place…"
   },
   "edit": {
     "title": "Edit event",
@@ -372,7 +375,11 @@
     "mapView": "Map view",
     "noEvents": "No events in this category",
     "clusterAria": "{{count}} events here. Tap to zoom in.",
-    "searchEvents": "Search events…"
+    "searchEvents": "Search events…",
+    "createEventLabel": "Create event",
+    "tipTitle": "This is where you create events",
+    "tipBody": "Tap this button to organize something and put it on your campus map.",
+    "tipGotIt": "Got it"
   },
   "rpcErrors": {
     "notAuthenticated": "Your session expired. Sign in again.",

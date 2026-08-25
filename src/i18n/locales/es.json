@@ -234,14 +234,11 @@
     "pickDate": "Elegir fecha",
     "time": "Hora",
     "location": "Ubicación",
-    "pickOnMap": "Toca para elegir ubicación en el mapa",
     "locationNamePh": "Nombre del lugar (opcional)",
     "maxSpots": "Cupo máximo",
     "decreaseSpots": "Disminuir cupo",
     "increaseSpots": "Aumentar cupo",
     "descriptionPh": "Descripción corta (opcional)",
-    "showAdvanced": "Opciones avanzadas",
-    "hideAdvanced": "Ocultar opciones",
     "privacy": "Privacidad",
     "privacyOpen": "Público",
     "privacyFriends": "Amigos",
@@ -265,7 +262,13 @@
     "privacyHintFriends": "Solo lo ven tus amigos, y entran directo.",
     "privacyHintPrivate": "Lo ve todo el mundo, pero tú apruebas quién entra.",
     "when": "Cuándo",
-    "pickWhen": "Elegir fecha y hora"
+    "pickWhen": "Elegir fecha y hora",
+    "locationQuestion": "¿Dónde va a ser el evento?",
+    "locationHint": "Toca el mapa para marcar el lugar",
+    "locationConfirmed": "Aquí va a ser el evento",
+    "locationChange": "Cambiar ubicación",
+    "locationUnnamed": "Ubicación seleccionada",
+    "locationLooking": "Buscando el lugar…"
   },
   "edit": {
     "title": "Editar evento",
@@ -372,7 +375,11 @@
     "mapView": "Ver mapa",
     "noEvents": "No hay eventos en esta categoría",
     "clusterAria": "{{count}} eventos aquí. Pulsa para acercarte.",
-    "searchEvents": "Buscar eventos…"
+    "searchEvents": "Buscar eventos…",
+    "createEventLabel": "Crear evento",
+    "tipTitle": "Aquí creas tus eventos",
+    "tipBody": "Toca este botón para organizar algo y que aparezca en el mapa de tu campus.",
+    "tipGotIt": "Entendido"
   },
   "rpcErrors": {
     "notAuthenticated": "Tu sesión expiró. Vuelve a iniciar sesión.",

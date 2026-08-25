@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
-import { Plus, LocateFixed, Layers, List, Map as MapIcon, Search, X as XIcon, type LucideIcon } from 'lucide-react';
+import { Plus, LocateFixed, Layers, List, Map as MapIcon, Search, X as XIcon, Sparkles, type LucideIcon } from 'lucide-react';
 import { useEventStore, selectSelectedEvent } from '@/stores/eventStore';
 import { EVENT_CATEGORIES, MAPBOX_STYLE_LIGHT, MAPBOX_STYLE_DARK } from '@/lib/constants';
 import { prefersDark, onColorSchemeChange } from '@/lib/theme';
@@ -13,6 +13,7 @@ import { CreateEventSheet } from '@/components/map/CreateEventSheet';
 import { LocationPickerOverlay } from '@/components/map/LocationPickerOverlay';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserLocation } from '@/hooks/useUserLocation';
+import { useAuthStore } from '@/stores/authStore';
 import { toast } from '@/hooks/use-toast';
 import i18n from '@/i18n';
 import mapboxgl, { type Map as MapboxMap, type Marker as MapboxMarker } from 'mapbox-gl';
@@ -71,6 +72,10 @@ export default function MapHome() {
   // lo que llegue por tiempo real.
   const selectedEvent = useEventStore(selectSelectedEvent);
   const [showCreate, setShowCreate] = useState(false);
+  // El aviso de primer uso. Se guarda en el perfil y no en localStorage para
+  // que no reaparezca al cambiar de telefono.
+  const { profile, fetchProfile } = useAuthStore();
+  const [tipDismissed, setTipDismissed] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
   // El centro sale de la institución del usuario, no de una constante.
   const { center: institutionCenter, resolved: centerResolved } = useInstitutionCenter();
@@ -84,7 +89,6 @@ export default function MapHome() {
   );
   const [pickingLocation, setPickingLocation] = useState(false);
   const [pickedLocation, setPickedLocation] = useState<{ lng: number; lat: number } | null>(null);
-  const [pickReturnsToForm, setPickReturnsToForm] = useState(false);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   // Alto real de la barra flotante. La vista de lista lo necesita para
   // empezar por debajo: escrito a mano como un pt-20 se quedaba corto y la
@@ -609,8 +613,56 @@ export default function MapHome() {
     };
   }, [pickingLocation, mapLoaded]);
 
+  /**
+   * El "+" abre el FORMULARIO, no el selector de mapa.
+   *
+   * Antes lanzaba directamente el modo "elige un punto": tocabas el boton, no
+   * aparecia ningun formulario y el mapa se veia casi igual, asi que parecia
+   * que el boton no hacia nada. La ubicacion se pide ahora desde dentro del
+   * formulario, donde se entiende para que es.
+   */
+  const handleOpenCreate = () => {
+    if (pickMarkerRef.current) {
+      pickMarkerRef.current.remove();
+      pickMarkerRef.current = null;
+    }
+    setPickedLocation(null);
+    setShowCreate(true);
+  };
+
+  const dismissTip = async () => {
+    setTipDismissed(true);
+    if (!profile) return;
+    const { error } = await supabase
+      .from('profiles')
+      .update({ create_tip_seen: true })
+      .eq('id', profile.id);
+    // Si falla, el aviso ya esta oculto en esta sesion y volvera a salir la
+    // proxima. Molesto, no roto: no merece un toast encima del mapa.
+    if (error) console.error('create_tip_seen:', error.message);
+    else fetchProfile();
+  };
+
+  /**
+   * Cuando sale el aviso de primer uso.
+   *
+   * `=== false` a proposito, no `!profile?.create_tip_seen`: mientras la
+   * columna no exista en la base llega `undefined`, y con la negacion el
+   * aviso saldria SIEMPRE y no habria forma de quitarselo de encima. Con la
+   * comparacion estricta, si la migracion no se ha aplicado simplemente no
+   * aparece, que es el fallo seguro.
+   */
+  const mostrarAviso =
+    !tipDismissed &&
+    profile?.create_tip_seen === false &&
+    viewMode === 'map' &&
+    !showCreate &&
+    !selectedEvent;
+
+  // El mapa como selector solo se entra desde el formulario, asi que
+  // confirmar y cancelar vuelven siempre a el. Antes hacia falta recordar de
+  // donde se venia porque el "+" tambien abria el selector a secas.
   const handleStartPicking = () => {
-    setPickReturnsToForm(true);
     setShowCreate(false);
     setPickingLocation(true);
   };
@@ -626,19 +678,7 @@ export default function MapHome() {
       pickMarkerRef.current.remove();
       pickMarkerRef.current = null;
     }
-    if (pickReturnsToForm) {
-      setShowCreate(true);
-    } else {
-      setPickedLocation(null);
-    }
-  };
-
-  const handleClearLocation = () => {
-    setPickedLocation(null);
-    if (pickMarkerRef.current) {
-      pickMarkerRef.current.remove();
-      pickMarkerRef.current = null;
-    }
+    setShowCreate(true);
   };
 
   const handleCloseCreate = () => {
@@ -907,23 +947,46 @@ export default function MapHome() {
         </button>
       )}
 
-      {/* FAB - hide during picking */}
+      {/* FAB extendido - hide during picking.
+
+          Con etiqueta y no solo el icono: un "+" a secas no dice que crea
+          eventos, y era el punto donde la gente se quedaba parada. Siempre
+          extendido, sin colapsar al hacer scroll: el mapa no scrollea y solo
+          hay un boton, asi que encogerlo seria movimiento sin motivo. */}
       {!pickingLocation && (
-        <button
-          onClick={() => {
-            if (pickMarkerRef.current) {
-              pickMarkerRef.current.remove();
-              pickMarkerRef.current = null;
-            }
-            setPickedLocation(null);
-            setPickReturnsToForm(false);
-            setPickingLocation(true);
-          }}
-          aria-label={t('map.createEvent')}
-          className="absolute above-nav mb-4 right-4 z-10 w-14 h-14 bg-primary rounded-full flex items-center justify-center shadow-lifted active:scale-95 transition-transform"
-        >
-          <Plus className="w-7 h-7 text-primary-foreground" />
-        </button>
+        <>
+          {mostrarAviso && (
+            <div className="absolute above-nav mb-20 right-4 z-20 w-[min(19rem,calc(100vw-2rem))] animate-fade-in">
+              <div role="dialog" aria-labelledby="create-tip-title" className="bg-card rounded-2xl shadow-lifted border border-border p-4">
+                <div className="flex items-start gap-2.5">
+                  <Sparkles aria-hidden="true" className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <h3 id="create-tip-title" className="text-sm font-bold text-foreground">{t('map.tipTitle')}</h3>
+                    <p className="text-xs text-muted-foreground mt-1">{t('map.tipBody')}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={dismissTip}
+                  className="mt-3 w-full min-h-[44px] rounded-xl bg-primary text-primary-foreground text-sm font-bold"
+                >
+                  {t('map.tipGotIt')}
+                </button>
+              </div>
+              {/* Pico apuntando al boton de abajo. */}
+              <div aria-hidden="true" className="absolute -bottom-1.5 right-8 w-3 h-3 bg-card border-r border-b border-border rotate-45" />
+            </div>
+          )}
+          <button
+            onClick={handleOpenCreate}
+            aria-label={t('map.createEvent')}
+            className="absolute above-nav mb-4 right-4 z-10 h-14 pl-5 pr-6 bg-primary rounded-full flex items-center gap-2 shadow-lifted active:scale-95 transition-transform"
+          >
+            <Plus className="w-6 h-6 text-primary-foreground flex-shrink-0" />
+            <span className="text-primary-foreground font-bold text-sm whitespace-nowrap">
+              {t('map.createEventLabel')}
+            </span>
+          </button>
+        </>
       )}
 
       {/* Event bottom sheet */}
@@ -940,7 +1003,6 @@ export default function MapHome() {
           onClose={handleCloseCreate}
           onPickLocation={handleStartPicking}
           pickedLocation={pickedLocation}
-          onClearLocation={handleClearLocation}
         />
       )}
     </div>

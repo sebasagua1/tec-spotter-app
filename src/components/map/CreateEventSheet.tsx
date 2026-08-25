@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
 import { X, Minus, Plus as PlusIcon, MapPin, CalendarIcon } from 'lucide-react';
@@ -15,6 +15,7 @@ import { EVENT_CATEGORIES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { rpcMessage } from '@/lib/rpcErrors';
+import { reverseGeocode } from '@/lib/geocode';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
 
@@ -30,14 +31,15 @@ const eventSchema = z.object({
   startsAt: z.date().refine((d) => d.getTime() > Date.now() - 60_000),
 });
 
+const MAPBOX_TOKEN = (import.meta.env.VITE_MAPBOX_TOKEN as string) ?? '';
+
 interface Props {
   onClose: () => void;
   onPickLocation: () => void;
   pickedLocation: { lng: number; lat: number } | null;
-  onClearLocation: () => void;
 }
 
-export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onClearLocation }: Props) {
+export function CreateEventSheet({ onClose, onPickLocation, pickedLocation }: Props) {
   const { user } = useAuthStore();
   const { toast } = useToast();
   const { t, i18n } = useTranslation();
@@ -52,8 +54,33 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
   const [description, setDescription] = useState('');
   const [privacy, setPrivacy] = useState('open');
   const [durationMins, setDurationMins] = useState(120);
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [placeName, setPlaceName] = useState<string | null>(null);
+  const [lookingUp, setLookingUp] = useState(false);
+  // Si la persona ya escribio el nombre del sitio a mano, el geocoding no se
+  // lo pisa: lo suyo manda sobre lo que adivine Mapbox.
+  const addressTouched = useRef(false);
+
+  // El pin -> un nombre que alguien reconozca. Las coordenadas siguen yendo
+  // a la base igual; esto es solo lo que se ve.
+  useEffect(() => {
+    if (!pickedLocation) {
+      setPlaceName(null);
+      return;
+    }
+    const ctrl = new AbortController();
+    let cancelada = false;
+    setLookingUp(true);
+    const idioma = i18n.language?.startsWith('en') ? 'en' : 'es';
+    reverseGeocode(pickedLocation.lng, pickedLocation.lat, MAPBOX_TOKEN, idioma, ctrl.signal)
+      .then((nombre) => {
+        if (cancelada) return;
+        setPlaceName(nombre);
+        if (nombre && !addressTouched.current) setAddress(nombre);
+      })
+      .finally(() => { if (!cancelada) setLookingUp(false); });
+    return () => { cancelada = true; ctrl.abort(); };
+  }, [pickedLocation, i18n.language]);
 
   const DURATION_OPTIONS = [
     { mins: 30, label: t('create.duration30') },
@@ -225,33 +252,55 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
               </div>
             </div>
 
-            {/* Location - Pick on map */}
+            {/* Location - Pick on map.
+
+                Ya no se enseñan lat/lng: son exactas y no significan nada
+                para quien organiza. Se guardan igual, solo no se pintan.
+                Cuando el geocoding no da nombre, la etiqueta es neutra —
+                NUNCA se vuelve a caer en las coordenadas. */}
             <div>
               <label className="text-sm font-semibold text-foreground mb-2 block">{t('create.location')}</label>
               {pickedLocation ? (
-                <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-xl border border-primary/20">
+                <div className="flex items-center gap-3 p-3 bg-primary/10 rounded-xl border border-primary/20">
                   <MapPin className="w-5 h-5 text-primary flex-shrink-0" />
-                  <span className="text-sm font-medium text-foreground flex-1">
-                    {pickedLocation.lat.toFixed(5)}, {pickedLocation.lng.toFixed(5)}
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-sm font-semibold text-foreground">
+                      {t('create.locationConfirmed')}
+                    </span>
+                    <span className="block text-xs text-muted-foreground truncate">
+                      {lookingUp
+                        ? t('create.locationLooking')
+                        : placeName ?? t('create.locationUnnamed')}
+                    </span>
                   </span>
-                  <button onClick={onClearLocation} className="inline-flex items-center min-h-[44px] text-xs text-muted-foreground underline">
-                    {t('common.remove')}
+                  <button
+                    onClick={onPickLocation}
+                    className="inline-flex items-center min-h-[44px] text-xs font-semibold text-primary underline flex-shrink-0"
+                  >
+                    {t('create.locationChange')}
                   </button>
                 </div>
               ) : (
                 <button
                   onClick={onPickLocation}
-                  className="w-full flex items-center gap-2 p-3 bg-muted rounded-xl text-sm font-medium text-muted-foreground hover:bg-muted/80 transition-colors"
+                  className="w-full flex items-center gap-3 p-3 bg-muted rounded-xl text-left hover:bg-muted/80 transition-colors"
                 >
-                  <MapPin className="w-5 h-5" />
-                  {t('create.pickOnMap')}
+                  <MapPin className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                  <span className="flex-1">
+                    <span className="block text-sm font-semibold text-foreground">
+                      {t('create.locationQuestion')}
+                    </span>
+                    <span className="block text-xs text-muted-foreground mt-0.5">
+                      {t('create.locationHint')}
+                    </span>
+                  </span>
                 </button>
               )}
               <Input
                 placeholder={t('create.locationNamePh')}
                 aria-label={t('create.locationNamePh')}
                 value={address}
-                onChange={e => setAddress(e.target.value)}
+                onChange={e => { addressTouched.current = true; setAddress(e.target.value); }}
                 className="h-12 rounded-xl text-base mt-2"
               />
             </div>
@@ -287,19 +336,11 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
               className="rounded-xl min-h-[80px]"
             />
 
-            {/* Advanced */}
-            <button
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              className="inline-flex items-center min-h-[44px] text-sm font-semibold text-primary"
-            >
-              {showAdvanced ? t('create.hideAdvanced') : t('create.showAdvanced')}
-            </button>
-
-            {showAdvanced && (
-              <div className="space-y-3">
-                <PrivacySelector value={privacy} onChange={setPrivacy} />
-              </div>
-            )}
+            {/* Privacidad, en el formulario y no escondida tras un acordeon:
+                decidir quien puede ver tu evento no es una opcion avanzada,
+                y plegada nadie la abria — todos los eventos salian con el
+                valor por defecto sin haberlo elegido. */}
+            <PrivacySelector value={privacy} onChange={setPrivacy} />
 
             {/* Publish */}
             <Button

@@ -357,6 +357,7 @@ export type Database = {
           avatar_url: string | null
           campus_id: string | null
           institution_verified: boolean
+          create_tip_seen: boolean
           created_at: string
           email: string
           id: string
@@ -377,6 +378,7 @@ export type Database = {
           avatar_url?: string | null
           campus_id?: string | null
           institution_verified?: boolean
+          create_tip_seen?: boolean
           created_at?: string
           email: string
           id: string
@@ -397,6 +399,7 @@ export type Database = {
           avatar_url?: string | null
           campus_id?: string | null
           institution_verified?: boolean
+          create_tip_seen?: boolean
           created_at?: string
           email?: string
           id?: string

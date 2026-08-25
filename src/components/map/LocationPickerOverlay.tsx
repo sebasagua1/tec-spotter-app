@@ -18,9 +18,16 @@ export function LocationPickerOverlay({ onConfirm, onCancel, hasPin }: Props) {
         >
           <X className="w-5 h-5 text-foreground" />
         </button>
-        <span className="text-sm font-semibold text-foreground flex-1 text-center flex items-center justify-center gap-1.5">
-          <MapPin className="w-4 h-4 flex-shrink-0" />
-          {t('create.pickOnMap')}
+        {/* Pregunta arriba y la instruccion debajo, no al reves: lo primero
+            dice PARA QUE sirve tocar el mapa, y lo segundo, como hacerlo. */}
+        <span className="flex-1 min-w-0 text-center">
+          <span className="flex items-center justify-center gap-1.5 text-sm font-semibold text-foreground">
+            <MapPin className="w-4 h-4 flex-shrink-0" />
+            {t('create.locationQuestion')}
+          </span>
+          <span className="block text-xs text-muted-foreground mt-0.5">
+            {hasPin ? t('create.locationConfirmed') : t('create.locationHint')}
+          </span>
         </span>
         {hasPin && (
           <button
