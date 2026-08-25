@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Loader2, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -67,11 +67,25 @@ export function EditProfileSheet({ profile, onClose }: Props) {
     setPendingPhoto(file);
   };
 
+  // `avatarPreview` empieza siendo la URL remota del perfil, que NO hay que
+  // revocar. Solo se lleva la cuenta de las que se crean aquí.
+  const objectUrlRef = useRef<string | null>(null);
+
   const handleCropped = (cropped: File) => {
     setPendingPhoto(null);
     setAvatarFile(cropped);
-    setAvatarPreview(URL.createObjectURL(cropped));
+    // Recortar varias veces seguidas dejaba una URL viva por intento, y con
+    // ella el blob entero retenido hasta recargar la página.
+    if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+    const url = URL.createObjectURL(cropped);
+    objectUrlRef.current = url;
+    setAvatarPreview(url);
   };
+
+  // La hoja se cierra tras guardar; la vista previa ya no la mira nadie.
+  useEffect(() => () => {
+    if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+  }, []);
 
   const toggle = (list: string[], item: string, setter: (v: string[]) => void) =>
     setter(list.includes(item) ? list.filter((x) => x !== item) : [...list, item]);

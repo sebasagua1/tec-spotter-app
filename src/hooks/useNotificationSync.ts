@@ -50,11 +50,28 @@ export function useNotificationSync() {
       timer = setTimeout(refresh, 400);
     };
 
+    // Filtros del lado del servidor donde el contador lo permite: sin ellos
+    // cada fila que tocaba CUALQUIER usuario de la app despertaba a todos los
+    // clientes conectados para pedir la misma RPC.
     const channel = supabase
       .channel('notification-counts')
+      // Sin filtrar a propósito. `join_requests` cuenta las solicitudes de
+      // OTRA gente a MIS eventos, y eso es un join contra events que no se
+      // puede expresar como filtro de tiempo real. Filtrar por user_id
+      // dejaría de contar justo lo que interesa.
       .on('postgres_changes', { event: '*', schema: 'public', table: 'event_participants' }, scheduleRefresh)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'friendships' }, scheduleRefresh)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, scheduleRefresh)
+      // `friend_requests` solo mira las dirigidas a mí.
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'friendships',
+        filter: `addressee_id=eq.${user.id}`,
+      }, scheduleRefresh)
+      // Los mensajes propios no cuentan como no leídos (la RPC hace
+      // `sender_id <> auth.uid()`), así que enviar uno no tiene por qué
+      // provocar una recarga del contador.
+      .on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'messages',
+        filter: `sender_id=neq.${user.id}`,
+      }, scheduleRefresh)
       .subscribe();
 
     // Volver a la app tras un rato en segundo plano: el websocket pudo

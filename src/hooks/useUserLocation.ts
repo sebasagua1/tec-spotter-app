@@ -34,6 +34,18 @@ export function useUserLocation(options: Options = {}) {
   const [error, setError] = useState<GeolocationPositionError | null>(null);
   const [permission, setPermission] = useState<GeoPermissionStatus>('prompt');
   const watchIdRef = useRef<number | null>(null);
+  // El GPS de alta precisión no tiene por qué seguir encendido con la pantalla
+  // tapada o la pestaña en segundo plano. En iOS el webview se suspende solo,
+  // pero en la web una pestaña de fondo seguiría consumiendo indefinidamente.
+  const [visible, setVisible] = useState(
+    () => typeof document === 'undefined' || document.visibilityState !== 'hidden',
+  );
+
+  useEffect(() => {
+    const alCambiar = () => setVisible(document.visibilityState !== 'hidden');
+    document.addEventListener('visibilitychange', alCambiar);
+    return () => document.removeEventListener('visibilitychange', alCambiar);
+  }, []);
 
   // Probe permission state when available
   useEffect(() => {
@@ -53,7 +65,9 @@ export function useUserLocation(options: Options = {}) {
   }, []);
 
   useEffect(() => {
-    if (!enabled) return;
+    // Al ocultarse, la limpieza de este efecto llama a clearWatch; al volver,
+    // se vuelve a suscribir y la primera lectura llega en unos segundos.
+    if (!enabled || !visible) return;
     if (!('geolocation' in navigator)) {
       setPermission('unsupported');
       return;
@@ -86,7 +100,7 @@ export function useUserLocation(options: Options = {}) {
         watchIdRef.current = null;
       }
     };
-  }, [enabled, enableHighAccuracy, maximumAge, timeout]);
+  }, [enabled, visible, enableHighAccuracy, maximumAge, timeout]);
 
   return { location, error, permission };
 }

@@ -490,6 +490,10 @@
     "groupsLoad": "No se pudieron cargar tus grupos",
     "friendsLoad": "No se pudieron cargar tus amigos",
     "leaderboardLoad": "No se pudo cargar la tabla",
-    "searchFailed": "La búsqueda falló. Inténtalo otra vez."
+    "searchFailed": "La búsqueda falló. Inténtalo otra vez.",
+    "crashTitle": "Algo ha fallado",
+    "crashBody": "Ha ocurrido un error inesperado. Puedes reintentar sin perder la sesión.",
+    "crashRetry": "Reintentar",
+    "crashHome": "Ir al inicio"
   }
 }

@@ -490,6 +490,10 @@
     "groupsLoad": "Couldn't load your groups",
     "friendsLoad": "Couldn't load your friends",
     "leaderboardLoad": "Couldn't load the leaderboard",
-    "searchFailed": "Search failed. Try again."
+    "searchFailed": "Search failed. Try again.",
+    "crashTitle": "Something went wrong",
+    "crashBody": "An unexpected error occurred. You can retry without losing your session.",
+    "crashRetry": "Try again",
+    "crashHome": "Go home"
   }
 }
