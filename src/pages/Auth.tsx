@@ -129,11 +129,18 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 bg-background relative">
-      <div className="absolute top-4 right-4 safe-top">
+    <div className="min-h-screen flex flex-col items-center px-6 pt-safe safe-bottom bg-background">
+      {/* En flujo, no `absolute`: flotando se solapaba con el título en cuanto
+          el aparato tenía isla dinámica, porque `safe-top` lo empujaba hacia
+          abajo justo hasta la altura del <h1>. */}
+      <div className="w-full max-w-[380px] flex justify-end">
         <LanguageSwitcher />
       </div>
-      <div className="w-full max-w-[380px] space-y-8">
+      {/* `my-auto` y no `justify-center` en el padre: centra cuando sobra
+          sitio, pero cuando el contenido es más alto que el hueco seguro deja
+          crecer la página en vez de esconder el logo bajo la barra de estado.
+          Con `justify-center` lo que sobraba quedaba fuera y sin scroll. */}
+      <div className="w-full max-w-[380px] space-y-8 my-auto py-6">
         {/* Logo */}
         <div className="text-center space-y-2">
           <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto shadow-soft">
