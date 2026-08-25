@@ -51,26 +51,38 @@ export default function Profile() {
 
   useEffect(() => {
     if (!profile) return;
+    // Son cuatro consultas encadenadas. Sin esta bandera, cambiar de perfil a
+    // mitad dejaba dos ejecuciones vivas y podía ganar la vieja, pintando
+    // estadísticas que no son de quien se está mirando.
+    let cancelada = false;
     const fetchStats = async () => {
       setLoading(true);
       try {
-        const { count: created } = await supabase
+        const { count: created, error: errCreados } = await supabase
           .from('events')
           .select('*', { count: 'exact', head: true })
           .eq('creator_id', profile.id);
 
-        const { count: attended } = await supabase
+        const { count: attended, error: errAsistidos } = await supabase
           .from('event_participants')
           .select('*', { count: 'exact', head: true })
           .eq('user_id', profile.id)
           .eq('checked_in', true);
 
+        if (cancelada) return;
+        // Un cero por fallo de red se leía como "no has organizado nada",
+        // que es justo lo contrario de lo que anima a nadie.
+        if (errCreados || errAsistidos) {
+          toast({ title: t('errors.statsLoad'), variant: 'destructive' });
+          return;
+        }
         setStats({ created: created ?? 0, attended: attended ?? 0 });
 
         const { data: badgeData } = await supabase
           .from('badges')
           .select('badge_type')
           .eq('user_id', profile.id);
+        if (cancelada) return;
         if (badgeData) setBadges(badgeData.map((b) => b.badge_type));
 
         const { data: historyData } = await supabase
@@ -79,13 +91,17 @@ export default function Profile() {
           .eq('user_id', profile.id)
           .order('created_at', { ascending: false })
           .limit(10);
+        if (cancelada) return;
         if (historyData) setPointsHistory(historyData);
       } finally {
+        // El spinner sí se apaga aunque se haya cancelado: si no, al cambiar
+        // de perfil se quedaría girando para siempre.
         setLoading(false);
       }
     };
     fetchStats();
-  }, [profile]);
+    return () => { cancelada = true; };
+  }, [profile, t, toast]);
 
   // Borrado de cuenta (App Store 5.1.1 v). La Edge Function saca la
   // identidad del JWT, así que solo puede borrar al que la llama.

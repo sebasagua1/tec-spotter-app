@@ -496,6 +496,9 @@
     "crashBody": "An unexpected error occurred. You can retry without losing your session.",
     "crashRetry": "Try again",
     "crashHome": "Go home",
-    "leaveGroup": "Couldn't leave the group. You're still in it."
+    "leaveGroup": "Couldn't leave the group. You're still in it.",
+    "statsLoad": "Couldn't load your stats",
+    "attendeesLoad": "Couldn't load who's going",
+    "blockedLoad": "Couldn't load your blocked list"
   }
 }

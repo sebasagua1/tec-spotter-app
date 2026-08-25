@@ -95,12 +95,19 @@ export function EventBottomSheet({ event, onClose }: Props) {
     let cancelled = false;
     const fetchAttendees = async () => {
       setLoadingAttendees(true);
-      const { data: participants } = await supabase
+      const { data: participants, error: errParticipantes } = await supabase
         .from('event_participants')
         .select('user_id')
         .eq('event_id', event.id)
         .eq('status', 'joined');
       if (cancelled) return;
+      // Sin esto, un fallo dejaba la lista con el organizador y nadie más:
+      // idéntica a un evento al que de verdad no se ha apuntado nadie.
+      if (errParticipantes) {
+        toast({ title: t('errors.attendeesLoad'), variant: 'destructive' });
+        setLoadingAttendees(false);
+        return;
+      }
 
       // Quien organiza no tiene fila en event_participants —  nada la crea al
       // montar el evento— así que salía una lista de asistentes sin la persona
@@ -120,7 +127,7 @@ export function EventBottomSheet({ event, onClose }: Props) {
     };
     fetchAttendees();
     return () => { cancelled = true; };
-  }, [canSeeAttendees, event.id, event.creator_id, attendeesVersion]);
+  }, [canSeeAttendees, event.id, event.creator_id, attendeesVersion, t, toast]);
 
   // Solicitudes pendientes — solo las ve y resuelve el organizador.
   useEffect(() => {
@@ -128,12 +135,19 @@ export function EventBottomSheet({ event, onClose }: Props) {
     let cancelled = false;
     (async () => {
       setLoadingRequests(true);
-      const { data: rows } = await supabase
+      const { data: rows, error: errSolicitudes } = await supabase
         .from('event_participants')
         .select('user_id')
         .eq('event_id', event.id)
         .eq('status', 'pending');
       if (cancelled) return;
+      // Cero solicitudes por fallo se leía como "nadie ha pedido entrar", y
+      // el organizador dejaría a gente esperando sin saberlo.
+      if (errSolicitudes) {
+        toast({ title: t('errors.attendeesLoad'), variant: 'destructive' });
+        setLoadingRequests(false);
+        return;
+      }
 
       const ids = rows?.map(r => r.user_id) ?? [];
       if (ids.length === 0) {
@@ -150,7 +164,7 @@ export function EventBottomSheet({ event, onClose }: Props) {
       setLoadingRequests(false);
     })();
     return () => { cancelled = true; };
-  }, [isCreator, event.id, attendeesVersion]);
+  }, [isCreator, event.id, attendeesVersion, t, toast]);
 
   useEffect(() => {
     let cancelled = false;

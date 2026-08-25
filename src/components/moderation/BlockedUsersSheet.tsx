@@ -31,18 +31,25 @@ export function BlockedUsersSheet({ onClose }: { onClose: () => void }) {
       // El nombre sale de la copia que se guardó al bloquear: quien está
       // bloqueado ya no aparece en public_profiles, así que no se puede
       // volver a consultar.
-      const { data: rows } = await supabase
+      const { data: rows, error } = await supabase
         .from('blocks')
         .select('blocked_id, blocked_name')
         .eq('blocker_id', user.id)
         .order('created_at', { ascending: false });
       if (cancelled) return;
 
+      // Aquí una lista vacía por error es de las peores: da a entender que ya
+      // no bloqueas a nadie, y esta pantalla existe justo para lo contrario.
+      if (error) {
+        toast({ title: t('errors.blockedLoad'), variant: 'destructive' });
+        setLoading(false);
+        return;
+      }
       setBlocked((rows ?? []).map((r) => ({ id: r.blocked_id, name: r.blocked_name })));
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [user]);
+  }, [user, t, toast]);
 
   const unblock = async (id: string) => {
     if (!user) return;

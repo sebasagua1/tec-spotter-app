@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { CalendarDays, ChevronRight, Clock, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
+import { useToast } from '@/hooks/use-toast';
 import { EVENT_CATEGORIES } from '@/lib/constants';
 import { CATEGORY_ICONS } from '@/lib/categoryIcons';
 import { cn } from '@/lib/utils';
@@ -26,6 +27,7 @@ interface EventWithParticipation extends MapEvent {
 
 export default function MyEvents() {
   const { user } = useAuthStore();
+  const { toast } = useToast();
   const { t, i18n } = useTranslation();
   const dateLocale = i18n.language?.startsWith('en') ? enUS : esLocale;
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
@@ -43,17 +45,26 @@ export default function MyEvents() {
       try {
         // Events I created — los cancelados (is_active = false) no se listan:
         // el organizador ya los dio por muertos y no deben salir en "Próximos".
-        const { data: created } = await supabase
+        const { data: created, error: errCreated } = await supabase
           .from('events')
           .select('*')
           .eq('creator_id', user.id)
           .eq('is_active', true);
 
         // Events I joined
-        const { data: participated } = await supabase
+        const { data: participated, error: errJoined } = await supabase
           .from('event_participants')
           .select('event_id, events(*)')
           .eq('user_id', user.id);
+
+        // Sin esto, un bache de red enseñaba "no tienes eventos" a quien sí
+        // los tiene, y la lista vacía por fallo era idéntica a la lista vacía
+        // de verdad. Se corta aquí para no pintar media lista como si fuera
+        // toda: es peor un listado incompleto sin avisar que ninguno.
+        if (errCreated || errJoined) {
+          toast({ title: t('errors.eventsLoad'), variant: 'destructive' });
+          return;
+        }
 
         // Aparte y no en el select de arriba: si estas dos columnas todavía no
         // existen en la base, PostgREST rechazaría la consulta entera y la
@@ -116,7 +127,7 @@ export default function MyEvents() {
         setLoading(false);
       }
     }
-  }, [user]);
+  }, [user, t, toast]);
 
   useEffect(() => { fetchMyEvents(); }, [fetchMyEvents]);
 
