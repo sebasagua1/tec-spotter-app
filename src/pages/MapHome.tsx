@@ -96,6 +96,10 @@ export default function MapHome() {
   const topBarRef = useRef<HTMLDivElement>(null);
   const [topBarHeight, setTopBarHeight] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
+  // Sin esto, el estado vacio parpadeaba en cada arranque en frio: hasta que
+  // responde la primera consulta, "no hay eventos" y "todavia no se sabe" son
+  // el mismo array vacio.
+  const [eventsLoaded, setEventsLoaded] = useState(false);
   const pickMarkerRef = useRef<MapboxMarker | null>(null);
   const userMarkerRef = useRef<MapboxMarker | null>(null);
   const hasAutoCenteredRef = useRef(false);
@@ -150,6 +154,9 @@ export default function MapHome() {
         .order('starts_at', { ascending: true })
         .limit(MAX_MAP_EVENTS);
       if (cancelled || seq !== lastFetch) return;
+      // Se marca cargado tambien cuando hay error: si no, un fallo de red
+      // dejaria el mapa sin pines Y sin estado vacio, o sea en blanco.
+      setEventsLoaded(true);
       // Sin esto, un fallo de red dejaba el mapa sin pines y sin forma de
       // distinguirlo de "no hay eventos".
       // i18n.t y no el `t` del hook: este mensaje se lee en el momento del fallo y
@@ -929,6 +936,8 @@ export default function MapHome() {
             filterCategory={filterCategory}
             searchQuery={searchQuery}
             onSelect={(event) => { setSelectedEvent(event); setViewMode('map'); }}
+            onCreate={handleOpenCreate}
+            onClearFilters={() => { setFilterCategory(null); setSearchQuery(''); }}
           />
         </div>
       )}
@@ -987,6 +996,27 @@ export default function MapHome() {
             </span>
           </button>
         </>
+      )}
+
+      {/* Estado vacio del mapa. La lista tiene el suyo; el mapa no tenia
+          ninguno, y un mapa sin pines no se distingue de uno roto. Solo
+          cuando de verdad no hay NADA: si hay eventos y el filtro no los
+          deja pasar, los pines vuelven al quitar el filtro y no hace falta
+          tapar el mapa. */}
+      {!pickingLocation && viewMode === 'map' && eventsLoaded && events.length === 0 && !showCreate && (
+        <div className="absolute inset-x-0 above-nav mb-24 z-10 px-6 pointer-events-none">
+          <div className="pointer-events-auto mx-auto sm:max-w-[430px] bg-card/95 backdrop-blur-md rounded-2xl shadow-lifted border border-border p-5 text-center">
+            <p className="text-base font-bold text-foreground">{t('map.emptyTitle')}</p>
+            <p className="text-sm text-muted-foreground mt-1">{t('map.emptyBody')}</p>
+            <button
+              onClick={handleOpenCreate}
+              className="mt-4 inline-flex items-center gap-2 min-h-[44px] px-5 rounded-xl bg-primary text-primary-foreground text-sm font-bold"
+            >
+              <Plus aria-hidden="true" className="w-4 h-4" />
+              {t('map.emptyCta')}
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Event bottom sheet */}

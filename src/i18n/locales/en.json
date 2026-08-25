@@ -373,13 +373,17 @@
     "waitingGpsDesc": "Waiting for your location…",
     "listView": "List view",
     "mapView": "Map view",
-    "noEvents": "No events in this category",
     "clusterAria": "{{count}} events here. Tap to zoom in.",
     "searchEvents": "Search events…",
     "createEventLabel": "Create event",
     "tipTitle": "This is where you create events",
     "tipBody": "Tap this button to organize something and put it on your campus map.",
-    "tipGotIt": "Got it"
+    "tipGotIt": "Got it",
+    "emptyTitle": "Nothing here yet",
+    "emptyBody": "Be the one who starts: organize something and it will show up on your campus map.",
+    "emptyCta": "Create the first one",
+    "noEventsFilter": "No events match what you are looking for",
+    "clearFilters": "Clear filters"
   },
   "rpcErrors": {
     "notAuthenticated": "Your session expired. Sign in again.",

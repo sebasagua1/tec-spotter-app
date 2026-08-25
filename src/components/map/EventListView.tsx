@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Clock, MapPin, Users, Flame } from 'lucide-react';
+import { Clock, MapPin, Users, Flame, Plus, SearchX } from 'lucide-react';
 import { format } from 'date-fns';
 import { es as esLocale, enUS } from 'date-fns/locale';
 import { EVENT_CATEGORIES } from '@/lib/constants';
@@ -13,9 +13,11 @@ interface Props {
   filterCategory: string | null;
   searchQuery?: string;
   onSelect: (event: MapEvent) => void;
+  onCreate: () => void;
+  onClearFilters: () => void;
 }
 
-export function EventListView({ events, filterCategory, searchQuery = '', onSelect }: Props) {
+export function EventListView({ events, filterCategory, searchQuery = '', onSelect, onCreate, onClearFilters }: Props) {
   const { t, i18n } = useTranslation();
   const dateLocale = i18n.language?.startsWith('en') ? enUS : esLocale;
 
@@ -23,11 +25,38 @@ export function EventListView({ events, filterCategory, searchQuery = '', onSele
   // por duplicado, mapa y lista acababan enseñando cosas distintas.
   const visible = filterEvents(events, { category: filterCategory, query: searchQuery });
 
+  // Dos vacios distintos, y decirlo importa: "crea el primero" cuando en
+  // realidad hay treinta eventos y solo esta mal el filtro es mentira, y deja
+  // a la persona pensando que su campus esta muerto.
   if (visible.length === 0) {
+    const noHayNada = events.length === 0;
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-center px-8">
-        <Users className="w-12 h-12 text-muted-foreground/30 mb-3" />
-        <p className="text-muted-foreground text-sm font-medium">{t('map.noEvents')}</p>
+      <div className="flex flex-col items-center justify-center min-h-64 text-center px-8 py-12">
+        {noHayNada ? (
+          <>
+            <Users aria-hidden="true" className="w-12 h-12 text-muted-foreground/30 mb-3" />
+            <p className="text-base font-bold text-foreground">{t('map.emptyTitle')}</p>
+            <p className="text-sm text-muted-foreground mt-1 max-w-xs">{t('map.emptyBody')}</p>
+            <button
+              onClick={onCreate}
+              className="mt-5 inline-flex items-center gap-2 min-h-[44px] px-5 rounded-xl bg-primary text-primary-foreground text-sm font-bold"
+            >
+              <Plus aria-hidden="true" className="w-4 h-4" />
+              {t('map.emptyCta')}
+            </button>
+          </>
+        ) : (
+          <>
+            <SearchX aria-hidden="true" className="w-12 h-12 text-muted-foreground/30 mb-3" />
+            <p className="text-sm font-medium text-muted-foreground max-w-xs">{t('map.noEventsFilter')}</p>
+            <button
+              onClick={onClearFilters}
+              className="mt-4 inline-flex items-center min-h-[44px] px-5 rounded-xl bg-muted text-foreground text-sm font-semibold"
+            >
+              {t('map.clearFilters')}
+            </button>
+          </>
+        )}
       </div>
     );
   }

@@ -373,13 +373,17 @@
     "waitingGpsDesc": "Esperando tu ubicación…",
     "listView": "Ver como lista",
     "mapView": "Ver mapa",
-    "noEvents": "No hay eventos en esta categoría",
     "clusterAria": "{{count}} eventos aquí. Pulsa para acercarte.",
     "searchEvents": "Buscar eventos…",
     "createEventLabel": "Crear evento",
     "tipTitle": "Aquí creas tus eventos",
     "tipBody": "Toca este botón para organizar algo y que aparezca en el mapa de tu campus.",
-    "tipGotIt": "Entendido"
+    "tipGotIt": "Entendido",
+    "emptyTitle": "Todavía no hay nada por aquí",
+    "emptyBody": "Sé quien empieza: organiza algo y aparecerá en el mapa de tu campus.",
+    "emptyCta": "Crear el primero",
+    "noEventsFilter": "Ningún evento coincide con lo que buscas",
+    "clearFilters": "Quitar filtros"
   },
   "rpcErrors": {
     "notAuthenticated": "Tu sesión expiró. Vuelve a iniciar sesión.",
