@@ -19,13 +19,27 @@ import mapboxgl, { type Map as MapboxMap, type Marker as MapboxMarker } from 'ma
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { pageTitle } from '@/lib/brand';
 import { useInstitutionCenter } from '@/hooks/useInstitutionCenter';
+import { toMapEvent, needsServerCheck, type EventRow } from '@/lib/eventSync';
+
+/**
+ * Lo que hace falta del payload de tiempo real.
+ *
+ * Se declara aquí en vez de importarlo: supabase-js 2.100 no reexporta
+ * RealtimePostgresChangesPayload, y tirar de @supabase/realtime-js sería
+ * depender de un paquete que no está en package.json y solo llega como
+ * dependencia transitiva.
+ */
+type EventChange =
+  | { eventType: 'INSERT'; new: EventRow }
+  | { eventType: 'UPDATE'; new: EventRow }
+  | { eventType: 'DELETE'; old: Partial<EventRow> };
 
 export default function MapHome() {
   const { t } = useTranslation();
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapboxMap | null>(null);
   const markersRef = useRef<MapboxMarker[]>([]);
-  const { events, setEvents, setSelectedEvent, filterCategory, setFilterCategory } = useEventStore();
+  const { events, setEvents, upsertEvent, removeEvent, setSelectedEvent, filterCategory, setFilterCategory } = useEventStore();
   // Resuelto contra la lista viva en cada render: así la hoja abierta refleja
   // lo que llegue por tiempo real.
   const selectedEvent = useEventStore(selectSelectedEvent);
@@ -63,14 +77,42 @@ export default function MapHome() {
   });
 
 
-  // Fetch events
+  // Eventos: carga inicial y tiempo real.
+  //
+  // El tiempo real ya NO vuelve a pedir la lista entera. Antes sí, con
+  // `event: '*'` sobre toda la tabla: como `current_spots` es una columna de
+  // `events`, cada vez que alguien se apuntaba o se salía de cualquier evento
+  // se disparaba un refetch completo en TODOS los clientes conectados, y
+  // detrás de cada uno una reconstrucción de todos los marcadores del mapa.
+  //
+  // La regla que sigue este efecto, y que es lo que lo hace seguro:
+  //
+  //     el payload de tiempo real nunca CONCEDE visibilidad;
+  //     solo actualiza o quita algo que PostgREST ya había concedido.
+  //
+  // Así no depende de que la RLS esté aplicada sobre el canal de realtime, que
+  // es algo que no se puede comprobar desde aquí. Lo que llega por el socket se
+  // aplica tal cual únicamente si el evento ya estaba en la lista y nada de lo
+  // que decide su visibilidad ha cambiado. En cuanto hay duda se le pregunta al
+  // servidor por esa fila concreta: una búsqueda por clave primaria, no un
+  // barrido de la tabla.
   useEffect(() => {
+    let cancelled = false;
+
+    // Ahora la lista se pide desde tres sitios —montaje, reconexión y volver
+    // del segundo plano—, que en iOS coinciden con facilidad. Sin este número
+    // de orden, dos peticiones en vuelo y la más vieja respondiendo la última
+    // pisarían los datos nuevos. Solo escribe la última que se lanzó.
+    let lastFetch = 0;
+
     const fetchEvents = async () => {
+      const seq = ++lastFetch;
       const { data, error } = await supabase
         .from('events')
         .select('*')
         .eq('is_active', true)
         .gt('ends_at', new Date().toISOString());
+      if (cancelled || seq !== lastFetch) return;
       // Sin esto, un fallo de red dejaba el mapa sin pines y sin forma de
       // distinguirlo de "no hay eventos".
       // i18n.t y no el `t` del hook: este mensaje se lee en el momento del fallo y
@@ -80,26 +122,84 @@ export default function MapHome() {
         toast({ title: i18n.t('errors.eventsLoad'), variant: 'destructive' });
         return;
       }
-      if (data) {
-        const mapped = data.map(e => ({
-          ...e,
-          location: e.lng != null && e.lat != null ? { lng: e.lng, lat: e.lat } : null,
-        }));
-        setEvents(mapped);
-      }
+      if (data) setEvents(data.map(toMapEvent));
     };
+
+    // Una sola fila, por clave primaria y con los mismos filtros que la carga
+    // inicial. Va por PostgREST a propósito: es quien aplica la RLS, así que si
+    // el evento no me corresponde vuelve vacío y entonces se quita.
+    const syncOne = async (id: string) => {
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('id', id)
+        .eq('is_active', true)
+        .gt('ends_at', new Date().toISOString())
+        .maybeSingle();
+      // Ante un fallo de red se deja lo que ya hay: borrar por no haber podido
+      // preguntar sería hacer desaparecer pines buenos en cada bache.
+      if (cancelled || error) return;
+      if (data) upsertEvent(toMapEvent(data));
+      else removeEvent(id);
+    };
+
+    const handleChange = (payload: EventChange) => {
+      if (payload.eventType === 'DELETE') {
+        // Con REPLICA IDENTITY DEFAULT el payload de un DELETE solo trae la
+        // clave primaria, que es justo lo único que hace falta. Quitar un id
+        // que no está en la lista no hace nada, así que da igual si el canal
+        // reparte los borrados sin filtrar.
+        const id = payload.old?.id;
+        if (id) removeEvent(id);
+        return;
+      }
+
+      const row = payload.new;
+      if (!row?.id) return;
+
+      const known = useEventStore.getState().events.find((e) => e.id === row.id);
+
+      // Las reglas están en lib/eventSync.ts, con sus pruebas: es la única
+      // parte de todo esto que puede fallar en silencio.
+      if (needsServerCheck(known, row)) {
+        syncOne(row.id);
+        return;
+      }
+
+      // Ya era visible y lo sigue siendo. Aquí cae el caso frecuente —el aforo
+      // subiendo y bajando— y se resuelve entero en memoria, sin tocar la red.
+      upsertEvent(toMapEvent(row));
+    };
+
     fetchEvents();
 
-    // Realtime subscription
+    let firstSubscribe = true;
     const channel = supabase
       .channel('events-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => {
+      .on<EventRow>('postgres_changes', { event: '*', schema: 'public', table: 'events' }, handleChange)
+      .subscribe((status) => {
+        if (status !== 'SUBSCRIBED') return;
+        // El primer SUBSCRIBED acompaña al fetch inicial que ya se ha lanzado.
+        // Los siguientes son reconexiones, y mientras el socket estuvo caído se
+        // perdieron cambios: ahí sí hay que volver a pedir la lista.
+        if (firstSubscribe) { firstSubscribe = false; return; }
         fetchEvents();
-      })
-      .subscribe();
+      });
 
-    return () => { supabase.removeChannel(channel); };
-  }, [setEvents]);
+    // Volver a la app tras un rato en segundo plano. iOS congela el webview y
+    // el socket puede quedarse muerto sin llegar a reconectar. Además recupera
+    // la deriva que antes corregía de rebote el refetch continuo: hay cambios
+    // que alteran lo que puedes ver sin tocar ninguna fila de `events` —un
+    // bloqueo, una amistad nueva— y que por el socket no llegan nunca.
+    const onVisible = () => { if (document.visibilityState === 'visible') fetchEvents(); };
+    document.addEventListener('visibilitychange', onVisible);
+
+    return () => {
+      cancelled = true;
+      document.removeEventListener('visibilitychange', onVisible);
+      supabase.removeChannel(channel);
+    };
+  }, [setEvents, upsertEvent, removeEvent]);
 
   // Initialize map
   useEffect(() => {

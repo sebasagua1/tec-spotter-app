@@ -30,7 +30,7 @@ interface EventState {
   selectedEventId: string | null;
   filterCategory: string | null;
   setEvents: (events: MapEvent[]) => void;
-  addEvent: (event: MapEvent) => void;
+  upsertEvent: (event: MapEvent) => void;
   removeEvent: (id: string) => void;
   setSelectedEvent: (event: MapEvent | null) => void;
   setFilterCategory: (cat: string | null) => void;
@@ -41,7 +41,20 @@ export const useEventStore = create<EventState>((set) => ({
   selectedEventId: null,
   filterCategory: null,
   setEvents: (events) => set({ events }),
-  addEvent: (event) => set((s) => ({ events: [event, ...s.events] })),
+  /**
+   * Mete el evento si es nuevo y lo reemplaza EN SU SITIO si ya estaba.
+   *
+   * La posición importa: es lo que consume la vista de lista, y mover una
+   * fila porque a alguien le cambió el aforo haría saltar las tarjetas bajo
+   * el dedo de quien está leyendo.
+   */
+  upsertEvent: (event) => set((s) => {
+    const i = s.events.findIndex((e) => e.id === event.id);
+    if (i === -1) return { events: [event, ...s.events] };
+    const events = s.events.slice();
+    events[i] = event;
+    return { events };
+  }),
   // Al cancelar un evento hay que sacarlo del store a mano: los marcadores del
   // mapa son DOM imperativo que solo se reconstruye cuando cambia `events`, y
   // esperar al refetch por realtime deja el pin visible mientras tanto.

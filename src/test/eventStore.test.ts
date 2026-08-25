@@ -42,6 +42,43 @@ describe('eventStore.removeEvent', () => {
   });
 });
 
+describe('eventStore.upsertEvent', () => {
+  beforeEach(() => {
+    useEventStore.setState({ events: [], selectedEventId: null, filterCategory: null });
+  });
+
+  it('añade el evento si no estaba', () => {
+    useEventStore.setState({ events: [mk('a')] });
+    useEventStore.getState().upsertEvent(mk('b'));
+    expect(useEventStore.getState().events.map(e => e.id).sort()).toEqual(['a', 'b']);
+  });
+
+  it('reemplaza EN SU SITIO si ya estaba', () => {
+    // Si se moviera al principio, un cambio de aforo haría saltar las
+    // tarjetas de la vista de lista bajo el dedo de quien está leyendo.
+    useEventStore.setState({ events: [mk('a'), mk('b'), mk('c')] });
+    useEventStore.getState().upsertEvent({ ...mk('b'), current_spots: 9 });
+    const events = useEventStore.getState().events;
+    expect(events.map(e => e.id)).toEqual(['a', 'b', 'c']);
+    expect(events[1].current_spots).toBe(9);
+  });
+
+  it('no duplica al aplicar el mismo evento dos veces', () => {
+    useEventStore.setState({ events: [mk('a')] });
+    useEventStore.getState().upsertEvent(mk('a'));
+    useEventStore.getState().upsertEvent(mk('a'));
+    expect(useEventStore.getState().events).toHaveLength(1);
+  });
+
+  it('la hoja abierta ve el valor nuevo sin cerrarse', () => {
+    const a = mk('a');
+    useEventStore.setState({ events: [a], selectedEventId: 'a' });
+    useEventStore.getState().upsertEvent({ ...a, current_spots: 5 });
+    expect(useEventStore.getState().selectedEventId).toBe('a');
+    expect(selectSelectedEvent(useEventStore.getState())?.current_spots).toBe(5);
+  });
+});
+
 describe('eventStore.setSelectedEvent', () => {
   beforeEach(() => {
     useEventStore.setState({ events: [], selectedEventId: null, filterCategory: null });
