@@ -5,6 +5,14 @@ import { EventListView } from '@/components/map/EventListView';
 import type { MapEvent } from '@/stores/eventStore';
 import i18n from '@/i18n';
 
+// vi.mock se ELEVA al principio del archivo, asi que estas cuatro valen para
+// todo el modulo aunque solo las necesite el ultimo describe. Van aqui para
+// que se vea, y no escondidas a mitad del archivo.
+vi.mock('@/lib/geocode', () => ({ reverseGeocode: vi.fn().mockResolvedValue(null) }));
+vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: vi.fn() } }));
+vi.mock('@/hooks/use-toast', () => ({ useToast: () => ({ toast: vi.fn() }) }));
+vi.mock('@/stores/authStore', () => ({ useAuthStore: () => ({ user: { id: 'u1' } }) }));
+
 const evento = (over: Partial<MapEvent> = {}): MapEvent => ({
   id: 'e1', creator_id: 'u1', title: 'Estudio de cálculo', category: 'study',
   location: { lng: -98.2, lat: 19 }, address: null, description: null,
@@ -91,5 +99,59 @@ describe('EventListView: los dos vacíos', () => {
     render(<EventListView {...props} events={[evento()]} onCreate={vi.fn()} onClearFilters={vi.fn()} />);
     expect(screen.getByText('Estudio de cálculo')).toBeInTheDocument();
     expect(screen.queryByText('Todavía no hay nada por aquí')).not.toBeInTheDocument();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Regresión: ir a marcar la ubicación borraba el formulario entero.
+//
+// La hoja guarda título, fecha, hora, descripción, aforo… en su propio estado.
+// MapHome la montaba con `{showCreate && <CreateEventSheet/>}` y ponía
+// showCreate en false al saltar al mapa, así que React la DESMONTABA y con
+// ella todo lo escrito. Al volver aparecía un formulario en blanco.
+//
+// El arreglo es apartarla de la vista sin desmontarla. Esto fija esa parte del
+// contrato: `hidden` oculta, y ocultar NO es desmontar.
+// ---------------------------------------------------------------------------
+describe('CreateEventSheet: no se pierde lo escrito al ir a por la ubicación', () => {
+  const props = { onClose: vi.fn(), onPickLocation: vi.fn(), pickedLocation: null };
+
+  it('oculta la hoja sin desmontarla: lo escrito sigue ahí', async () => {
+    const { CreateEventSheet } = await import('@/components/map/CreateEventSheet');
+    const { rerender } = render(<CreateEventSheet {...props} />);
+
+    const titulo = screen.getByPlaceholderText('Título del evento');
+    fireEvent.change(titulo, { target: { value: 'Estudiar para el final' } });
+    fireEvent.change(screen.getByPlaceholderText(/Descripción corta/i), {
+      target: { value: 'Traigan calculadora' },
+    });
+
+    // Salta al mapa a marcar el sitio.
+    rerender(<CreateEventSheet {...props} hidden />);
+
+    // Sigue montada —ese es el punto— y conserva los valores.
+    expect(screen.getByDisplayValue('Estudiar para el final')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Traigan calculadora')).toBeInTheDocument();
+
+    // Vuelve del mapa: nada se ha perdido.
+    rerender(<CreateEventSheet {...props} hidden={false} />);
+    expect(screen.getByDisplayValue('Estudiar para el final')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Traigan calculadora')).toBeInTheDocument();
+  });
+
+  it('mientras está oculta no tapa el mapa ni se puede tocar', async () => {
+    const { CreateEventSheet } = await import('@/components/map/CreateEventSheet');
+    const { container, rerender } = render(<CreateEventSheet {...props} />);
+    const raiz = () => container.querySelector('.fixed.inset-0') as HTMLElement;
+
+    expect(raiz().className).not.toMatch(/invisible/);
+    expect(raiz()).toHaveAttribute('aria-hidden', 'false');
+
+    rerender(<CreateEventSheet {...props} hidden />);
+
+    // Sin esto los toques para poner el pin se los comía la hoja.
+    expect(raiz().className).toMatch(/invisible/);
+    expect(raiz().className).toMatch(/pointer-events-none/);
+    expect(raiz()).toHaveAttribute('aria-hidden', 'true');
   });
 });

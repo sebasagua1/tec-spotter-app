@@ -37,9 +37,16 @@ interface Props {
   onClose: () => void;
   onPickLocation: () => void;
   pickedLocation: { lng: number; lat: number } | null;
+  /**
+   * Aparta la hoja de la vista SIN desmontarla, mientras se elige el sitio
+   * en el mapa. Tiene que ser esto y no dejar de renderizarla: todo lo que
+   * se ha escrito —titulo, fecha, hora, descripcion— vive en el estado de
+   * este componente, y desmontarlo lo borra.
+   */
+  hidden?: boolean;
 }
 
-export function CreateEventSheet({ onClose, onPickLocation, pickedLocation }: Props) {
+export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, hidden = false }: Props) {
   const { user } = useAuthStore();
   const { toast } = useToast();
   const { t, i18n } = useTranslation();
@@ -161,7 +168,17 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation }: Pr
     // Mismo z que el sheet de editar, por encima de BottomNav (z-50): en z-30
     // el fondo oscuro quedaba por debajo y la barra se veía iluminada sobre la
     // pantalla atenuada, además de seguir siendo pulsable con el modal abierto.
-    <div className="fixed inset-0 z-[60] bg-foreground/40 animate-fade-in" onClick={onClose}>
+    <div
+      className={cn(
+        'fixed inset-0 z-[60] bg-foreground/40 animate-fade-in',
+        // `invisible` y no un desmontaje: conserva el estado. Ademas quita el
+        // elemento del hit-testing, asi que los toques llegan al mapa de
+        // debajo para poner el pin.
+        hidden && 'invisible pointer-events-none',
+      )}
+      onClick={onClose}
+      aria-hidden={hidden}
+    >
       <div
         className="absolute bottom-0 left-0 right-0 bg-card rounded-t-3xl shadow-lifted animate-slide-up max-h-[85vh] overflow-y-auto mx-auto sm:max-w-[430px]"
         onClick={e => e.stopPropagation()}

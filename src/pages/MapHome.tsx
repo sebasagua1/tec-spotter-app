@@ -666,17 +666,24 @@ export default function MapHome() {
     !showCreate &&
     !selectedEvent;
 
-  // El mapa como selector solo se entra desde el formulario, asi que
-  // confirmar y cancelar vuelven siempre a el. Antes hacia falta recordar de
-  // donde se venia porque el "+" tambien abria el selector a secas.
+  /**
+   * Al mapa a marcar el sitio, y de vuelta.
+   *
+   * Solo se entra desde el formulario, asi que confirmar y cancelar vuelven
+   * siempre a el. Antes hacia falta recordar de donde se venia porque el "+"
+   * tambien abria el selector a secas.
+   *
+   * `showCreate` NO se toca aqui: ponerlo en false desmontaba
+   * CreateEventSheet, y al volver el formulario se montaba de cero con el
+   * titulo, la fecha, la hora y la descripcion en blanco. La hoja se queda
+   * montada y solo se aparta de la vista (prop `hidden`).
+   */
   const handleStartPicking = () => {
-    setShowCreate(false);
     setPickingLocation(true);
   };
 
   const handleConfirmLocation = () => {
     setPickingLocation(false);
-    setShowCreate(true);
   };
 
   const handleCancelPicking = () => {
@@ -685,7 +692,6 @@ export default function MapHome() {
       pickMarkerRef.current.remove();
       pickMarkerRef.current = null;
     }
-    setShowCreate(true);
   };
 
   const handleCloseCreate = () => {
@@ -1033,6 +1039,7 @@ export default function MapHome() {
           onClose={handleCloseCreate}
           onPickLocation={handleStartPicking}
           pickedLocation={pickedLocation}
+          hidden={pickingLocation}
         />
       )}
     </div>
