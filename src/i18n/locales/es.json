@@ -371,6 +371,7 @@
     "listView": "Ver como lista",
     "mapView": "Ver mapa",
     "noEvents": "No hay eventos en esta categoría",
+    "clusterAria": "{{count}} eventos aquí. Pulsa para acercarte.",
     "searchEvents": "Buscar eventos…"
   },
   "rpcErrors": {

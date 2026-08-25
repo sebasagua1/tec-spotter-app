@@ -371,6 +371,7 @@
     "listView": "List view",
     "mapView": "Map view",
     "noEvents": "No events in this category",
+    "clusterAria": "{{count}} events here. Tap to zoom in.",
     "searchEvents": "Search events…"
   },
   "rpcErrors": {

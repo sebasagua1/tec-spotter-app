@@ -21,15 +21,8 @@ import { pageTitle } from '@/lib/brand';
 import { useInstitutionCenter } from '@/hooks/useInstitutionCenter';
 import { toMapEvent, needsServerCheck, type EventRow } from '@/lib/eventSync';
 import { matchesFilter } from '@/lib/eventFilter';
+import { planMarkers, CLUSTER_MAX_ZOOM, MAX_MAP_EVENTS } from '@/lib/mapClusters';
 
-/**
- * Lo que hace falta del payload de tiempo real.
- *
- * Se declara aquí en vez de importarlo: supabase-js 2.100 no reexporta
- * RealtimePostgresChangesPayload, y tirar de @supabase/realtime-js sería
- * depender de un paquete que no está en package.json y solo llega como
- * dependencia transitiva.
- */
 /** Un marcador vivo, con lo justo para saber qué hay que refrescar de él. */
 type MarkerEntry = {
   marker: MapboxMarker;
@@ -41,6 +34,23 @@ type MarkerEntry = {
   onMap: boolean;
 };
 
+/** Un racimo vivo: el marcador con el número y a dónde lleva al pulsarlo. */
+type ClusterEntry = {
+  marker: MapboxMarker;
+  label: HTMLDivElement;
+  count: number;
+  /** Encuadre de sus miembros, para acercarse a ellos al pulsar. */
+  bounds: [[number, number], [number, number]];
+};
+
+/**
+ * Lo que hace falta del payload de tiempo real.
+ *
+ * Se declara aquí en vez de importarlo: supabase-js 2.100 no reexporta
+ * RealtimePostgresChangesPayload, y tirar de @supabase/realtime-js sería
+ * depender de un paquete que no está en package.json y solo llega como
+ * dependencia transitiva.
+ */
 type EventChange =
   | { eventType: 'INSERT'; new: EventRow }
   | { eventType: 'UPDATE'; new: EventRow }
@@ -55,6 +65,7 @@ export default function MapHome() {
   // pertenece el caché, para vaciarlo si el mapa se recreara.
   const markersRef = useRef<Map<string, MarkerEntry>>(new Map());
   const markersMapRef = useRef<MapboxMap | null>(null);
+  const clustersRef = useRef<Map<string, ClusterEntry>>(new Map());
   const { events, setEvents, upsertEvent, removeEvent, setSelectedEvent, filterCategory, setFilterCategory } = useEventStore();
   // Resuelto contra la lista viva en cada render: así la hoja abierta refleja
   // lo que llegue por tiempo real.
@@ -127,7 +138,13 @@ export default function MapHome() {
         .from('events')
         .select('*')
         .eq('is_active', true)
-        .gt('ends_at', new Date().toISOString());
+        .gt('ends_at', new Date().toISOString())
+        // Con orden y tope: sin ellos la consulta se comía el corte que
+        // Supabase pone en 1.000 filas, y mil marcadores en un webview no se
+        // ralentizan, se quedan clavados. Por `starts_at` ascendente, así que
+        // lo que se recorta es lo que empieza más tarde.
+        .order('starts_at', { ascending: true })
+        .limit(MAX_MAP_EVENTS);
       if (cancelled || seq !== lastFetch) return;
       // Sin esto, un fallo de red dejaba el mapa sin pines y sin forma de
       // distinguirlo de "no hay eventos".
@@ -294,45 +311,86 @@ export default function MapHome() {
 
   // Marcadores.
   //
-  // Se reutilizan entre renders. Antes este efecto empezaba derribándolo todo
-  // —`markersRef.current.forEach(m => m.remove())`— y lo reconstruía entero, y
-  // como `searchQuery` está en sus dependencias, escribir "fiesta" en el
-  // buscador eran seis derribos y seis reconstrucciones completas: con 300
-  // eventos, cada tecla creaba y destruía 600 nodos, parseaba 300 SVG y colgaba
-  // 300 escuchadores.
+  // Tres cosas a la vez, y por eso está en una sola pasada:
   //
-  // Ahora filtrar solo saca y mete del mapa marcadores que ya existen, con su
-  // DOM y su escuchador intactos. Crear y destruir queda para cuando un evento
-  // entra o sale de la lista de verdad.
-  useEffect(() => {
+  //   · Se REUTILIZAN entre renders. Antes el efecto derribaba todo y lo
+  //     reconstruía, y como `searchQuery` está en sus dependencias, escribir
+  //     "fiesta" eran seis derribos completos.
+  //
+  //   · Se AGRUPAN cuando se pisan en pantalla. Con muchos eventos no se
+  //     distinguía nada y Mapbox recalculaba la posición de cada uno en cada
+  //     fotograma del desplazamiento.
+  //
+  //   · Filtrar y agrupar solo SACAN Y METEN del mapa marcadores que ya
+  //     existen, con su DOM y su escuchador intactos.
+  //
+  // Va en un useCallback y no en un efecto porque el resultado depende del
+  // zoom y del encuadre, que cambian fuera de React: hay que poder llamarlo
+  // también desde el mapa.
+  const syncMarkers = useCallback(() => {
     const map = mapRef.current;
-    if (!map || !mapLoaded) return;
+    if (!map) return;
 
     // El caché pertenece a una instancia concreta del mapa: si el mapa se
     // recreara, sus nodos colgarían de un contenedor que ya no existe.
     if (markersMapRef.current !== map) {
       markersRef.current.forEach((e) => e.marker.remove());
       markersRef.current.clear();
+      clustersRef.current.forEach((c) => c.marker.remove());
+      clustersRef.current.clear();
       markersMapRef.current = map;
     }
 
-    const seen = new Set<string>();
+    // 1. Qué va suelto, qué se agrupa y qué se conserva.
+    //
+    // La decisión vive en lib/mapClusters.ts con sus pruebas: es lo único de
+    // todo el dibujado que puede fallar sin dar ningún error — un marcador de
+    // más o de menos no lanza nada, solo hace que el mapa parpadee o que falte
+    // un pin.
+    const plan = planMarkers(
+      events.map((e) => {
+        const colocable = !!e.location && EVENT_CATEGORIES.some((c) => c.key === e.category);
+        const punto = colocable ? map.project([e.location!.lng, e.location!.lat]) : { x: 0, y: 0 };
+        return {
+          id: e.id,
+          placeable: colocable,
+          passesFilter: matchesFilter(e, { category: filterCategory, query: searchQuery }),
+          x: punto.x,
+          y: punto.y,
+        };
+      }),
+      map.getZoom(),
+    );
+    const sueltos = plan.loose;
+    const porId = new Map(events.map((e) => [e.id, e]));
 
+    // 2. Pines sueltos.
+    //
+    // Se recorren TODOS los eventos, no solo los que pasan el filtro. Un
+    // marcador solo se destruye cuando su evento desaparece de la lista;
+    // filtrar o entrar en un racimo únicamente lo saca del mapa. Recorriendo
+    // solo los filtrados, la limpieza de abajo se llevaría por delante los
+    // marcadores de lo oculto y habría que rehacerlos al limpiar el buscador,
+    // que es justo lo que se quitó al reutilizarlos.
     events.forEach((event) => {
       if (!event.location) return;
       const cat = EVENT_CATEGORIES.find((c) => c.key === event.category);
       if (!cat) return;
 
+      const debeVerse = sueltos.has(event.id);
       const id = event.id;
       const { lng, lat } = event.location;
-      const visible = matchesFilter(event, { category: filterCategory, query: searchQuery });
-
-      seen.add(id);
       let entry = markersRef.current.get(id);
 
+      // Un evento oculto —por el filtro o porque vive dentro de un racimo— no
+      // estrena marcador: no hay nada que enseñar todavía. Pero si ya lo tenía
+      // se conserva, porque volver a usarlo cuando reaparezca es más barato
+      // que construirlo otra vez.
+      if (!entry && !debeVerse) return;
+
       if (!entry) {
-        // Raíz: solo tamaño. Mapbox le escribe el transform para colocarla, así
-        // que no puede llevar animaciones que lo pisen.
+        // Raíz: solo tamaño. Mapbox le escribe el transform para colocarla,
+        // así que no puede llevar animaciones que lo pisen.
         const el = document.createElement('div');
         el.style.cssText = 'width: 36px; height: 36px; cursor: pointer;';
 
@@ -356,7 +414,7 @@ export default function MapHome() {
         }
 
         // Se captura el id y no el evento: el objeto cambia con cada cambio de
-        // aforo, y quedarse con una copia vieja aquí abriría la hoja con datos
+        // aforo, y quedarse con una copia vieja abriría la hoja con datos
         // caducados. La posición se le pregunta al marcador, que la tiene al
         // día aunque editen el sitio del evento.
         el.addEventListener('click', (ev) => {
@@ -388,21 +446,126 @@ export default function MapHome() {
       // escondido le sigue costando a Mapbox recalcular su posición en cada
       // fotograma del desplazamiento. Fuera del mapa no cuesta nada, y su
       // elemento y su escuchador siguen vivos para cuando vuelva a entrar.
-      if (visible !== entry.onMap) {
-        if (visible) entry.marker.addTo(map);
+      if (debeVerse !== entry.onMap) {
+        if (debeVerse) entry.marker.addTo(map);
         else entry.marker.remove();
-        entry.onMap = visible;
+        entry.onMap = debeVerse;
       }
     });
 
-    // Lo que ya no está en la lista sí se destruye. Borrar durante un forEach
-    // sobre un Map es seguro.
+    // 3. Racimos.
+    const clavesVivas = new Set<string>();
+
+    plan.clusters.forEach((racimo) => {
+      const miembros = racimo.ids.map((id) => porId.get(id)!).filter(Boolean);
+      if (miembros.length === 0) return;
+      clavesVivas.add(racimo.key);
+
+      // El racimo se coloca en la media de sus miembros, para que caiga encima
+      // de ellos y no en el centro geométrico de una celda vacía.
+      let sumaLng = 0;
+      let sumaLat = 0;
+      let minLng = Infinity;
+      let minLat = Infinity;
+      let maxLng = -Infinity;
+      let maxLat = -Infinity;
+      for (const m of miembros) {
+        const { lng, lat } = m.location!;
+        sumaLng += lng;
+        sumaLat += lat;
+        if (lng < minLng) minLng = lng;
+        if (lat < minLat) minLat = lat;
+        if (lng > maxLng) maxLng = lng;
+        if (lat > maxLat) maxLat = lat;
+      }
+      const centro: [number, number] = [sumaLng / miembros.length, sumaLat / miembros.length];
+      const bounds: [[number, number], [number, number]] = [
+        [minLng, minLat],
+        [maxLng, maxLat],
+      ];
+
+      let entry = clustersRef.current.get(racimo.key);
+
+      if (!entry) {
+        const el = document.createElement('div');
+        el.style.cssText = 'width: 40px; height: 40px; cursor: pointer;';
+        el.setAttribute('role', 'button');
+        el.setAttribute('tabindex', '0');
+
+        const label = document.createElement('div');
+        label.style.cssText = `
+          width: 100%; height: 100%; border-radius: 50%;
+          background: hsl(var(--primary)); color: hsl(var(--primary-foreground));
+          border: 3px solid white; box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+          display: flex; align-items: center; justify-content: center;
+          font-weight: 800; font-size: 13px; line-height: 1;
+        `;
+        el.appendChild(label);
+
+        let marker: MapboxMarker;
+        try {
+          marker = new mapboxgl.Marker({ element: el }).setLngLat(centro).addTo(map);
+        } catch (err) {
+          console.error('Failed to create cluster marker:', racimo.key, err);
+          return;
+        }
+
+        const creada: ClusterEntry = { marker, label, count: 0, bounds };
+        // Lee del propio registro, que se actualiza en cada pasada: así el
+        // encuadre al que lleva es siempre el de sus miembros de ahora.
+        el.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          mapRef.current?.fitBounds(creada.bounds, {
+            padding: 80,
+            // Por encima del umbral de agrupación a propósito: al llegar, los
+            // pines ya salen sueltos. Sin esto, varios eventos en la misma
+            // coordenada formarían un racimo imposible de deshacer.
+            maxZoom: CLUSTER_MAX_ZOOM + 0.5,
+            duration: 600,
+          });
+        });
+
+        entry = creada;
+        clustersRef.current.set(racimo.key, entry);
+      } else {
+        entry.marker.setLngLat(centro);
+        entry.bounds = bounds;
+      }
+
+      if (entry.count !== miembros.length) {
+        entry.count = miembros.length;
+        entry.label.textContent = String(miembros.length);
+        entry.marker.getElement().setAttribute(
+          'aria-label',
+          i18n.t('map.clusterAria', { count: miembros.length }),
+        );
+      }
+    });
+
+    // 4. Fuera lo que ya no toca. Borrar durante un forEach sobre un Map es
+    //    seguro.
     markersRef.current.forEach((entry, id) => {
-      if (seen.has(id)) return;
+      if (plan.cached.has(id)) return;
       entry.marker.remove();
       markersRef.current.delete(id);
     });
-  }, [events, filterCategory, searchQuery, mapLoaded, setSelectedEvent]);
+    clustersRef.current.forEach((entry, key) => {
+      if (clavesVivas.has(key)) return;
+      entry.marker.remove();
+      clustersRef.current.delete(key);
+    });
+  }, [events, filterCategory, searchQuery, setSelectedEvent]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapLoaded) return;
+    syncMarkers();
+    // La agrupación es en espacio de pantalla, así que depende del zoom y del
+    // encuadre. `moveend` y no `move`: rehacerlo en cada fotograma del
+    // desplazamiento costaría más que lo que ahorra.
+    map.on('moveend', syncMarkers);
+    return () => { map.off('moveend', syncMarkers); };
+  }, [syncMarkers, mapLoaded]);
 
   // Al desmontar: el mapa se destruye en su propio efecto y se lleva por
   // delante el DOM de los marcadores, pero el caché hay que vaciarlo a mano
@@ -410,6 +573,8 @@ export default function MapHome() {
   useEffect(() => () => {
     markersRef.current.forEach((e) => e.marker.remove());
     markersRef.current.clear();
+    clustersRef.current.forEach((c) => c.marker.remove());
+    clustersRef.current.clear();
     markersMapRef.current = null;
   }, []);
 
