@@ -85,6 +85,8 @@ export default function Friends() {
   // Friends pagination
   const [friendsPage, setFriendsPage] = useState(0);
   const [friendsHasMore, setFriendsHasMore] = useState(false);
+  /** Cuántos amigos hay, no cuántos se han cargado: lo devuelve la RPC. */
+  const [friendsTotal, setFriendsTotal] = useState(0);
   const [loadingMoreFriends, setLoadingMoreFriends] = useState(false);
   const FRIENDS_PAGE_SIZE = 15;
   const LEADER_PAGE_SIZE = 20;
@@ -93,62 +95,53 @@ export default function Friends() {
     if (!user) return;
     if (page === 0) setLoading(true); else setLoadingMoreFriends(true);
     try {
-      const { data: accepted } = await supabase
-        .from('friendships')
-        .select('requester_id, addressee_id')
-        .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
-        .eq('status', 'accepted');
-
-      if (accepted && accepted.length > 0) {
-        const friendIds = accepted.map((f) =>
-          f.requester_id === user.id ? f.addressee_id : f.requester_id
-        );
-        const { data: profiles } = await supabase
-          .from('public_profiles')
-          .select('id, name, avatar_url, major')
-          .in('id', friendIds)
-          .range(page * FRIENDS_PAGE_SIZE, (page + 1) * FRIENDS_PAGE_SIZE - 1);
-        if (profiles) {
-          if (page === 0) setFriends(profiles); else setFriends((prev) => [...prev, ...profiles]);
-          setFriendsHasMore(profiles.length === FRIENDS_PAGE_SIZE);
-        }
-      } else {
-        setFriends([]);
-        setFriendsHasMore(false);
+      // Una sola consulta, paginada en el servidor.
+      //
+      // Antes se traían TODAS las amistades y después se pedían los perfiles
+      // con `.in('id', [...])`, metiendo la lista entera de uuid en la URL.
+      // Unos 37 bytes por uuid contra un límite de ~8 kB: pasados unos 200
+      // amigos la petición se rechazaba con 414 y la pestaña quedaba vacía.
+      //
+      // La RPC además ordena, que `.range()` sin `.order()` podía repetir y
+      // saltarse filas entre páginas, y devuelve el total de verdad.
+      const { data, error } = await supabase.rpc('friends_page', {
+        _limit: FRIENDS_PAGE_SIZE,
+        _offset: page * FRIENDS_PAGE_SIZE,
+      });
+      // Antes esto fallaba en silencio: una caída de red se veía igual que
+      // "no tienes amigos todavía".
+      if (error) {
+        toast({ title: i18n.t('errors.friendsLoad'), variant: 'destructive' });
+        return;
       }
 
-      if (page === 0) {
-        const { data: pending } = await supabase
-          .from('friendships')
-          .select('id, requester_id')
-          .eq('addressee_id', user.id)
-          .eq('status', 'pending');
+      const rows = data ?? [];
+      const perfiles = rows.map(({ id, name, avatar_url, major }) => ({ id, name, avatar_url, major }));
+      if (page === 0) setFriends(perfiles); else setFriends((prev) => [...prev, ...perfiles]);
+      setFriendsHasMore(rows.length === FRIENDS_PAGE_SIZE);
+      // El total viaja en cada fila. Una página vacía más allá del final no
+      // dice nada del total, así que solo se pisa si hay filas o si es la
+      // primera página (donde vacío sí significa que no hay ninguno).
+      if (rows.length > 0) setFriendsTotal(Number(rows[0].total));
+      else if (page === 0) setFriendsTotal(0);
 
-        if (pending && pending.length > 0) {
-          const requesterIds = pending.map((r) => r.requester_id);
-          const { data: profiles } = await supabase
-            .from('public_profiles')
-            .select('id, name, avatar_url, major')
-            .in('id', requesterIds);
-          if (profiles) {
-            setPendingRequests(
-              pending.map((r) => ({
-                friendshipId: r.id,
-                profile: profiles.find((p) => p.id === r.requester_id) ?? {
-                  id: r.requester_id,
-                  name: null,
-                  avatar_url: null,
-                  major: null,
-                },
-              }))
-            );
-          }
+      if (page === 0) {
+        const { data: pending, error: pendingError } = await supabase.rpc('friend_requests_incoming');
+        // Se asigna también cuando viene vacío: si no, rechazar la última
+        // solicitud dejaba la anterior pintada hasta recargar la pantalla.
+        if (!pendingError) {
+          setPendingRequests(
+            (pending ?? []).map((r) => ({
+              friendshipId: r.friendship_id,
+              profile: { id: r.id, name: r.name, avatar_url: r.avatar_url, major: r.major },
+            })),
+          );
         }
       }
     } finally {
       if (page === 0) setLoading(false); else setLoadingMoreFriends(false);
     }
-  }, [user]);
+  }, [user, toast]);
 
   useEffect(() => {
     loadFriends(0);
@@ -215,6 +208,9 @@ export default function Friends() {
         .from('public_profiles')
         .select('id, name, avatar_url, reputation')
         .order('reputation', { ascending: false })
+        // Desempate: sin él, dos personas con la misma reputación podían
+        // intercambiarse entre páginas y salir dos veces, o ninguna.
+        .order('id', { ascending: true })
         .range(offset, offset + LEADER_PAGE_SIZE - 1);
       if (error) {
         toast({ title: i18n.t('errors.leaderboardLoad'), variant: 'destructive' });
@@ -510,7 +506,7 @@ export default function Friends() {
 
           <div className="space-y-2">
             <h2 className="text-sm font-semibold text-muted-foreground">
-              {t('friends.myFriends')} ({friends.length})
+              {t('friends.myFriends')} ({friendsTotal})
             </h2>
             {loading ? (
               [1, 2, 3].map((i) => (

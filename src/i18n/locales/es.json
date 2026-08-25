@@ -486,6 +486,7 @@
     "eventsLoad": "No se pudieron cargar los eventos",
     "messagesLoad": "No se pudieron cargar los mensajes",
     "groupsLoad": "No se pudieron cargar tus grupos",
+    "friendsLoad": "No se pudieron cargar tus amigos",
     "leaderboardLoad": "No se pudo cargar la tabla",
     "searchFailed": "La búsqueda falló. Inténtalo otra vez."
   }

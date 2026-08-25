@@ -486,6 +486,7 @@
     "eventsLoad": "Couldn't load events",
     "messagesLoad": "Couldn't load messages",
     "groupsLoad": "Couldn't load your groups",
+    "friendsLoad": "Couldn't load your friends",
     "leaderboardLoad": "Couldn't load the leaderboard",
     "searchFailed": "Search failed. Try again."
   }

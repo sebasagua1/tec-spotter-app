@@ -588,6 +588,26 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: { event_id: string; pending: number }[]
       }
+      friends_page: {
+        Args: { _limit?: number; _offset?: number }
+        Returns: {
+          id: string
+          name: string | null
+          avatar_url: string | null
+          major: string | null
+          total: number
+        }[]
+      }
+      friend_requests_incoming: {
+        Args: { _limit?: number }
+        Returns: {
+          friendship_id: string
+          id: string
+          name: string | null
+          avatar_url: string | null
+          major: string | null
+        }[]
+      }
       unread_by_group: {
         Args: Record<PropertyKey, never>
         Returns: { group_id: string; group_name: string; unread: number }[]
