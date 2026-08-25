@@ -93,6 +93,7 @@
     "metaDesc": "Tu perfil de {{app}}: reputación, puntos, insignias y estadísticas.",
     "adjustPhoto": "Ajusta tu foto",
     "adjustPhotoHint": "Arrastra para mover y pellizca o usa la barra para acercar",
+    "preparingPhoto": "Preparando la foto…",
     "usePhoto": "Usar esta foto",
     "zoom": "Zoom",
     "photoError": "No se pudo procesar la imagen. Prueba con otra.",

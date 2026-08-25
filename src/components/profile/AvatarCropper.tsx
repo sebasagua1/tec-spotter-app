@@ -1,12 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Cropper, { type Area } from 'react-easy-crop';
 import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
-/** Lado del avatar que se sube. Se muestra como mucho a 96px, así que 512
- *  sobra para pantallas retina y deja el archivo en unos pocos kB. */
-const OUTPUT_SIZE = 512;
+import { downscaleForCrop, cropToSquare, MAX_ZOOM } from '@/lib/imageDownscale';
 
 interface Props {
   file: File;
@@ -18,50 +15,71 @@ interface Props {
  * Recorte cuadrado antes de subir. Sin esto la foto se guardaba entera y el
  * `object-cover` del avatar decidía por su cuenta qué parte enseñar, que casi
  * nunca era la cara.
+ *
+ * La foto se reduce ANTES de enseñarla, y lo reducido es también lo que se
+ * recorta después. Antes se trabajaba con el original en los dos sitios a la
+ * vez —la vista previa y el canvas del recorte—, y con una foto de un móvil
+ * moderno eso son cientos de MB descomprimidos: el webview de iOS cerraba la
+ * app. Ver lib/imageDownscale.ts.
  */
 export function AvatarCropper({ file, onCancel, onCropped }: Props) {
   const { t } = useTranslation();
   const [src, setSrc] = useState<string | null>(null);
+  const [preparing, setPreparing] = useState(true);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [area, setArea] = useState<Area | null>(null);
   const [working, setWorking] = useState(false);
   const [failed, setFailed] = useState(false);
+  // Lo que de verdad se recorta. El recortador mide sobre esta misma imagen,
+  // así que sus coordenadas ya vienen en este espacio: no hay conversión que
+  // pueda descuadrarse.
+  const sourceRef = useRef<Blob | null>(null);
 
   useEffect(() => {
-    const url = URL.createObjectURL(file);
-    setSrc(url);
-    // Sin esto cada foto elegida deja su blob colgado en memoria.
-    return () => URL.revokeObjectURL(url);
+    let cancelled = false;
+    let url: string | null = null;
+
+    // Se suelta la anterior antes de nada: si no, entre la limpieza de este
+    // efecto y la llegada de la nueva, el recortador se quedaba apuntando a
+    // una URL ya revocada.
+    setSrc(null);
+    setPreparing(true);
+    setFailed(false);
+    setArea(null);
+    setZoom(1);
+    setCrop({ x: 0, y: 0 });
+
+    downscaleForCrop(file)
+      .then((reduced) => {
+        if (cancelled) return;
+        sourceRef.current = reduced;
+        // Sin esto cada foto elegida deja su blob colgado en memoria.
+        url = URL.createObjectURL(reduced);
+        setSrc(url);
+        setPreparing(false);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setFailed(true);
+        setPreparing(false);
+      });
+
+    return () => {
+      cancelled = true;
+      sourceRef.current = null;
+      if (url) URL.revokeObjectURL(url);
+    };
   }, [file]);
 
   const onCropComplete = useCallback((_: Area, pixels: Area) => setArea(pixels), []);
 
   const handleConfirm = async () => {
-    if (!src || !area) return;
+    const source = sourceRef.current;
+    if (!source || !area) return;
     setWorking(true);
     try {
-      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-        const el = new Image();
-        el.onload = () => resolve(el);
-        el.onerror = () => reject(new Error('DECODE_FAILED'));
-        el.src = src;
-      });
-
-      const canvas = document.createElement('canvas');
-      canvas.width = OUTPUT_SIZE;
-      canvas.height = OUTPUT_SIZE;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) throw new Error('NO_CANVAS');
-      ctx.drawImage(img, area.x, area.y, area.width, area.height, 0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
-
-      // Siempre JPEG: normaliza HEIC y PNG enormes a un archivo pequeño y de
-      // tipo conocido, así que ni el peso ni el formato de origen importan.
-      const blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, 'image/jpeg', 0.9)
-      );
-      if (!blob) throw new Error('ENCODE_FAILED');
-
+      const blob = await cropToSquare(source, area);
       onCropped(new File([blob], 'avatar.jpg', { type: 'image/jpeg' }));
     } catch {
       setFailed(true);
@@ -85,10 +103,19 @@ export function AvatarCropper({ file, onCancel, onCropped }: Props) {
             aspect={1}
             cropShape="round"
             showGrid={false}
+            maxZoom={MAX_ZOOM}
             onCropChange={setCrop}
             onZoomChange={setZoom}
             onCropComplete={onCropComplete}
           />
+        )}
+        {/* Reducir una foto grande lleva un momento: sin esto la pantalla se
+            queda en negro y parece que se ha colgado. */}
+        {preparing && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+            <Loader2 aria-hidden="true" className="w-6 h-6 animate-spin text-background/80" />
+            <p className="text-xs text-background/70">{t('profile.preparingPhoto')}</p>
+          </div>
         )}
       </div>
 
@@ -101,19 +128,24 @@ export function AvatarCropper({ file, onCancel, onCropped }: Props) {
         <input
           type="range"
           min={1}
-          max={3}
+          max={MAX_ZOOM}
           step={0.01}
           value={zoom}
           onChange={(e) => setZoom(Number(e.target.value))}
           aria-label={t('profile.zoom')}
-          className="w-full accent-primary"
+          disabled={preparing}
+          className="w-full accent-primary disabled:opacity-40"
         />
 
         <div className="flex gap-3">
           <Button variant="outline" onClick={onCancel} disabled={working} className="h-12 rounded-xl px-6">
             {t('common.cancel')}
           </Button>
-          <Button onClick={handleConfirm} disabled={working || !area} className="flex-1 h-12 rounded-xl font-bold">
+          <Button
+            onClick={handleConfirm}
+            disabled={working || preparing || !area}
+            className="flex-1 h-12 rounded-xl font-bold"
+          >
             {working ? <Loader2 className="w-4 h-4 animate-spin" /> : t('profile.usePhoto')}
           </Button>
         </div>

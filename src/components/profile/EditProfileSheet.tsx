@@ -53,8 +53,12 @@ export function EditProfileSheet({ profile, onClose }: Props) {
       toast({ title: t('profile.photoNotImage'), variant: 'destructive' });
       return;
     }
-    // Tope solo sobre el original: lo que se sube es siempre el recorte de
-    // 512px reencodado, que pesa unos pocos kB venga de donde venga.
+    // Descarta pronto un fichero absurdo. Ojo: esto NO acota la memoria, que
+    // es lo que cerraba la app — un JPEG de 72 kB puede descomprimirse a 47 MB,
+    // así que el peso del fichero no predice nada. De eso se encarga la
+    // reducción previa en lib/imageDownscale.ts.
+    // Lo que se sube es siempre el recorte de 512px reencodado, que pesa unos
+    // pocos kB venga de donde venga.
     if (file.size > MAX_PHOTO_BYTES) {
       toast({ title: t('profile.photoTooLarge'), variant: 'destructive' });
       return;

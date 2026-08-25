@@ -93,6 +93,7 @@
     "metaDesc": "Your {{app}} profile: reputation, points, badges and stats.",
     "adjustPhoto": "Adjust your photo",
     "adjustPhotoHint": "Drag to move, pinch or use the slider to zoom",
+    "preparingPhoto": "Preparing photo…",
     "usePhoto": "Use this photo",
     "zoom": "Zoom",
     "photoError": "Couldn't process the image. Try another one.",
