@@ -14,7 +14,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Clock, MapPin, Users, X, Loader2, Pencil } from 'lucide-react';
+import { Clock, MapPin, Users, X, Loader2, Pencil, Star } from 'lucide-react';
 import { CATEGORY_ICONS } from '@/lib/categoryIcons';
 import { EditEventSheet } from '@/components/map/EditEventSheet';
 import { useAuthStore } from '@/stores/authStore';
@@ -640,10 +640,20 @@ export function EventBottomSheet({ event, onClose }: Props) {
                   onClick={() => handleRate(star)}
                   onMouseEnter={() => !userRating && setHoverRating(star)}
                   onMouseLeave={() => setHoverRating(null)}
-                  className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] text-2xl transition-transform active:scale-110 disabled:cursor-default"
-                  aria-label={`${star} star${star > 1 ? 's' : ''}`}
+                  className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] transition-transform active:scale-110 disabled:cursor-default"
+                  aria-label={star === 1 ? t('event.rateStarOne') : t('event.rateStarOther', { count: star })}
                 >
-                  {star <= (hoverRating ?? userRating ?? 0) ? '⭐' : '☆'}
+                  {/* El icono es decorativo: lo que anuncia el lector de
+                      pantalla es el aria-label del botón. */}
+                  <Star
+                    aria-hidden="true"
+                    className={cn(
+                      'w-7 h-7 transition-colors',
+                      star <= (hoverRating ?? userRating ?? 0)
+                        ? 'fill-warning text-warning'
+                        : 'fill-none text-muted-foreground'
+                    )}
+                  />
                 </button>
               ))}
             </div>

@@ -205,6 +205,8 @@
     "cancelEventConfirm": "Cancel this event?",
     "cancelEventConfirmDesc": "This will hide the event for everyone on the map.",
     "cancelEventFailed": "The event could not be cancelled. Reload and try again.",
+    "rateStarOne": "1 star",
+    "rateStarOther": "{{count}} stars",
     "rateEvent": "How was it? Rate this event",
     "yourRating": "Your rating",
     "ratingSubmitted": "Thanks for rating! +5 pts",

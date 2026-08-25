@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Search, UserPlus, Users, MessageCircle, Check, X as XIcon, Plus, Trophy } from 'lucide-react';
+import { Search, UserPlus, Users, MessageCircle, Check, X as XIcon, Plus, Trophy, Medal } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -352,10 +352,23 @@ export default function Friends() {
   };
 
   const rankMedal = (i: number) => {
-    if (i === 0) return '🥇';
-    if (i === 1) return '🥈';
-    if (i === 2) return '🥉';
-    return `${i + 1}.`;
+    if (i > 2) {
+      return <span className="text-sm font-bold text-muted-foreground">{i + 1}.</span>;
+    }
+    // Mismos tonos que los avatares de al lado, para que el podio se lea como
+    // una sola pieza y no como dos criterios de color distintos.
+    const tono =
+      i === 0 ? 'text-yellow-600 dark:text-yellow-300' :
+      i === 1 ? 'text-slate-500 dark:text-slate-200' :
+                'text-orange-600 dark:text-orange-300';
+    return (
+      <>
+        {/* El emoji anunciaba "medalla de oro" al lector de pantalla; un SVG
+            no dice nada, así que la posición se expone aparte. */}
+        <span className="sr-only">{i + 1}</span>
+        <Medal aria-hidden="true" className={cn('w-5 h-5', tono)} />
+      </>
+    );
   };
 
   return (
@@ -649,7 +662,7 @@ export default function Friends() {
                   i < 3 && 'border border-primary/20'
                 )}
               >
-                <span className="w-7 text-center text-sm font-bold text-muted-foreground shrink-0">
+                <span className="w-7 shrink-0 flex items-center justify-center">
                   {rankMedal(i)}
                 </span>
                 <UserAvatar

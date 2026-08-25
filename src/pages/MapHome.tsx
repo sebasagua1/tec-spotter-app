@@ -427,7 +427,7 @@ export default function MapHome() {
       {!mapboxToken && (
         <div className="absolute inset-0 bg-muted flex items-center justify-center">
           <div className="text-center p-6 space-y-3">
-            <div className="text-5xl">🗺️</div>
+            <MapIcon aria-hidden="true" className="w-12 h-12 mx-auto text-muted-foreground" />
             <h2 className="text-lg font-bold text-foreground">Map Preview</h2>
             <p className="text-sm text-muted-foreground max-w-xs">
               Add your Mapbox token as VITE_MAPBOX_TOKEN to see the interactive map.
