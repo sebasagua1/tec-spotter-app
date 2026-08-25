@@ -91,6 +91,7 @@ export type Database = {
           event_id: string
           id: string
           joined_at: string
+          rating: number | null
           status: string
           user_id: string
         }
@@ -101,6 +102,7 @@ export type Database = {
           event_id: string
           id?: string
           joined_at?: string
+          rating?: number | null
           status?: string
           user_id: string
         }
@@ -111,6 +113,7 @@ export type Database = {
           event_id?: string
           id?: string
           joined_at?: string
+          rating?: number | null
           status?: string
           user_id?: string
         }
@@ -542,6 +545,10 @@ export type Database = {
       is_blocked: {
         Args: { a: string; b: string }
         Returns: boolean
+      }
+      rate_event: {
+        Args: { p_event_id: string; p_rating: number; p_user_id: string }
+        Returns: undefined
       }
       is_event_creator: {
         Args: { _event_id: string; _user_id: string }

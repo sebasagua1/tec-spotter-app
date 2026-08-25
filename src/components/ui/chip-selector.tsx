@@ -1,8 +1,10 @@
 import { cn } from '@/lib/utils';
 
 interface Props {
-  options: string[];
-  selected: string[];
+  // `readonly`: las listas de constants.ts son `as const` y solo se recorren
+  // aquí. Pedirlas mutables obligaba a copiarlas en cada llamada.
+  options: readonly string[];
+  selected: readonly string[];
   onToggle: (item: string) => void;
   renderLabel?: (item: string) => string;
 }

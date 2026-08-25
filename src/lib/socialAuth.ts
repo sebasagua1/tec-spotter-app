@@ -59,5 +59,12 @@ export async function signInWithGoogleNative(): Promise<void> {
     provider: 'google',
     options: { scopes: ['email', 'profile'] },
   });
+  // El plugin tiene dos formas de respuesta: la "online" trae idToken y la
+  // "offline" solo un serverAuthCode. Pedimos la primera, pero el tipo
+  // contempla ambas y sin distinguirlas `result.idToken` no existe. Además
+  // el mensaje concreto ahorra adivinar si algún día llega la otra.
+  if (result.responseType !== 'online') {
+    throw new Error('Google devolvió un código de servidor, no un idToken');
+  }
   await exchangeIdToken('google', result.idToken);
 }

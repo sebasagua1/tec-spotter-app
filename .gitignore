@@ -44,3 +44,6 @@ pnpm-lock.yaml
 *.njsproj
 *.sln
 *.sw?
+
+# Caché incremental de `tsc -b` (la usa npm run build)
+*.tsbuildinfo
