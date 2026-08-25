@@ -97,9 +97,11 @@ export function EditProfileSheet({ profile, onClose }: Props) {
     let avatarUrl = profile.avatar_url ?? null;
     if (avatarFile) {
       setUploadingAvatar(true);
-      // Extensión fija: el recorte sale siempre en JPEG, y así no se acumulan
-      // avatar.png, avatar.heic... que nadie puede borrar (no hay política de
-      // DELETE en el bucket).
+      // Extensión fija: el recorte sale siempre en JPEG, así que cada subida
+      // pisa la anterior en vez de dejar avatar.png, avatar.heic... sueltos.
+      // (El motivo que ponía antes —"no hay política de DELETE en el bucket"—
+      //  era falso: "Users can delete own avatar" existe desde la migración
+      //  20260505192643. La decisión sigue valiendo; el motivo no.)
       const path = `${profile.id}/avatar.jpg`;
       const { error: uploadError } = await supabase.storage
         .from('avatars')
