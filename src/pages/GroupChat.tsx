@@ -318,7 +318,18 @@ export default function GroupChat() {
 
   const handleLeaveGroup = async () => {
     if (!groupId || !user) return;
-    await supabase.from('group_members').delete().eq('group_id', groupId).eq('user_id', user.id);
+    const { error } = await supabase
+      .from('group_members')
+      .delete()
+      .eq('group_id', groupId)
+      .eq('user_id', user.id);
+    // Antes se navegaba pase lo que pase. Si el borrado fallaba, la app te
+    // decía que habías salido, te sacaba a la lista, y seguías dentro:
+    // recibiendo mensajes y avisos de un grupo que creías haber dejado.
+    if (error) {
+      toast({ title: t('errors.leaveGroup'), description: error.message, variant: 'destructive' });
+      return;
+    }
     navigate('/friends', { state: { tab: 'groups' } });
   };
 
