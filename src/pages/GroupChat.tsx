@@ -32,6 +32,9 @@ import { ModerationMenu } from '@/components/moderation/ModerationMenu';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 
+/** Mensajes por tanda. Suficiente para llenar la pantalla y poco que pintar. */
+const MESSAGE_PAGE = 40;
+
 interface Message {
   id: string;
   content: string;
@@ -53,6 +56,18 @@ export default function GroupChat() {
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const [hasOlder, setHasOlder] = useState(false);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+  /**
+   * Nombre de cada remitente, cacheado.
+   *
+   * Sin esto, cada mensaje que llegaba por tiempo real disparaba una consulta
+   * para preguntar un nombre que ya estaba en pantalla. En un chat animado eso
+   * es una petición por mensaje.
+   */
+  const nameCacheRef = useRef<Map<string, string>>(new Map());
+  /** Para saber si la lista creció por abajo (mensaje nuevo) o por arriba. */
+  const lastIdRef = useRef<string | null>(null);
 
   // Members sheet state
   const [membersOpen, setMembersOpen] = useState(false);
@@ -89,48 +104,122 @@ export default function GroupChat() {
     msgs: { id: string; content: string; created_at: string; sender_id: string }[]
   ): Promise<Message[]> => {
     if (msgs.length === 0) return [];
-    const senderIds = [...new Set(msgs.map((m) => m.sender_id))];
-    const { data: profiles } = await supabase
-      .from('public_profiles')
-      .select('id, name')
-      .in('id', senderIds);
-    const nameMap = Object.fromEntries((profiles ?? []).map((p) => [p.id, p.name ?? '?']));
-    return msgs.map((m) => ({ ...m, senderName: nameMap[m.sender_id] ?? '?' }));
+    const cache = nameCacheRef.current;
+    const faltan = [...new Set(msgs.map((m) => m.sender_id))].filter((id) => !cache.has(id));
+
+    if (faltan.length > 0) {
+      const { data: profiles } = await supabase
+        .from('public_profiles')
+        .select('id, name')
+        .in('id', faltan);
+      (profiles ?? []).forEach((pr) => { if (pr.id) cache.set(pr.id, pr.name ?? '?'); });
+      // Quien no vuelve —bloqueado, o de otra institución— se marca igualmente:
+      // si no, se volvería a preguntar por él con cada mensaje suyo.
+      faltan.forEach((id) => { if (!cache.has(id)) cache.set(id, '?'); });
+    }
+
+    return msgs.map((m) => ({ ...m, senderName: cache.get(m.sender_id) ?? '?' }));
   };
 
+  // Los ÚLTIMOS mensajes, no todos.
+  //
+  // Antes se pedía el chat entero ordenado de más viejo a más nuevo y sin
+  // límite. Supabase corta en 1.000 filas, así que al pasar de ahí devolvía
+  // los 1.000 MÁS VIEJOS y los recientes dejaban de verse: el fallo ocurría
+  // justo al revés de como uno lo esperaría, y en los chats más usados.
+  //
+  // Se piden del más nuevo hacia atrás —que es lo que sirve el índice
+  // (group_id, created_at DESC)— y se le da la vuelta para pintarlos.
   useEffect(() => {
     if (!groupId) return;
+    let cancelled = false;
     (async () => {
       const { data, error } = await supabase
         .from('messages')
         .select('id, content, created_at, sender_id')
         .eq('group_id', groupId)
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: false })
+        .limit(MESSAGE_PAGE);
+      if (cancelled) return;
       // Un chat vacío por error de red es indistinguible de uno sin mensajes.
       if (error) {
         toast({ title: i18n.t('errors.messagesLoad'), variant: 'destructive' });
         return;
       }
-      setMessages(await enrichMessages(data ?? []));
+      const filas = (data ?? []).slice().reverse();
+      const enriquecidos = await enrichMessages(filas);
+      if (cancelled) return;
+      // Al cambiar de chat se olvida por dónde iba el desplazamiento.
+      lastIdRef.current = null;
+      setMessages(enriquecidos);
+      setHasOlder((data?.length ?? 0) === MESSAGE_PAGE);
     })();
+    return () => { cancelled = true; };
   }, [groupId, toast]);
 
+  /**
+   * Los anteriores a los que ya hay.
+   *
+   * El cursor va sobre `created_at`. Dos mensajes solo empatarían si se
+   * insertaran en la misma transacción, y aquí cada uno es una acción distinta
+   * de una persona. Aun así se descartan duplicados por id al unir.
+   */
+  const loadOlder = async () => {
+    if (!groupId || loadingOlder || messages.length === 0) return;
+    setLoadingOlder(true);
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('id, content, created_at, sender_id')
+        .eq('group_id', groupId)
+        .lt('created_at', messages[0].created_at)
+        .order('created_at', { ascending: false })
+        .limit(MESSAGE_PAGE);
+      if (error) {
+        toast({ title: i18n.t('errors.messagesLoad'), variant: 'destructive' });
+        return;
+      }
+      setHasOlder((data?.length ?? 0) === MESSAGE_PAGE);
+      const filas = (data ?? []).slice().reverse();
+      if (filas.length === 0) return;
+      const enriquecidos = await enrichMessages(filas);
+      setMessages((prev) => {
+        const vistos = new Set(prev.map((m) => m.id));
+        return [...enriquecidos.filter((m) => !vistos.has(m.id)), ...prev];
+      });
+    } finally {
+      setLoadingOlder(false);
+    }
+  };
+
+  // Bajar del todo solo cuando la lista crece por ABAJO. Al cargar mensajes
+  // anteriores crece por arriba, y saltar al final ahí tiraría de la pantalla
+  // justo a quien está leyendo hacia atrás.
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const ultimo = messages[messages.length - 1]?.id ?? null;
+    if (ultimo === lastIdRef.current) return;
+    const esLaPrimera = lastIdRef.current === null;
+    lastIdRef.current = ultimo;
+    bottomRef.current?.scrollIntoView({ behavior: esLaPrimera ? 'auto' : 'smooth' });
   }, [messages]);
 
   // Estar en el chat cuenta como haberlo leído, también si llega algo mientras
   // lo tienes abierto. Marcar leído es un UPDATE sobre group_members, que no
   // emite realtime, así que hay que pedir el recuento a mano después.
+  //
+  // Depende del id del último mensaje y no de cuántos hay: con la paginación,
+  // cargar mensajes anteriores cambia la longitud sin que haya nada nuevo que
+  // marcar, y disparaba una RPC de balde.
+  const newestId = messages[messages.length - 1]?.id;
   useEffect(() => {
-    if (!groupId || messages.length === 0) return;
+    if (!groupId || !newestId) return;
     let cancelled = false;
     (async () => {
       await supabase.rpc('mark_group_read', { _group_id: groupId });
       if (!cancelled) useNotificationStore.getState().refresh();
     })();
     return () => { cancelled = true; };
-  }, [groupId, messages.length]);
+  }, [groupId, newestId]);
 
   useEffect(() => {
     if (!groupId) return;
@@ -369,6 +458,15 @@ export default function GroupChat() {
 
       {/* Messages */}
       <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-3">
+        {hasOlder && (
+          <button
+            onClick={loadOlder}
+            disabled={loadingOlder}
+            className="w-full min-h-[44px] text-xs font-semibold text-muted-foreground disabled:opacity-50"
+          >
+            {loadingOlder ? t('common.loading') : t('groups.loadOlder')}
+          </button>
+        )}
         {messages.length === 0 && (
           <p className="text-center text-sm text-muted-foreground py-12">{t('groups.noMessages')}</p>
         )}

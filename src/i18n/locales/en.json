@@ -147,6 +147,7 @@
     "created": "Group created!",
     "messagePh": "Message…",
     "noMessages": "No messages yet. Say hi!",
+    "loadOlder": "View earlier messages",
     "send": "Send",
     "backToGroups": "Back",
     "directMessage": "Direct Message",
