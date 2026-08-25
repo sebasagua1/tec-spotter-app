@@ -380,7 +380,8 @@
     "notAMember": "No perteneces a este grupo.",
     "cannotInviteToDm": "Un mensaje directo es solo entre dos personas.",
     "groupNotFound": "Este grupo ya no existe.",
-    "invalidTarget": "No se puede hacer con esta persona."
+    "invalidTarget": "No se puede hacer con esta persona.",
+    "eventRateLimit": "Has creado demasiados eventos seguidos. Prueba de nuevo dentro de un rato."
   },
   "legal": {
     "privacy": "Aviso de privacidad",

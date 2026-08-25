@@ -14,6 +14,7 @@ import { combineDateTime, toTimeValue } from '@/lib/datetime';
 import { EVENT_CATEGORIES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { rpcMessage } from '@/lib/rpcErrors';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
 
@@ -118,7 +119,9 @@ export function CreateEventSheet({ onClose, onPickLocation, pickedLocation, onCl
     });
 
     if (error) {
-      toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
+      // El trigger de límite de creación lanza EVENT_RATE_LIMIT; sin pasar por
+      // rpcMessage el usuario vería el texto crudo de Postgres.
+      toast({ title: t('common.error'), description: rpcMessage(error.message, t), variant: 'destructive' });
     } else {
       toast({ title: t('create.created'), description: t('create.createdDesc') });
       onClose();

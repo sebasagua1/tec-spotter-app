@@ -380,7 +380,8 @@
     "notAMember": "You're not in this group.",
     "cannotInviteToDm": "A direct message is just between two people.",
     "groupNotFound": "This group no longer exists.",
-    "invalidTarget": "That's not possible with this person."
+    "invalidTarget": "That's not possible with this person.",
+    "eventRateLimit": "You've created too many events in a row. Try again in a little while."
   },
   "legal": {
     "privacy": "Privacy Policy",

@@ -13,6 +13,7 @@ const RPC_ERROR_KEYS: Record<string, string> = {
   CANNOT_INVITE_TO_DM: 'rpcErrors.cannotInviteToDm',
   GROUP_NOT_FOUND: 'rpcErrors.groupNotFound',
   INVALID_TARGET: 'rpcErrors.invalidTarget',
+  EVENT_RATE_LIMIT: 'rpcErrors.eventRateLimit',
 };
 
 export function rpcMessage(raw: string | undefined, t: TFunction): string {
