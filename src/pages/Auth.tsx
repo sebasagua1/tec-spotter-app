@@ -96,7 +96,10 @@ export default function Auth() {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: window.location.origin },
+          // Mismo motivo que el redirectTo del "olvidé mi contraseña" de
+          // arriba: dentro del webview el origen es capacitor://localhost, y
+          // el enlace del correo se abre en el navegador del sistema.
+          options: { emailRedirectTo: SITE_URL },
         });
         if (error) throw error;
         toast({ title: t('auth.checkEmail'), description: t('auth.verifyLink') });
