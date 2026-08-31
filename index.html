@@ -7,17 +7,10 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="theme-color" content="#003DA5" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#141734" media="(prefers-color-scheme: dark)" />
-    <script>
-      // Enciende el modo oscuro ANTES del primer pintado. Tiene que ser un
-      // script en línea: los módulos van diferidos y para cuando corren ya
-      // se ha visto el fondo claro, que de noche es un fogonazo en la cara.
-      // El resto (cambios en vivo) está en src/lib/theme.ts.
-      try {
-        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-          document.documentElement.classList.add('dark');
-        }
-      } catch (e) {}
-    </script>
+    <!-- Modo oscuro antes del primer pintado. Va en un archivo aparte y no
+         en línea porque la CSP de vercel.json bloquea los scripts en línea;
+         el porqué completo está dentro de public/theme-init.js. -->
+    <script src="/theme-init.js"></script>
     <title>{{APP_NAME}} — Campus Social App</title>
     <meta name="description" content="{{APP_NAME}}: descubre, crea y únete a actividades reales en tu campus.">
     
