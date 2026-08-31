@@ -7,6 +7,11 @@
   <title>Términos de Uso — Always Connected</title>
   <style>
     :root {
+      /* Estas paginas estan disenadas solo en claro. Sin declararlo, el modo
+         oscuro automatico del navegador oscurecia el fondo y los colores
+         heredados por su cuenta. */
+      color-scheme: light;
+
       --brand: #003DA5;
       --brand-ink: #002a73;
       --bg: #f5f7fa;
@@ -41,7 +46,11 @@
       margin-bottom: 16px;
     }
     header.hero h1 { margin: 0 0 6px; font-size: 28px; letter-spacing: -.02em; }
-    header.hero p { margin: 0; opacity: .9; font-size: 15px; }
+    /* `color: inherit` no sobra: la regla `p, li { color: var(--ink) }` de mas
+       abajo tambien casa con este <p> y le gana al blanco que HEREDA de
+       .hero, porque cualquier regla directa vence a la herencia. Sin esto el
+       subtitulo sale azul oscuro sobre azul oscuro. */
+    header.hero p { margin: 0; opacity: .9; font-size: 15px; color: inherit; }
     main {
       background: var(--card);
       border: 1px solid var(--border);
