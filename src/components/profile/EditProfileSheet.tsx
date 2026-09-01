@@ -7,12 +7,13 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
-import { LANGUAGE_OPTIONS } from '@/lib/constants';
+import { LANGUAGE_OPTIONS, SEMESTER_OPTIONS } from '@/lib/constants';
 import { ChipSelector } from '@/components/ui/chip-selector';
 import { ResidencePicker } from '@/components/ui/residence-picker';
 import { InterestPicker } from '@/components/ui/interest-picker';
 import { OriginPicker } from '@/components/ui/origin-picker';
 import { AvatarCropper } from '@/components/profile/AvatarCropper';
+import { WheelColumn, WHEEL_ITEM_HEIGHT } from '@/components/ui/wheel-column';
 import type { Database } from '@/integrations/supabase/types';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
@@ -29,7 +30,10 @@ export function EditProfileSheet({ profile, onClose }: Props) {
 
   const [name, setName] = useState(profile.name ?? '');
   const [major, setMajor] = useState(profile.major ?? '');
-  const [semester, setSemester] = useState(profile.semester?.toString() ?? '');
+  // Con rueda de scroll ya no hay "campo vacío": siempre hay una fila
+  // seleccionada, así que quien nunca lo puso arranca en el primer semestre
+  // en vez de en blanco.
+  const [semester, setSemester] = useState(profile.semester?.toString() ?? '1');
   const [residence, setResidence] = useState(profile.residence_type ?? '');
   const [origin, setOrigin] = useState<string | null>(profile.origin ?? null);
   const [interests, setInterests] = useState<string[]>(profile.interests ?? []);
@@ -226,16 +230,20 @@ export function EditProfileSheet({ profile, onClose }: Props) {
         {/* Semester */}
         <div className="space-y-2">
           <Label htmlFor="ep-semester">{t('onboarding.semester')}</Label>
-          <Input
-            id="ep-semester"
-            type="number"
-            min="1"
-            max="12"
-            value={semester}
-            onChange={(e) => setSemester(e.target.value)}
-            placeholder={t('onboarding.semesterPh')}
-            className="h-12 rounded-xl text-base"
-          />
+          <div className="relative rounded-xl border border-input bg-background px-4">
+            <div
+              className="pointer-events-none absolute left-4 right-4 top-1/2 -translate-y-1/2 rounded-lg bg-muted"
+              style={{ height: WHEEL_ITEM_HEIGHT }}
+              aria-hidden
+            />
+            <WheelColumn
+              items={SEMESTER_OPTIONS}
+              index={Math.min(11, Math.max(0, parseInt(semester, 10) - 1 || 0))}
+              onIndexChange={(i) => setSemester(SEMESTER_OPTIONS[i])}
+              label={t('onboarding.semester')}
+              className="relative w-full"
+            />
+          </div>
         </div>
 
         {/* Residence */}

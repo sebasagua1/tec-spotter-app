@@ -1,90 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { format, addDays, isSameDay, startOfDay } from 'date-fns';
 import { es as esLocale, enUS } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { WheelColumn, WHEEL_ITEM_HEIGHT } from '@/components/ui/wheel-column';
 
-const ITEM_H = 44;      // alto de cada fila
-const VISIBLE = 5;      // filas visibles; impar para que haya una central
-const PAD = ((VISIBLE - 1) / 2) * ITEM_H;
+const ITEM_H = WHEEL_ITEM_HEIGHT;
 const DAYS_AHEAD = 365;
-
-interface ColumnProps {
-  items: string[];
-  index: number;
-  onIndexChange: (i: number) => void;
-  label: string;
-  className?: string;
-}
-
-/**
- * Una columna de la rueda. El ajuste a la fila lo hace scroll-snap del
- * navegador —que es lo que da el frenado con inercia de iOS—; aquí solo se
- * traduce la posición de scroll a un índice.
- */
-function WheelColumn({ items, index, onIndexChange, label, className }: ColumnProps) {
-  const ref = useRef<HTMLDivElement>(null);
-  const settling = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Mientras el dedo mueve la rueda, sus propios scrollTop no deben
-  // reposicionarla desde fuera o pelearía contra el gesto.
-  const touching = useRef(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || touching.current) return;
-    const target = index * ITEM_H;
-    if (Math.abs(el.scrollTop - target) > 1) el.scrollTop = target;
-  }, [index]);
-
-  const handleScroll = () => {
-    touching.current = true;
-    if (settling.current) clearTimeout(settling.current);
-    // El scroll con inercia no avisa de cuándo termina: se espera a que pare.
-    settling.current = setTimeout(() => {
-      touching.current = false;
-      const el = ref.current;
-      if (!el) return;
-      const i = Math.max(0, Math.min(items.length - 1, Math.round(el.scrollTop / ITEM_H)));
-      if (i !== index) onIndexChange(i);
-    }, 120);
-  };
-
-  return (
-    <div
-      ref={ref}
-      role="listbox"
-      aria-label={label}
-      onScroll={handleScroll}
-      className={cn(
-        'relative overflow-y-scroll snap-y snap-mandatory no-scrollbar touch-pan-y',
-        className
-      )}
-      // Sin scroll-padding: desplaza el punto de anclaje de snap media
-      // columna y el navegador acaba rechazando el scrollTop que se le pide.
-      // Con los huecos de arriba y abajo, el anclaje de la fila i cae ya en
-      // i * ITEM_H, que es justo lo que calcula handleScroll.
-      style={{ height: VISIBLE * ITEM_H }}
-    >
-      <div style={{ height: PAD }} aria-hidden />
-      {items.map((item, i) => (
-        <div
-          key={item + i}
-          role="option"
-          aria-selected={i === index}
-          className={cn(
-            'snap-center flex items-center justify-center text-center transition-colors',
-            i === index ? 'text-foreground font-semibold' : 'text-muted-foreground/50'
-          )}
-          style={{ height: ITEM_H }}
-        >
-          {item}
-        </div>
-      ))}
-      <div style={{ height: PAD }} aria-hidden />
-    </div>
-  );
-}
 
 interface Props {
   value: Date | null;

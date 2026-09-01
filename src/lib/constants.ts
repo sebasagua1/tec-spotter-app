@@ -38,6 +38,9 @@ export const LANGUAGE_OPTIONS = [
   'Español', 'English', 'Français', 'Deutsch', 'Português', '中文', '日本語', 'Korean',
 ] as const;
 
+/** 1 a 12, para la rueda de semestre del alta y de editar perfil. */
+export const SEMESTER_OPTIONS = Array.from({ length: 12 }, (_, i) => String(i + 1));
+
 export const RESIDENCE_OPTIONS = [
   { key: 'local', label: 'residence.local' },
   { key: 'foraneo', label: 'residence.foraneo' },

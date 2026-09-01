@@ -4,12 +4,13 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { LANGUAGE_OPTIONS } from '@/lib/constants';
+import { LANGUAGE_OPTIONS, SEMESTER_OPTIONS } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { ChipSelector } from '@/components/ui/chip-selector';
 import { InterestPicker } from '@/components/ui/interest-picker';
 import { OriginPicker } from '@/components/ui/origin-picker';
 import { ResidencePicker } from '@/components/ui/residence-picker';
+import { WheelColumn, WHEEL_ITEM_HEIGHT } from '@/components/ui/wheel-column';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
@@ -31,7 +32,9 @@ export default function Onboarding() {
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
   const [major, setMajor] = useState('');
-  const [semester, setSemester] = useState('');
+  // Con rueda de scroll ya no hay "campo vacío": siempre hay una fila
+  // seleccionada, así que arranca en el primer semestre en vez de en blanco.
+  const [semester, setSemester] = useState('1');
   const [residence, setResidence] = useState('');
   const [origin, setOrigin] = useState<string | null>(null);
   const [interests, setInterests] = useState<string[]>([]);
@@ -204,7 +207,23 @@ export default function Onboarding() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="onb-semester">{t('onboarding.semester')}</Label>
-            <Input id="onb-semester" placeholder={t('onboarding.semesterPh')} type="number" min="1" max="12" value={semester} onChange={e => setSemester(e.target.value)} className="h-12 rounded-xl text-base" />
+            {/* Rueda de scroll y no un número tecleado: nadie sabe de memoria
+                si va en su séptimo u octavo semestre sin contar, y un teclado
+                numérico para un valor de 1 a 12 era más fricción que ayuda. */}
+            <div className="relative rounded-xl border border-input bg-background px-4">
+              <div
+                className="pointer-events-none absolute left-4 right-4 top-1/2 -translate-y-1/2 rounded-lg bg-muted"
+                style={{ height: WHEEL_ITEM_HEIGHT }}
+                aria-hidden
+              />
+              <WheelColumn
+                items={SEMESTER_OPTIONS}
+                index={Math.min(11, Math.max(0, parseInt(semester, 10) - 1 || 0))}
+                onIndexChange={(i) => setSemester(SEMESTER_OPTIONS[i])}
+                label={t('onboarding.semester')}
+                className="relative w-full"
+              />
+            </div>
           </div>
         </div>
       );
