@@ -36,6 +36,11 @@ export function BottomNav() {
             <button
               key={path}
               onClick={() => navigate(path)}
+              // Ancla para el recorrido de bienvenida, que mide dónde está
+              // cada pestaña para colocarle el globo encima. Con data-* y no
+              // con un ref porque la barra vive en el AppShell y el recorrido
+              // en MapHome: pasar refs entre esos dos sería atarlos.
+              data-tour={key}
               className={cn(
                 'flex flex-col items-center gap-0.5 px-4 py-2 min-w-[64px]',
                 'transition-[color,transform] duration-200 active:scale-95',

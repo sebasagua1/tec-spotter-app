@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
-import { Plus, LocateFixed, Layers, List, Map as MapIcon, Search, X as XIcon, Sparkles, type LucideIcon } from 'lucide-react';
+import { Plus, LocateFixed, Layers, List, Map as MapIcon, Search, X as XIcon, type LucideIcon } from 'lucide-react';
 import { useEventStore, selectSelectedEvent } from '@/stores/eventStore';
 import { EVENT_CATEGORIES, MAPBOX_STYLE_LIGHT, MAPBOX_STYLE_DARK } from '@/lib/constants';
 import { prefersDark, onColorSchemeChange } from '@/lib/theme';
@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { EventBottomSheet } from '@/components/map/EventBottomSheet';
 import { CreateEventSheet } from '@/components/map/CreateEventSheet';
 import { LocationPickerOverlay } from '@/components/map/LocationPickerOverlay';
+import { WelcomeTour } from '@/components/map/WelcomeTour';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { useAuthStore } from '@/stores/authStore';
@@ -970,30 +971,12 @@ export default function MapHome() {
           hay un boton, asi que encogerlo seria movimiento sin motivo. */}
       {!pickingLocation && (
         <>
-          {mostrarAviso && (
-            <div className="absolute above-nav mb-20 right-4 z-20 w-[min(19rem,calc(100vw-2rem))] animate-fade-in">
-              <div role="dialog" aria-labelledby="create-tip-title" className="bg-card rounded-2xl shadow-lifted border border-border p-4">
-                <div className="flex items-start gap-2.5">
-                  <Sparkles aria-hidden="true" className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <h3 id="create-tip-title" className="text-sm font-bold text-foreground">{t('map.tipTitle')}</h3>
-                    <p className="text-xs text-muted-foreground mt-1">{t('map.tipBody')}</p>
-                  </div>
-                </div>
-                <button
-                  onClick={dismissTip}
-                  className="mt-3 w-full min-h-[44px] rounded-xl bg-primary text-primary-foreground text-sm font-bold"
-                >
-                  {t('map.tipGotIt')}
-                </button>
-              </div>
-              {/* Pico apuntando al boton de abajo. */}
-              <div aria-hidden="true" className="absolute -bottom-1.5 right-8 w-3 h-3 bg-card border-r border-b border-border rotate-45" />
-            </div>
-          )}
+          {mostrarAviso && <WelcomeTour onFinish={dismissTip} />}
           <button
             onClick={handleOpenCreate}
             aria-label={t('map.createEvent')}
+            // Ancla del recorrido de bienvenida. Ver WelcomeTour.
+            data-tour="create"
             className="absolute above-nav mb-4 right-4 z-10 h-14 pl-5 pr-6 bg-primary rounded-full flex items-center gap-2 shadow-lifted active:scale-95 transition-transform"
           >
             <Plus className="w-6 h-6 text-primary-foreground flex-shrink-0" />

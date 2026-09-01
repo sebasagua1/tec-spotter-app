@@ -382,14 +382,27 @@
     "clusterAria": "{{count}} eventos aquí. Pulsa para acercarte.",
     "searchEvents": "Buscar eventos…",
     "createEventLabel": "Crear evento",
-    "tipTitle": "Aquí creas tus eventos",
-    "tipBody": "Toca este botón para organizar algo y que aparezca en el mapa de tu campus.",
-    "tipGotIt": "Entendido",
     "emptyTitle": "Todavía no hay nada por aquí",
     "emptyBody": "Sé quien empieza: organiza algo y aparecerá en el mapa de tu campus.",
     "emptyCta": "Crear el primero",
     "noEventsFilter": "Ningún evento coincide con lo que buscas",
-    "clearFilters": "Quitar filtros"
+    "clearFilters": "Quitar filtros",
+    "tour": {
+      "mapTitle": "Este es tu campus",
+      "mapBody": "Aquí aparece todo lo que está pasando cerca de ti. Toca cualquier punto del mapa para ver de qué va.",
+      "createTitle": "Aquí creas tus eventos",
+      "createBody": "Toca este botón para organizar algo y que aparezca en el mapa de tu campus.",
+      "eventsTitle": "Tus eventos",
+      "eventsBody": "Lo que has creado y aquello a lo que te has unido, con las solicitudes que esperan tu respuesta.",
+      "friendsTitle": "Amigos y chats",
+      "friendsBody": "Añade gente, mira lo que organizan y habla con ellos desde aquí.",
+      "profileTitle": "Tu perfil",
+      "profileBody": "Tu foto, tus intereses, tus insignias y los puntos que vas sumando al participar.",
+      "next": "Siguiente",
+      "skip": "Saltar",
+      "done": "Listo",
+      "progress": "Paso {{current}} de {{total}}"
+    }
   },
   "rpcErrors": {
     "notAuthenticated": "Tu sesión expiró. Vuelve a iniciar sesión.",

@@ -382,14 +382,27 @@
     "clusterAria": "{{count}} events here. Tap to zoom in.",
     "searchEvents": "Search events…",
     "createEventLabel": "Create event",
-    "tipTitle": "This is where you create events",
-    "tipBody": "Tap this button to organize something and put it on your campus map.",
-    "tipGotIt": "Got it",
     "emptyTitle": "Nothing here yet",
     "emptyBody": "Be the one who starts: organize something and it will show up on your campus map.",
     "emptyCta": "Create the first one",
     "noEventsFilter": "No events match what you are looking for",
-    "clearFilters": "Clear filters"
+    "clearFilters": "Clear filters",
+    "tour": {
+      "mapTitle": "This is your campus",
+      "mapBody": "Everything happening near you shows up here. Tap any point on the map to see what it is.",
+      "createTitle": "This is where you create events",
+      "createBody": "Tap this button to organise something and put it on your campus map.",
+      "eventsTitle": "Your events",
+      "eventsBody": "What you've created and what you've joined, plus the requests waiting on your answer.",
+      "friendsTitle": "Friends and chats",
+      "friendsBody": "Add people, see what they're organising and message them from here.",
+      "profileTitle": "Your profile",
+      "profileBody": "Your photo, your interests, your badges and the points you earn by taking part.",
+      "next": "Next",
+      "skip": "Skip",
+      "done": "Done",
+      "progress": "Step {{current}} of {{total}}"
+    }
   },
   "rpcErrors": {
     "notAuthenticated": "Your session expired. Sign in again.",
