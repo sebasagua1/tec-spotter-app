@@ -49,7 +49,7 @@ export function OriginPicker({ mode, value, onChange }: Props) {
               'w-full p-3.5 rounded-xl text-left font-semibold transition-all border-2',
               value === o.code
                 ? 'border-primary bg-primary/5 text-foreground'
-                : 'border-border bg-card text-muted-foreground'
+                : 'border-border bg-card text-foreground/80'
             )}
           >
             {o.name}

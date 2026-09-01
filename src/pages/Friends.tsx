@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -287,23 +287,40 @@ export default function Friends() {
     toast({ title: t('friends.requestDeclined') });
   };
 
-  const handleSearch = async () => {
-    if (!user || !searchQuery.trim()) return;
-    const safeQuery = searchQuery.replace(/[%_\\]/g, '\\$&');
-    const { data, error } = await supabase
-      .from('public_profiles')
-      .select('id, name, avatar_url, major')
-      .ilike('name', `%${safeQuery}%`)
-      .neq('id', user?.id ?? '')
-      .limit(10);
-    // El más engañoso de todos: una búsqueda fallida se veía igual que una
-    // sin resultados, o sea "esa persona no está en Always Connected".
-    if (error) {
-      toast({ title: t('errors.searchFailed'), variant: 'destructive' });
+  // Busca según se escribe, sin esperar a que se pulse nada.
+  //
+  // El número de secuencia es porque el debounce no basta solo: dos consultas
+  // pueden quedar en vuelo a la vez si la red va lenta, y sin esto la más
+  // vieja podía responder la última y pisar los resultados de lo que se
+  // acababa de escribir.
+  const searchSeqRef = useRef(0);
+  useEffect(() => {
+    if (!user) return;
+    const query = searchQuery.trim();
+    if (!query) {
+      setSearchResults([]);
       return;
     }
-    if (data) setSearchResults(data);
-  };
+    const seq = ++searchSeqRef.current;
+    const timer = setTimeout(async () => {
+      const safeQuery = query.replace(/[%_\\]/g, '\\$&');
+      const { data, error } = await supabase
+        .from('public_profiles')
+        .select('id, name, avatar_url, major')
+        .ilike('name', `%${safeQuery}%`)
+        .neq('id', user.id)
+        .limit(10);
+      if (seq !== searchSeqRef.current) return;
+      // El más engañoso de todos: una búsqueda fallida se veía igual que una
+      // sin resultados, o sea "esa persona no está en Always Connected".
+      if (error) {
+        toast({ title: i18n.t('errors.searchFailed'), variant: 'destructive' });
+        return;
+      }
+      if (data) setSearchResults(data);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery, user, toast]);
 
   const sendFriendRequest = async (friendId: string | null) => {
     if (!user || !friendId) return;
@@ -405,20 +422,14 @@ export default function Friends() {
       {/* Friends tab */}
       {activeTab === 'friends' && (
         <div className="space-y-4">
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder={t('friends.searchPh')}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                className="pl-9 h-11 rounded-xl"
-              />
-            </div>
-            <Button onClick={handleSearch} size="icon" aria-label={t('common.search')} className="h-11 w-11 rounded-xl">
-              <Search className="w-4 h-4" />
-            </Button>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder={t('friends.searchPh')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 h-11 rounded-xl"
+            />
           </div>
 
           {searchResults.length > 0 && (

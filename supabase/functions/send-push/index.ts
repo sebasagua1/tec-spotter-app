@@ -33,22 +33,22 @@ const SERVER_KEYS = [SERVICE_ROLE, SECRET_KEY, FALLBACK_KEY].filter((k) => k.len
 const ADMIN_KEY = FALLBACK_KEY || SERVICE_ROLE || SECRET_KEY;
 const APP_ORIGIN = Deno.env.get("APP_ORIGIN") ?? "*";
 
+// El origen de la app nativa no es configurable por secreto: lo fija
+// Capacitor y es siempre el mismo. Ver la misma trampa (y el mismo arreglo)
+// en supabase/functions/delete-account/index.ts — de ahí llegaba "Failed to
+// send a request to the Edge Function" pese a tener el JWT bueno.
+const NATIVE_ORIGINS = ["capacitor://localhost", "http://localhost"];
+
+function resolveOrigin(req: Request): string {
+  if (APP_ORIGIN === "*") return "*";
+  const origin = req.headers.get("Origin") ?? "";
+  return origin === APP_ORIGIN || NATIVE_ORIGINS.includes(origin) ? origin : APP_ORIGIN;
+}
+
 const APNS_KEY_ID = Deno.env.get("APNS_KEY_ID")!;
 const APNS_TEAM_ID = Deno.env.get("APNS_TEAM_ID")!;
 const APNS_BUNDLE_ID = Deno.env.get("APNS_BUNDLE_ID") ?? "com.alwaysconnected.app";
 const APNS_PRIVATE_KEY = Deno.env.get("APNS_PRIVATE_KEY")!;
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": APP_ORIGIN,
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
-
-const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
 
 // ---------------------------------------------------------------- JWT ES256
 
@@ -134,6 +134,18 @@ async function pushTo(
 }
 
 serve(async (req) => {
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": resolveOrigin(req),
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    Vary: "Origin",
+  };
+  const json = (body: unknown, status = 200) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 

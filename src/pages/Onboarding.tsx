@@ -173,7 +173,7 @@ export default function Onboarding() {
                   'w-full p-4 rounded-xl text-left font-semibold transition-all border-2',
                   selectedCampusId === campus.id
                     ? 'border-primary bg-primary/5 text-foreground'
-                    : 'border-border bg-card text-muted-foreground'
+                    : 'border-border bg-card text-foreground/80'
                 )}
               >
                 {campus.name}
@@ -374,7 +374,7 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col px-6 py-8 bg-background relative">
+    <div className="min-h-screen flex flex-col px-6 pt-safe pb-8 bg-background relative">
       <div className="absolute top-4 right-4 safe-top">
         {/* Language switcher imported lazily to avoid extra refactor */}
         <LanguageSwitcher />

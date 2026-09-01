@@ -17,19 +17,33 @@ const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const APP_ORIGIN = Deno.env.get("APP_ORIGIN") ?? "*";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": APP_ORIGIN,
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+// El origen de la app nativa no es configurable por secreto: lo fija
+// Capacitor y es siempre el mismo. Sin admitirlo aquí, CORS solo dejaba
+// pasar al sitio web y la app de iOS —que llama a esta misma función—
+// se quedaba sin poder borrar la cuenta ("Failed to send a request to
+// the Edge Function", que es como supabase-js reporta un fetch bloqueado
+// por CORS, no un error de la función).
+const NATIVE_ORIGINS = ["capacitor://localhost", "http://localhost"];
 
-const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
+function resolveOrigin(req: Request): string {
+  if (APP_ORIGIN === "*") return "*";
+  const origin = req.headers.get("Origin") ?? "";
+  return origin === APP_ORIGIN || NATIVE_ORIGINS.includes(origin) ? origin : APP_ORIGIN;
+}
 
 serve(async (req) => {
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": resolveOrigin(req),
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    Vary: "Origin",
+  };
+  const json = (body: unknown, status = 200) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 

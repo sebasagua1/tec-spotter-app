@@ -753,6 +753,13 @@ export default function MapHome() {
   // error DESPUÉS de haber dado posiciones buenas (precisión aproximada,
   // un fallo puntual del GPS), y entonces salía un aviso de "ubicación
   // denegada" con el punto azul pintado en el mapa, contradiciéndose solo.
+  //
+  // Y no solo después: en frío, CoreLocation puede entregar un
+  // PERMISSION_DENIED transitorio mientras todavía está confirmando la
+  // autorización recién concedida, y la posición buena llega un instante
+  // después. Por eso el aviso espera un margen antes de salir: si en ese
+  // rato llega la ubicación (o el permiso dejó de estar denegado), el aviso
+  // ni se lanza.
   useEffect(() => {
     if (userLocation) {
       // Si acabó llegando la posición, el aviso vuelve a estar disponible
@@ -760,21 +767,26 @@ export default function MapHome() {
       deniedToastShownRef.current = false;
       return;
     }
-    if (permission === 'denied' && !deniedToastShownRef.current) {
+    if (deniedToastShownRef.current) return;
+    if (permission !== 'denied' && permission !== 'unsupported') return;
+
+    const timer = setTimeout(() => {
       deniedToastShownRef.current = true;
-      toast({
-        title: t('map.locDenied'),
-        description: t('map.locDeniedDesc'),
-        variant: 'destructive',
-      });
-    } else if (permission === 'unsupported' && !deniedToastShownRef.current) {
-      deniedToastShownRef.current = true;
-      toast({
-        title: t('map.gpsUnavailable'),
-        description: t('map.gpsUnavailableDesc'),
-        variant: 'destructive',
-      });
-    }
+      if (permission === 'denied') {
+        toast({
+          title: t('map.locDenied'),
+          description: t('map.locDeniedDesc'),
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: t('map.gpsUnavailable'),
+          description: t('map.gpsUnavailableDesc'),
+          variant: 'destructive',
+        });
+      }
+    }, 2500);
+    return () => clearTimeout(timer);
   }, [permission, userLocation, t]);
 
   useEffect(() => {
@@ -888,7 +900,10 @@ export default function MapHome() {
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder={t('map.searchEvents')}
-                className="w-full h-11 pl-9 pr-11 rounded-full text-sm font-medium border border-border shadow-soft bg-background/80 backdrop-blur-xl focus:outline-none focus:ring-2 focus:ring-primary/40"
+                // text-base y no text-sm: por debajo de 16px, iOS hace zoom
+                // automatico del viewport al enfocar el campo, y como el mapa
+                // no reacciona a ese cambio, se queda enganchado en ese zoom.
+                className="w-full h-11 pl-9 pr-11 rounded-full text-base font-medium border border-border shadow-soft bg-background/80 backdrop-blur-xl focus:outline-none focus:ring-2 focus:ring-primary/40"
               />
               {searchQuery && (
                 <button

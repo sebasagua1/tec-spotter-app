@@ -21,7 +21,7 @@ export function ResidencePicker({ value, onChange }: Props) {
             'w-full p-4 rounded-xl text-left font-semibold transition-all border-2',
             value === opt.key
               ? 'border-primary bg-primary/5 text-foreground'
-              : 'border-border bg-card text-muted-foreground'
+              : 'border-border bg-card text-foreground/80'
           )}
         >
           {t('residence.' + opt.key)}
