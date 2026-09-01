@@ -63,7 +63,13 @@
     "languagesSubtitle": "¿Qué idiomas hablas?",
     "getStarted": "Comenzar",
     "metaDesc": "Configura tu perfil de {{app}}: campus, carrera, intereses e idiomas.",
-    "complete": "Completa tu perfil"
+    "complete": "Completa tu perfil",
+    "legalTitle": "Una última cosa",
+    "legalSubtitle": "Confirma estas dos y ya estás dentro.",
+    "legalAge": "Tengo 18 años o más",
+    "legalAgeHint": "Always Connected es solo para mayores de edad.",
+    "legalAcceptPrefix": "He leído y acepto los",
+    "legalAcceptHint": "Se abren en el navegador; no perderás lo que llevas escrito."
   },
   "profile": {
     "title": "Perfil",

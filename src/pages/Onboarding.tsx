@@ -13,9 +13,10 @@ import { ResidencePicker } from '@/components/ui/residence-picker';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
-import { ChevronRight, ChevronLeft, Search } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Search, Check } from 'lucide-react';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { pageTitle } from '@/lib/brand';
+import { PRIVACY_URL, TERMS_URL } from '@/lib/legal';
 
 interface Campus {
   id: string;
@@ -36,6 +37,11 @@ export default function Onboarding() {
   const [interests, setInterests] = useState<string[]>([]);
   const [languages, setLanguages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  // Las dos afirmaciones del paso legal. Empiezan en false y no se guardan en
+  // ningún sitio hasta que la persona las marca: un consentimiento marcado por
+  // defecto no es consentimiento.
+  const [isAdult, setIsAdult] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   // Campus state
   const [campuses, setCampuses] = useState<Campus[]>([]);
@@ -76,6 +82,9 @@ export default function Onboarding() {
     list.push('basics', 'residence');
     if (residence === 'foraneo' || residence === 'international') list.push('origin');
     list.push('interests', 'languages');
+    // Siempre el último: es la puerta que hay que cruzar para que exista el
+    // perfil, y ponerla al final significa que nadie la esquiva volviendo atrás.
+    list.push('legal');
     return list;
   }, [needsCampusSelection, residence]);
 
@@ -103,7 +112,11 @@ export default function Onboarding() {
 
   const handleComplete = async () => {
     if (!user) return;
+    // Cinturón: el botón ya va deshabilitado, pero esto es lo que impide que el
+    // perfil se cree sin constancia si algún día cambia el orden de los pasos.
+    if (!isAdult || !acceptedTerms) return;
     setLoading(true);
+    const ahora = new Date().toISOString();
     const { error } = await supabase.from('profiles').update({
       name,
       major,
@@ -114,6 +127,11 @@ export default function Onboarding() {
       interests,
       languages,
       campus_id: selectedCampusId,
+      // La constancia se escribe en el mismo UPDATE que crea el perfil: o queda
+      // todo, o no queda nada. Un perfil terminado sin estas dos fechas sería
+      // una cuenta que nunca aceptó nada.
+      terms_accepted_at: ahora,
+      age_confirmed_at: ahora,
       onboarding_completed: true,
     }).eq('id', user.id);
 
@@ -250,6 +268,99 @@ export default function Onboarding() {
       );
     }
 
+    if (current === 'legal') {
+      // Casilla nativa oculta con dos <label> apuntándole: uno es el cuadro que
+      // se ve y el otro el texto. Así el teclado y los lectores de pantalla la
+      // tratan como lo que es, y toda la frase es zona de toque.
+      //
+      // Los enlaces van FUERA de cualquier <label>: un <a> dentro de un label
+      // marca la casilla además de abrir el enlace, que es justo lo contrario
+      // de leerse los términos antes de aceptarlos.
+      const fila = (
+        id: string,
+        marcada: boolean,
+        alCambiar: (v: boolean) => void,
+        etiqueta: React.ReactNode,
+        pista: string,
+      ) => (
+        <div
+          className={cn(
+            'flex items-start gap-3 rounded-2xl border p-4 transition-colors',
+            marcada ? 'border-primary bg-primary/5' : 'border-border',
+          )}
+        >
+          <input
+            type="checkbox"
+            id={id}
+            className="sr-only"
+            checked={marcada}
+            onChange={(e) => alCambiar(e.target.checked)}
+          />
+          <label
+            htmlFor={id}
+            className={cn(
+              'mt-0.5 grid h-6 w-6 shrink-0 cursor-pointer place-items-center rounded-md border-2 transition-colors',
+              marcada ? 'border-primary bg-primary text-primary-foreground' : 'border-muted-foreground/40',
+            )}
+          >
+            {marcada && <Check className="h-4 w-4" strokeWidth={3} />}
+          </label>
+          <div className="flex-1 space-y-1">
+            <div className="text-sm font-medium leading-snug text-foreground">{etiqueta}</div>
+            <p className="text-xs text-muted-foreground">{pista}</p>
+          </div>
+        </div>
+      );
+
+      return (
+        <div className="space-y-6 flex-1">
+          <div>
+            <h2 className="text-2xl font-extrabold text-foreground mb-1">{t('onboarding.legalTitle')}</h2>
+            <p className="text-muted-foreground text-sm">{t('onboarding.legalSubtitle')}</p>
+          </div>
+
+          <div className="space-y-3">
+            {fila(
+              'consent-age',
+              isAdult,
+              setIsAdult,
+              <label htmlFor="consent-age" className="cursor-pointer">{t('onboarding.legalAge')}</label>,
+              t('onboarding.legalAgeHint'),
+            )}
+
+            {fila(
+              'consent-terms',
+              acceptedTerms,
+              setAcceptedTerms,
+              <>
+                <label htmlFor="consent-terms" className="cursor-pointer">
+                  {t('onboarding.legalAcceptPrefix')}
+                </label>{' '}
+                <a
+                  href={TERMS_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-primary underline underline-offset-2"
+                >
+                  {t('legal.terms')}
+                </a>{' '}
+                {t('legal.and')}{' '}
+                <a
+                  href={PRIVACY_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-primary underline underline-offset-2"
+                >
+                  {t('legal.privacy')}
+                </a>
+              </>,
+              t('onboarding.legalAcceptHint'),
+            )}
+          </div>
+        </div>
+      );
+    }
+
     return null;
   };
 
@@ -258,6 +369,7 @@ export default function Onboarding() {
     if (current === 'basics') return !!name;
     if (current === 'residence') return !!residence;
     if (current === 'origin') return !!origin;
+    if (current === 'legal') return isAdult && acceptedTerms;
     return true;
   };
 
@@ -313,7 +425,10 @@ export default function Onboarding() {
           <Button
             onClick={handleComplete}
             className="flex-1 h-12 rounded-xl font-bold"
-            disabled={loading}
+            // `canProceed()` también aquí, no solo en el botón de "Siguiente":
+            // el último paso es ahora el legal, y sin esto se podía terminar el
+            // perfil sin marcar ninguna de las dos casillas.
+            disabled={loading || !canProceed()}
           >
             {loading ? t('common.saving') : t('onboarding.getStarted')}
           </Button>

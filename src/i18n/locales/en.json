@@ -63,7 +63,13 @@
     "languagesSubtitle": "Which languages do you speak?",
     "getStarted": "Get Started",
     "metaDesc": "Set up your {{app}} profile: campus, major, interests and languages.",
-    "complete": "Complete your profile"
+    "complete": "Complete your profile",
+    "legalTitle": "One last thing",
+    "legalSubtitle": "Confirm these two and you're in.",
+    "legalAge": "I am 18 or older",
+    "legalAgeHint": "Always Connected is for adults only.",
+    "legalAcceptPrefix": "I have read and accept the",
+    "legalAcceptHint": "They open in your browser; you won't lose what you've filled in."
   },
   "profile": {
     "title": "Profile",

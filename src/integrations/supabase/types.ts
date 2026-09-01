@@ -358,6 +358,8 @@ export type Database = {
           campus_id: string | null
           institution_verified: boolean
           create_tip_seen: boolean
+          terms_accepted_at: string | null
+          age_confirmed_at: string | null
           created_at: string
           email: string
           id: string
@@ -379,6 +381,8 @@ export type Database = {
           campus_id?: string | null
           institution_verified?: boolean
           create_tip_seen?: boolean
+          terms_accepted_at?: string | null
+          age_confirmed_at?: string | null
           created_at?: string
           email: string
           id: string
@@ -400,6 +404,8 @@ export type Database = {
           campus_id?: string | null
           institution_verified?: boolean
           create_tip_seen?: boolean
+          terms_accepted_at?: string | null
+          age_confirmed_at?: string | null
           created_at?: string
           email?: string
           id?: string
