@@ -229,7 +229,7 @@ export function EditProfileSheet({ profile, onClose }: Props) {
 
         {/* Semester */}
         <div className="space-y-2">
-          <Label htmlFor="ep-semester">{t('onboarding.semester')}</Label>
+          <Label id="ep-semester-label">{t('onboarding.semester')}</Label>
           <div className="relative rounded-xl border border-input bg-background px-4">
             <div
               className="pointer-events-none absolute left-4 right-4 top-1/2 -translate-y-1/2 rounded-lg bg-muted"
@@ -241,6 +241,7 @@ export function EditProfileSheet({ profile, onClose }: Props) {
               index={Math.min(11, Math.max(0, parseInt(semester, 10) - 1 || 0))}
               onIndexChange={(i) => setSemester(SEMESTER_OPTIONS[i])}
               label={t('onboarding.semester')}
+              labelledBy="ep-semester-label"
               className="relative w-full"
             />
           </div>

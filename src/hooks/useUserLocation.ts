@@ -47,28 +47,64 @@ export function useUserLocation(options: Options = {}) {
     return () => document.removeEventListener('visibilitychange', alCambiar);
   }, []);
 
-  // Probe permission state when available
+  /**
+   * Si el propio geolocation ya se ha pronunciado, en un sentido o en otro.
+   *
+   * A partir de ahí su palabra es la única que vale y el sondeo deja de tocar
+   * nada: es lo observado contra lo que otra capa opina.
+   */
+  const decididoPorGeoRef = useRef(false);
+
+  // Sondeo del estado del permiso.
+  //
+  // OJO con lo que este sondeo vale y lo que NO vale. Dentro del WKWebView de
+  // Capacitor, `navigator.permissions` responde por el origen de la página
+  // (capacitor://localhost), que no tiene nada que ver con la autorización
+  // nativa de CoreLocation que sí gobierna a `watchPosition`. Puede decir
+  // `denied` mientras el GPS está entregando posiciones sin problema.
+  //
+  // Por eso este sondeo NUNCA declara denegado. Solo sirve para adelantar un
+  // `granted` y ahorrarse la espera. Quien decide que algo está denegado es
+  // el error PERMISSION_DENIED del propio geolocation, que es el único que
+  // habla con el sistema operativo.
   useEffect(() => {
-    if (!('geolocation' in navigator)) {
+    if (!navigator.geolocation) {
       setPermission('unsupported');
       return;
     }
-    if ('permissions' in navigator && navigator.permissions?.query) {
-      navigator.permissions
-        .query({ name: 'geolocation' })
-        .then((res) => {
-          setPermission(res.state as GeoPermissionStatus);
-          res.onchange = () => setPermission(res.state as GeoPermissionStatus);
-        })
-        .catch(() => {});
-    }
+    if (!('permissions' in navigator) || !navigator.permissions?.query) return;
+
+    let cancelado = false;
+    const aplicar = (estado: string) => {
+      if (cancelado) return;
+      // En cuanto geolocation ha dicho algo, el sondeo se calla. Sin esto, su
+      // promesa resolvía DESPUÉS de un PERMISSION_DENIED real y devolvía el
+      // estado a `prompt`, tapando una denegación de verdad.
+      if (decididoPorGeoRef.current) return;
+      // Y lo único que puede aportar es adelantar un `granted`. `denied` se
+      // ignora siempre —miente dentro del webview— y `prompt` ya es el valor
+      // inicial, así que no añade nada.
+      if (estado === 'granted') setPermission('granted');
+    };
+
+    navigator.permissions
+      .query({ name: 'geolocation' })
+      .then((res) => {
+        aplicar(res.state);
+        res.onchange = () => aplicar(res.state);
+      })
+      // En WebKit 'geolocation' no siempre es un nombre válido y la promesa
+      // se rechaza. No es un fallo: simplemente no hay sondeo.
+      .catch(() => {});
+
+    return () => { cancelado = true; };
   }, []);
 
   useEffect(() => {
     // Al ocultarse, la limpieza de este efecto llama a clearWatch; al volver,
     // se vuelve a suscribir y la primera lectura llega en unos segundos.
     if (!enabled || !visible) return;
-    if (!('geolocation' in navigator)) {
+    if (!navigator.geolocation) {
       setPermission('unsupported');
       return;
     }
@@ -76,6 +112,7 @@ export function useUserLocation(options: Options = {}) {
     const id = navigator.geolocation.watchPosition(
       (pos) => {
         setError(null);
+        decididoPorGeoRef.current = true;
         setPermission('granted');
         setLocation({
           lng: pos.coords.longitude,
@@ -88,7 +125,10 @@ export function useUserLocation(options: Options = {}) {
       },
       (err) => {
         setError(err);
-        if (err.code === err.PERMISSION_DENIED) setPermission('denied');
+        if (err.code === err.PERMISSION_DENIED) {
+          decididoPorGeoRef.current = true;
+          setPermission('denied');
+        }
       },
       { enableHighAccuracy, maximumAge, timeout }
     );

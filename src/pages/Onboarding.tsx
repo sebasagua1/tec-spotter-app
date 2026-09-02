@@ -206,7 +206,7 @@ export default function Onboarding() {
             <Input id="onb-major" placeholder={t('onboarding.majorPh')} value={major} onChange={e => setMajor(e.target.value)} className="h-12 rounded-xl text-base" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="onb-semester">{t('onboarding.semester')}</Label>
+            <Label id="onb-semester-label">{t('onboarding.semester')}</Label>
             {/* Rueda de scroll y no un número tecleado: nadie sabe de memoria
                 si va en su séptimo u octavo semestre sin contar, y un teclado
                 numérico para un valor de 1 a 12 era más fricción que ayuda. */}
@@ -221,6 +221,7 @@ export default function Onboarding() {
                 index={Math.min(11, Math.max(0, parseInt(semester, 10) - 1 || 0))}
                 onIndexChange={(i) => setSemester(SEMESTER_OPTIONS[i])}
                 label={t('onboarding.semester')}
+                labelledBy="onb-semester-label"
                 className="relative w-full"
               />
             </div>
@@ -393,17 +394,23 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col px-6 pt-safe pb-8 bg-background relative">
-      <div className="absolute top-4 right-4 safe-top">
-        {/* Language switcher imported lazily to avoid extra refactor */}
-        <LanguageSwitcher />
-      </div>
+    <div className="min-h-screen flex flex-col px-6 pt-safe pb-8 bg-background">
       <Helmet>
         <title>{pageTitle(t('onboarding.complete'))}</title>
         <meta name="description" content={t('onboarding.metaDesc')} />
         <link rel="canonical" href="/" />
       </Helmet>
       <h1 className="sr-only">{t('onboarding.complete')}</h1>
+      {/* En flujo, NO en absoluto. Colocado con `absolute top-4`, el selector
+          se anclaba a la caja de relleno del contenedor —o sea, arrancaba en el
+          borde de la pantalla— y su propio `safe-top` lo bajaba otros tantos
+          píxeles, justo hasta donde `pt-safe` empieza a colocar el contenido.
+          Resultado: la pastilla caía encima de la barra de progreso y tapaba
+          su último segmento, con notch y sin él. Mismo fallo, y misma
+          solución, que en Auth.tsx. */}
+      <div className="flex justify-end mb-4">
+        <LanguageSwitcher />
+      </div>
       {/* Progress */}
       <div className="flex gap-1.5 mb-8">
         {Array.from({ length: totalSteps }).map((_, i) => (

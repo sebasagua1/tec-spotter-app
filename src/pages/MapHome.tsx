@@ -768,11 +768,19 @@ export default function MapHome() {
       return;
     }
     if (deniedToastShownRef.current) return;
-    if (permission !== 'denied' && permission !== 'unsupported') return;
+
+    // Quién decide que está denegado: SOLO el error del propio geolocation,
+    // que es el único que habla con el sistema operativo. `permission` ya no
+    // sirve para esto: dentro del webview lo alimenta navigator.permissions,
+    // que responde por el origen capacitor://localhost y dice `denied` con el
+    // permiso nativo perfectamente concedido. De ahí venía el aviso de
+    // "ubicación denegada" con la ubicación funcionando.
+    const denegadoDeVerdad = !!geoError && geoError.code === geoError.PERMISSION_DENIED;
+    if (!denegadoDeVerdad && permission !== 'unsupported') return;
 
     const timer = setTimeout(() => {
       deniedToastShownRef.current = true;
-      if (permission === 'denied') {
+      if (denegadoDeVerdad) {
         toast({
           title: t('map.locDenied'),
           description: t('map.locDeniedDesc'),
@@ -785,9 +793,13 @@ export default function MapHome() {
           variant: 'destructive',
         });
       }
-    }, 2500);
+      // Margen antes de avisar. En frío, CoreLocation puede soltar un
+      // PERMISSION_DENIED pasajero mientras confirma una autorización recién
+      // concedida, y la posición buena llega detrás. Con 2,5 s el aviso salía
+      // igualmente en cuanto el GPS tardaba un poco en el primer arranque.
+    }, 5000);
     return () => clearTimeout(timer);
-  }, [permission, userLocation, t]);
+  }, [permission, geoError, userLocation, t]);
 
   useEffect(() => {
     if (geoError && geoError.code !== geoError.PERMISSION_DENIED) {

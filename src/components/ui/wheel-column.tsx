@@ -8,7 +8,17 @@ interface WheelColumnProps {
   items: string[];
   index: number;
   onIndexChange: (i: number) => void;
+  /** Nombre accesible cuando no hay un <label> visible. */
   label: string;
+  /**
+   * id del <label> visible, cuando lo hay.
+   *
+   * Se asocia por `aria-labelledby` y no por el `htmlFor` del <label>: ese
+   * atributo solo surte efecto sobre controles de formulario, y esto es un
+   * div con role="listbox". Un `htmlFor` apuntando aquí no asocia nada ni
+   * hace nada al tocarlo.
+   */
+  labelledBy?: string;
   className?: string;
   itemHeight?: number;
   /** Filas visibles a la vez; impar para que haya una central. */
@@ -28,6 +38,7 @@ export function WheelColumn({
   index,
   onIndexChange,
   label,
+  labelledBy,
   className,
   itemHeight = WHEEL_ITEM_HEIGHT,
   visibleRows = 5,
@@ -63,7 +74,10 @@ export function WheelColumn({
     <div
       ref={ref}
       role="listbox"
-      aria-label={label}
+      // Uno u otro, nunca los dos: `aria-labelledby` gana sobre `aria-label`,
+      // y dejar ambos puestos hace que el nombre dependa de que el id exista.
+      aria-label={labelledBy ? undefined : label}
+      aria-labelledby={labelledBy}
       onScroll={handleScroll}
       className={cn(
         'relative overflow-y-scroll snap-y snap-mandatory no-scrollbar touch-pan-y',
