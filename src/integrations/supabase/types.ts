@@ -359,6 +359,7 @@ export type Database = {
           institution_verified: boolean
           create_tip_seen: boolean
           terms_accepted_at: string | null
+          student_id: string | null
           age_confirmed_at: string | null
           created_at: string
           email: string
@@ -382,6 +383,7 @@ export type Database = {
           institution_verified?: boolean
           create_tip_seen?: boolean
           terms_accepted_at?: string | null
+          student_id?: string | null
           age_confirmed_at?: string | null
           created_at?: string
           email: string
@@ -405,6 +407,7 @@ export type Database = {
           institution_verified?: boolean
           create_tip_seen?: boolean
           terms_accepted_at?: string | null
+          student_id?: string | null
           age_confirmed_at?: string | null
           created_at?: string
           email?: string

@@ -106,7 +106,8 @@
     "photoNotImage": "Ese archivo no es una imagen",
     "photoTooLarge": "La imagen es demasiado grande (máx. 15 MB)",
     "interests": "Intereses",
-    "languages": "Idiomas"
+    "languages": "Idiomas",
+    "studentId": "Matrícula"
   },
   "myEvents": {
     "title": "Mis eventos",

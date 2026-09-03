@@ -195,6 +195,16 @@ export default function Profile() {
               {originLabel && ` · ${originLabel}`}
               {' · '}{t('profile.semester')} {profile.semester ?? '—'}
             </p>
+            {/* Solo si hay: la matrícula sale del correo institucional, así que
+                quien entró con un correo genérico no tiene ninguna, y una línea
+                con un guion no informa de nada. No es editable a propósito —
+                la escribe el servidor en el alta. */}
+            {profile.student_id && (
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {t('profile.studentId')}{' '}
+                <span className="font-mono">{profile.student_id}</span>
+              </p>
+            )}
           </div>
           <button
             onClick={() => setEditOpen(true)}

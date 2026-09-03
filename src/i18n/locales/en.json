@@ -106,7 +106,8 @@
     "photoNotImage": "That file is not an image",
     "photoTooLarge": "Image is too large (max 15 MB)",
     "interests": "Interests",
-    "languages": "Languages"
+    "languages": "Languages",
+    "studentId": "Student ID"
   },
   "myEvents": {
     "title": "My Events",
