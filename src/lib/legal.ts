@@ -14,4 +14,4 @@ export const SUPPORT_URL = `${SITE}/support`;
 
 // Contacto de moderación. Apple exige un canal publicado para reportar
 // contenido y actuar en menos de 24 h (guideline 1.2).
-export const SUPPORT_EMAIL = 'sebasagua4@gmail.com';
+export const SUPPORT_EMAIL = 'always.connected.support@gmail.com';
